@@ -36,29 +36,7 @@ export default function PartyDetailPage() {
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
     fetch(`http://localhost:3001/api/parties/${id}`)
       .then((res) => res.json())
-      .then((data) => setParty(data))
-      .catch(() => {
-        setParty({
-          id: "1",
-          title: "Night of Strategy",
-          description: "A tabletop evening with strategy games and relaxed social play.",
-          category: "games",
-          format: "offline",
-          status: "active",
-          startDate: "2026-09-30",
-          startTime: "18:30",
-          location: "Red Room Studio, Taipei",
-          createdBy: "Admin Team",
-          createdAt: "2026-09-20T12:00:00Z",
-          updatedBy: "Admin Team",
-          updatedAt: "2026-09-22T09:00:00Z",
-          timeline: [
-            { id: "t1", title: "Setup and greetings", description: "Check-in and introductions", startDateTime: "2026-09-30T18:30:00Z" },
-            { id: "t2", title: "Game rounds", description: "Multiple sessions across the night", startDateTime: "2026-09-30T19:00:00Z" },
-            { id: "t3", title: "Wrap-up", description: "Results and community chat", startDateTime: "2026-09-30T21:30:00Z" },
-          ],
-        });
-      });
+      .then((data) => setParty(data ?? null));
   }, [params.id]);
 
   if (!party) return <main className="page-shell"><section className="detail-shell">Loading...</section></main>;

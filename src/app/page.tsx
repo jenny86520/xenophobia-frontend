@@ -50,25 +50,7 @@ export default function HomePage() {
     fetch("http://localhost:3001/api/parties/upcoming")
       .then((res) => res.json())
       .then((payload) => {
-        setData(payload);
-      })
-      .catch(() => {
-        setData({
-          nextParty: {
-            id: "1",
-            title: "Night of Strategy",
-            description: "A tabletop evening with strategy games and relaxed social play.",
-            category: "games",
-            format: "offline",
-            startDate: "2026-09-30",
-            startTime: "18:30",
-            location: "Red Room Studio, Taipei",
-          },
-          recentParties: [
-            { id: "1", title: "Night of Strategy", summary: "Strategy-focused game night for team members and friends.", category: "games", format: "offline", startDate: "2026-09-30", startTime: "18:30" },
-            { id: "2", title: "Online Hangout Roundtable", summary: "Casual online community meetup and planning session.", category: "gathering", format: "online", startDate: "2026-10-05", startTime: "20:00" },
-          ],
-        });
+        setData(payload ?? {});
       });
   }, []);
 

@@ -30,47 +30,7 @@ export default function PartyPage() {
 
     fetch(`http://localhost:3001/api/parties?${params.toString()}`)
       .then((res) => res.json())
-      .then((data) => setParties(data))
-      .catch(() => {
-        setParties([
-          {
-            id: "1",
-            title: "Night of Strategy",
-            description: "A tabletop evening with strategy games and relaxed social play.",
-            category: "games",
-            format: "offline",
-            status: "active",
-            startDate: "2026-09-30",
-            startTime: "18:30",
-            location: "Red Room Studio, Taipei",
-            summary: "Strategy-focused game night for team members and friends.",
-          },
-          {
-            id: "2",
-            title: "Online Hangout Roundtable",
-            description: "A casual online meetup to share updates and plans across the community.",
-            category: "gathering",
-            format: "online",
-            status: "active",
-            startDate: "2026-10-05",
-            startTime: "20:00",
-            location: "Discord Voice Room",
-            summary: "Casual online community meetup and planning session.",
-          },
-          {
-            id: "3",
-            title: "Retro Night",
-            description: "A relaxed social gathering with games, sharing, and conversation.",
-            category: "gathering",
-            format: "offline",
-            status: "expired",
-            startDate: "2026-08-15",
-            startTime: "19:00",
-            location: "Sky Lounge",
-            summary: "A community gathering for conversation and shared activities.",
-          },
-        ]);
-      });
+      .then((data) => setParties(Array.isArray(data) ? data : []));
   }, [status, format, category]);
 
   return (

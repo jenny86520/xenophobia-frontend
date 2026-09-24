@@ -19,29 +19,7 @@ export default function AboutPage() {
   useEffect(() => {
     fetch("http://localhost:3001/api/about")
       .then((res) => res.json())
-      .then((payload) => setData(payload))
-      .catch(() => {
-        setData({
-          teamProfile: {
-            name: "Xenophobia Team",
-            introduction: "We build memorable community experiences around games, gatherings, and collaborative creativity.",
-            mission: "To create welcoming spaces where people connect, share ideas, and enjoy meaningful events together.",
-          },
-          milestones: [
-            { id: "m1", title: "Community Founded", description: "The team was established to connect players and friends around shared interests.", date: "2024-01-15" },
-            { id: "m2", title: "First Public Meetup", description: "We hosted our first open gathering and welcomed new members to the community.", date: "2024-06-20" },
-          ],
-          contactInfo: [
-            { id: "c1", label: "Email", type: "email", value: "hello@xenophobia.team" },
-            { id: "c2", label: "Website", type: "website", value: "https://xenophobia.team" },
-          ],
-          highlights: [
-            "Public-facing event directory",
-            "Community-first design",
-            "Clear event timelines and updates",
-          ],
-        });
-      });
+      .then((payload) => setData(payload ?? {}));
   }, []);
 
   return (
