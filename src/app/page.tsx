@@ -44,7 +44,7 @@ export default function HomePage() {
       <section className="hero-card">
         <span className="eyebrow">Upcoming event</span>
         <h1>{data.nextParty?.title ?? "Loading upcoming event..."}</h1>
-        <div className="countdown-row">
+        <div className="countdown-row" data-complete={countdown === "Starting now" ? "true" : undefined}>
           <span className="countdown-label">Countdown</span>
           <strong>{countdown}</strong>
         </div>
@@ -72,9 +72,24 @@ export default function HomePage() {
         </div>
         <div className="card-grid">
           {(data.recentParties ?? []).map((party) => (
-            <Link key={party.id} href={`/party/${party.id}`} className="event-card">
-              <span className="tag">{party.format}</span>
-              <h3>{party.title}</h3>
+            <Link
+              key={party.id}
+              href={`/party/${party.id}`}
+              className="event-card"
+              data-format={party.format}
+              data-category={party.category}
+            >
+              <h3 className="event-card__title">{party.title}</h3>
+              <div className="event-card__tags">
+                <span className="chip chip--category" data-value={party.category}>
+                  {party.category.toUpperCase()}
+                </span>
+              </div>
+              <div className="event-card__status">
+                <span className="status-badge status-badge--format">
+                  {party.format === "online" ? "[ONLINE]" : "[OFFLINE]"}
+                </span>
+              </div>
               <p>{party.summary}</p>
               <div className="event-meta">
                 <span>{party.startDate}</span>
@@ -87,3 +102,4 @@ export default function HomePage() {
     </main>
   );
 }
+

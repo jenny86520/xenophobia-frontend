@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { fetchPartyDetail, type PartyDetail } from "@/lib/public-content-client";
 
+const toLifecycle = (partyStatus: string) => (partyStatus === "expired" ? "ended" : "ongoing");
+
 export default function PartyDetailPage() {
   const params = useParams();
   const [party, setParty] = useState<PartyDetail | null>(null);
@@ -17,26 +19,29 @@ export default function PartyDetailPage() {
 
   if (!party) return <main className="page-shell"><section className="detail-shell">Loading...</section></main>;
 
+  const lifecycle = toLifecycle(party.status);
+
   return (
     <main className="page-shell">
-      <section className="detail-shell">
+      <section className="detail-shell" data-format={party.format} data-category={party.category} data-lifecycle={lifecycle}>
         <Link href="/party">← Back to party list</Link>
         <h1>{party.title}</h1>
+        <div className="event-card__tags">
+          <span className="chip chip--category" data-value={party.category}>
+            {party.category.toUpperCase()}
+          </span>
+        </div>
+        <div className="event-card__status">
+          <span className="status-badge status-badge--format">
+            {party.format === "online" ? "[ONLINE]" : "[OFFLINE]"}
+          </span>
+          <span className="status-badge status-badge--lifecycle">
+            {lifecycle === "ongoing" ? "ACTIVE" : "ENDED"}
+          </span>
+        </div>
         <p>{party.description}</p>
 
         <div className="detail-grid">
-          <div>
-            <span>Category</span>
-            <strong>{party.category}</strong>
-          </div>
-          <div>
-            <span>Format</span>
-            <strong>{party.format}</strong>
-          </div>
-          <div>
-            <span>Status</span>
-            <strong>{party.status}</strong>
-          </div>
           <div>
             <span>Location</span>
             <strong>{party.location}</strong>

@@ -25,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="site-shell">
           <header className="site-header">
             <div className="brand-block">
-              <span className="brand-mark">X</span>
+              <span className="brand-mark" aria-hidden="true">XPA</span>
               <div>
                 <strong>Xenophobia</strong>
                 <span>Official Team</span>
