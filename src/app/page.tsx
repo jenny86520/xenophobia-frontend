@@ -1,69 +1,134 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { useEffect, useState } from "react";
+
+type PartySummary = {
+  id: string;
+  title: string;
+  summary: string;
+  category: string;
+  format: string;
+  startDate: string;
+  startTime: string;
+};
+
+type UpcomingResponse = {
+  nextParty?: {
+    id: string;
+    title: string;
+    description: string;
+    category: string;
+    format: string;
+    startDate: string;
+    startTime: string;
+    location: string;
+  };
+  recentParties?: PartySummary[];
+};
+
+const formatCountdown = (targetDate: string, targetTime: string) => {
+  const target = new Date(`${targetDate}T${targetTime}:00`);
+  const now = new Date();
+  const diff = Math.max(target.getTime() - now.getTime(), 0);
+
+  if (diff === 0) return "Starting now";
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+};
+
+export default function HomePage() {
+  const [data, setData] = useState<UpcomingResponse>({});
+  const [countdown, setCountdown] = useState("--");
+
+  useEffect(() => {
+    fetch("http://localhost:3001/api/parties/upcoming")
+      .then((res) => res.json())
+      .then((payload) => {
+        setData(payload);
+      })
+      .catch(() => {
+        setData({
+          nextParty: {
+            id: "1",
+            title: "Night of Strategy",
+            description: "A tabletop evening with strategy games and relaxed social play.",
+            category: "games",
+            format: "offline",
+            startDate: "2026-09-30",
+            startTime: "18:30",
+            location: "Red Room Studio, Taipei",
+          },
+          recentParties: [
+            { id: "1", title: "Night of Strategy", summary: "Strategy-focused game night for team members and friends.", category: "games", format: "offline", startDate: "2026-09-30", startTime: "18:30" },
+            { id: "2", title: "Online Hangout Roundtable", summary: "Casual online community meetup and planning session.", category: "gathering", format: "online", startDate: "2026-10-05", startTime: "20:00" },
+          ],
+        });
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!data.nextParty?.startDate || !data.nextParty?.startTime) return;
+
+    const tick = () => {
+      setCountdown(formatCountdown(data.nextParty!.startDate, data.nextParty!.startTime));
+    };
+
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [data.nextParty]);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="page-shell">
+      <section className="hero-card">
+        <span className="eyebrow">Upcoming event</span>
+        <h1>{data.nextParty?.title ?? "Loading upcoming event..."}</h1>
+        <div className="countdown-row">
+          <span className="countdown-label">Countdown</span>
+          <strong>{countdown}</strong>
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <p>{data.nextParty?.description ?? "Preparing the next community event."}</p>
+        <div className="meta-grid">
+          <div>
+            <span>When</span>
+            <strong>{data.nextParty ? `${data.nextParty.startDate} ${data.nextParty.startTime}` : "--"}</strong>
+          </div>
+          <div>
+            <span>Where</span>
+            <strong>{data.nextParty?.location ?? "--"}</strong>
+          </div>
+          <div>
+            <span>Type</span>
+            <strong>{data.nextParty?.category ?? "--"}</strong>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      <section className="section-block">
+        <div className="section-header">
+          <h2>Recent parties</h2>
+          <Link href="/party">View all</Link>
+        </div>
+        <div className="card-grid">
+          {(data.recentParties ?? []).map((party) => (
+            <Link key={party.id} href={`/party/${party.id}`} className="event-card">
+              <span className="tag">{party.format}</span>
+              <h3>{party.title}</h3>
+              <p>{party.summary}</p>
+              <div className="event-meta">
+                <span>{party.startDate}</span>
+                <span>{party.startTime}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </main>
   );
 }
