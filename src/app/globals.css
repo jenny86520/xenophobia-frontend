@@ -7,15 +7,16 @@
   --text-primary: #f2f0eb;
   --text-secondary: #a4a1a0;
   --text-muted: #8a8785;
-  --accent: #4fa98c;
-  --accent-soft: rgba(79, 169, 140, 0.14);
-  --accent-strong: #6fd6b5;
+  --accent: #ff0000;
+  --accent-soft: rgba(255, 0, 0, 0.14);
+  --accent-strong: #ff5c50;
   --shadow: rgba(0, 0, 0, 0.35);
 
   /* Status colors: supplementary only, never the sole cue (FR-006–008) */
-  --status-online: var(--accent);
+  /* Fixed independent literals — must never alias --accent so status meaning cannot change with the brand color (FR-006) */
+  --status-online: #4fa98c;
   --status-offline: #b08d57;
-  --status-ongoing: var(--accent);
+  --status-ongoing: #4fa98c;
   --status-ended: var(--text-muted);
 
   /* Typography: editorial (Geist Sans) ~70% / technical (Geist Mono) ~30% */
@@ -97,9 +98,7 @@ img {
 }
 
 .site-header {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--space-5) var(--space-5) var(--space-3);
+  padding: var(--space-5) clamp(20px, 4vw, 64px) var(--space-3);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -114,19 +113,13 @@ img {
 
 .brand-mark {
   display: inline-flex;
-  min-width: 44px;
+  width: 40px;
   height: 40px;
-  align-items: center;
-  justify-content: center;
-  padding: 0 var(--space-2);
+  padding: 6px;
+  object-fit: contain;
   border-radius: var(--radius-md);
   border: 1px solid var(--accent);
   background: var(--surface-elevated);
-  color: var(--accent-strong);
-  font-family: var(--font-technical);
-  font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: 0.02em;
   transition: box-shadow var(--transition-fast);
 }
 
@@ -182,9 +175,7 @@ img {
 }
 
 .page-shell {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--space-5) var(--space-5) var(--space-8);
+  padding: var(--space-5) clamp(20px, 4vw, 64px) var(--space-8);
 }
 
 .hero-card,
@@ -285,7 +276,7 @@ img {
   color: var(--text-secondary);
   line-height: 1.7;
   margin-bottom: var(--space-5);
-  max-width: 60ch;
+  max-width: 70ch;
 }
 
 .meta-grid {
@@ -521,6 +512,7 @@ img {
 .about-shell li {
   color: var(--text-secondary);
   line-height: 1.7;
+  max-width: 70ch;
 }
 
 .detail-grid {
@@ -594,9 +586,7 @@ img {
 }
 
 .site-footer {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--space-5) var(--space-6);
+  padding: 0 clamp(20px, 4vw, 64px) var(--space-6);
   display: flex;
   justify-content: space-between;
   align-items: center;

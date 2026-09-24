@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -25,7 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="site-shell">
           <header className="site-header">
             <div className="brand-block">
-              <span className="brand-mark" aria-hidden="true">XPA</span>
+              <Image src="/brand/xpa-logo.png" alt="XPA" width={40} height={40} className="brand-mark" priority />
               <div>
                 <strong>Xenophobia</strong>
                 <span>Official Team</span>
