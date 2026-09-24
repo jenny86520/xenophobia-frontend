@@ -1,25 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-type AboutData = {
-  teamProfile?: {
-    name: string;
-    introduction: string;
-    mission: string;
-  };
-  milestones?: Array<{ id: string; title: string; description: string; date: string }>;
-  contactInfo?: Array<{ id: string; label: string; type: string; value: string }>;
-  highlights?: string[];
-};
+import { fetchAboutContent, type AboutContent } from "@/lib/public-content-client";
 
 export default function AboutPage() {
-  const [data, setData] = useState<AboutData>({});
+  const [data, setData] = useState<AboutContent>({});
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/about")
-      .then((res) => res.json())
-      .then((payload) => setData(payload ?? {}));
+    fetchAboutContent().then(setData);
   }, []);
 
   return (

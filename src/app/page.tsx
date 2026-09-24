@@ -2,30 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-type PartySummary = {
-  id: string;
-  title: string;
-  summary: string;
-  category: string;
-  format: string;
-  startDate: string;
-  startTime: string;
-};
-
-type UpcomingResponse = {
-  nextParty?: {
-    id: string;
-    title: string;
-    description: string;
-    category: string;
-    format: string;
-    startDate: string;
-    startTime: string;
-    location: string;
-  };
-  recentParties?: PartySummary[];
-};
+import { fetchUpcomingParty, type UpcomingPartyResponse } from "@/lib/public-content-client";
 
 const formatCountdown = (targetDate: string, targetTime: string) => {
   const target = new Date(`${targetDate}T${targetTime}:00`);
@@ -43,15 +20,11 @@ const formatCountdown = (targetDate: string, targetTime: string) => {
 };
 
 export default function HomePage() {
-  const [data, setData] = useState<UpcomingResponse>({});
+  const [data, setData] = useState<UpcomingPartyResponse>({});
   const [countdown, setCountdown] = useState("--");
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/parties/upcoming")
-      .then((res) => res.json())
-      .then((payload) => {
-        setData(payload ?? {});
-      });
+    fetchUpcomingParty().then(setData);
   }, []);
 
   useEffect(() => {

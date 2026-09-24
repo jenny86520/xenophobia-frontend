@@ -3,30 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-
-type TimelineItem = {
-  id: string;
-  title: string;
-  description: string;
-  startDateTime: string;
-};
-
-type PartyDetail = {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  format: string;
-  status: string;
-  startDate: string;
-  startTime: string;
-  location: string;
-  createdBy: string;
-  createdAt: string;
-  updatedBy?: string;
-  updatedAt?: string;
-  timeline?: TimelineItem[];
-};
+import { fetchPartyDetail, type PartyDetail } from "@/lib/public-content-client";
 
 export default function PartyDetailPage() {
   const params = useParams();
@@ -34,9 +11,8 @@ export default function PartyDetailPage() {
 
   useEffect(() => {
     const id = Array.isArray(params.id) ? params.id[0] : params.id;
-    fetch(`http://localhost:3001/api/parties/${id}`)
-      .then((res) => res.json())
-      .then((data) => setParty(data ?? null));
+    if (!id) return;
+    fetchPartyDetail(id).then(setParty);
   }, [params.id]);
 
   if (!party) return <main className="page-shell"><section className="detail-shell">Loading...</section></main>;

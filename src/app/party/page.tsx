@@ -2,35 +2,16 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-type Party = {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  format: string;
-  status: string;
-  startDate: string;
-  startTime: string;
-  location: string;
-  summary: string;
-};
+import { fetchPartyList, type PartyListItem } from "@/lib/public-content-client";
 
 export default function PartyPage() {
-  const [parties, setParties] = useState<Party[]>([]);
+  const [parties, setParties] = useState<PartyListItem[]>([]);
   const [status, setStatus] = useState("active");
   const [format, setFormat] = useState("all");
   const [category, setCategory] = useState("all");
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (status !== "all") params.set("status", status);
-    if (format !== "all") params.set("format", format);
-    if (category !== "all") params.set("category", category);
-
-    fetch(`http://localhost:3001/api/parties?${params.toString()}`)
-      .then((res) => res.json())
-      .then((data) => setParties(Array.isArray(data) ? data : []));
+    fetchPartyList({ status, format, category }).then(setParties);
   }, [status, format, category]);
 
   return (
