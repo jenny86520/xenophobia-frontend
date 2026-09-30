@@ -16,7 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Xenophobia Team | Official Site",
-  description: "Official team website for events, community updates, and team profile information.",
+  description:
+    "Official team website for events, community updates, and team profile information.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -26,7 +27,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div className="site-shell">
           <header className="site-header">
             <div className="brand-block">
-              <Image src="/brand/xpa-logo.png" alt="XPA" width={40} height={40} className="brand-mark" priority />
+              <Image
+                src="/brand/xpa-logo.png"
+                alt="XPA"
+                width={40}
+                height={40}
+                className="brand-mark"
+                priority
+              />
               <div>
                 <strong>Xenophobia</strong>
                 <span>Official Team</span>
@@ -41,10 +49,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
           <footer className="site-footer">
             <p>© 2026 Xenophobia Team</p>
-            <div>
-              <Link href="/party">Events</Link>
-              <Link href="/about">About</Link>
-            </div>
           </footer>
         </div>
       </body>

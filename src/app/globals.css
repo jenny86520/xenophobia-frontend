@@ -21,7 +21,8 @@
 
   /* Typography: editorial (Geist Sans) ~70% / technical (Geist Mono) ~30% */
   --font-editorial: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  --font-technical: var(--font-geist-mono), "SFMono-Regular", Consolas, monospace;
+  --font-technical:
+    var(--font-geist-mono), "SFMono-Regular", Consolas, monospace;
 
   /* Spacing scale */
   --space-1: 4px;
@@ -109,6 +110,7 @@ img {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  cursor: pointer;
 }
 
 .brand-mark {
@@ -117,14 +119,12 @@ img {
   height: 40px;
   padding: 6px;
   object-fit: contain;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--accent);
-  background: var(--surface-elevated);
   transition: box-shadow var(--transition-fast);
 }
 
-.brand-block:hover .brand-mark {
-  box-shadow: 0 0 0 1px var(--accent), 0 0 20px var(--accent-soft);
+.brand-block:hover strong,
+.brand-block:hover span {
+  color: var(--accent);
 }
 
 .brand-block strong,
@@ -158,7 +158,9 @@ img {
   color: var(--text-secondary);
   font-size: 0.9rem;
   border: 1px solid transparent;
-  transition: color var(--transition-fast), background-color var(--transition-fast),
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
     border-color var(--transition-fast);
 }
 
@@ -198,7 +200,12 @@ img {
   position: absolute;
   inset: 0 0 auto 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent) 40%, transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--accent) 40%,
+    transparent
+  );
   opacity: 0.5;
   pointer-events: none;
 }
@@ -327,7 +334,9 @@ img {
   font-size: 0.9rem;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .section-header a:hover {
@@ -348,7 +357,9 @@ img {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: var(--space-4);
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
 .event-card:hover {
@@ -499,7 +510,9 @@ img {
   font-size: 0.85rem;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
-  transition: color var(--transition-fast), background-color var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
 }
 
 .detail-shell > a:hover {
@@ -629,7 +642,9 @@ img {
   color: var(--text-primary);
   font-family: var(--font-editorial);
   padding: var(--space-3) var(--space-3);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .filter-block select:hover {
