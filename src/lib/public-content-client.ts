@@ -1,73 +1,22 @@
+import type {
+  PartyDetail,
+  PartyListFilters,
+  PartyListItem,
+  UpcomingPartyResponse,
+} from "@/types/party";
+import type { AboutContent } from "@/types/about";
+
+export type {
+  PartySummary,
+  UpcomingPartyResponse,
+  PartyTimelineItem,
+  PartyListItem,
+  PartyDetail,
+  PartyListFilters,
+} from "@/types/party";
+export type { AboutContent } from "@/types/about";
+
 const BACKEND_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
-
-export type PartySummary = {
-  id: string;
-  title: string;
-  summary: string;
-  category: string;
-  format: string;
-  startDate: string;
-  startTime: string;
-};
-
-export type UpcomingPartyResponse = {
-  nextParty?: {
-    id: string;
-    title: string;
-    description: string;
-    category: string;
-    format: string;
-    startDate: string;
-    startTime: string;
-    location: string;
-  };
-  recentParties?: PartySummary[];
-};
-
-export type PartyTimelineItem = {
-  id: string;
-  title: string;
-  description: string;
-  startDateTime: string;
-};
-
-export type PartyListItem = {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  format: string;
-  status: string;
-  startDate: string;
-  startTime: string;
-  location: string;
-  summary: string;
-};
-
-export type PartyDetail = PartyListItem & {
-  createdBy: string;
-  createdAt: string;
-  updatedBy?: string;
-  updatedAt?: string;
-  timeline?: PartyTimelineItem[];
-};
-
-export type PartyListFilters = {
-  status?: string;
-  format?: string;
-  category?: string;
-};
-
-export type AboutContent = {
-  teamProfile?: {
-    name: string;
-    introduction: string;
-    mission: string;
-  };
-  milestones?: Array<{ id: string; title: string; description: string; date: string }>;
-  contactInfo?: Array<{ id: string; label: string; type: string; value: string }>;
-  highlights?: string[];
-};
 
 export async function fetchUpcomingParty(): Promise<UpcomingPartyResponse> {
   const response = await fetch(`${BACKEND_BASE_URL}/api/parties/upcoming`);

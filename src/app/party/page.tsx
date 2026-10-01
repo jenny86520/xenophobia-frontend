@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchPartyList, type PartyListItem } from "@/lib/public-content-client";
-
-const toLifecycle = (partyStatus: string) => (partyStatus === "expired" ? "ended" : "ongoing");
+import { PartyCard } from "@/components/party/party-card";
 
 export default function PartyPage() {
   const [parties, setParties] = useState<PartyListItem[]>([]);
@@ -58,34 +57,7 @@ export default function PartyPage() {
         ) : (
           <div className="card-grid">
             {parties.map((party) => (
-              <Link
-                key={party.id}
-                href={`/party/${party.id}`}
-                className="event-card"
-                data-format={party.format}
-                data-category={party.category}
-                data-lifecycle={toLifecycle(party.status)}
-              >
-                <h3 className="event-card__title">{party.title}</h3>
-                <div className="event-card__tags">
-                  <span className="chip chip--category" data-value={party.category}>
-                    {party.category.toUpperCase()}
-                  </span>
-                </div>
-                <div className="event-card__status">
-                  <span className="status-badge status-badge--format">
-                    {party.format === "online" ? "[ONLINE]" : "[OFFLINE]"}
-                  </span>
-                  <span className="status-badge status-badge--lifecycle">
-                    {toLifecycle(party.status) === "ongoing" ? "ACTIVE" : "ENDED"}
-                  </span>
-                </div>
-                <p>{party.summary}</p>
-                <div className="event-meta">
-                  <span>{party.startDate}</span>
-                  <span>{party.category}</span>
-                </div>
-              </Link>
+              <PartyCard key={party.id} party={party} showLifecycleBadge={true} metaFields="date-category" />
             ))}
           </div>
         )}
@@ -93,4 +65,5 @@ export default function PartyPage() {
     </main>
   );
 }
+
 

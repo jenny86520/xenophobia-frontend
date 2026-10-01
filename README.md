@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Xenophobia Frontend
 
-## Getting Started
+反排外團隊官網的前端專案，使用 [Next.js](https://nextjs.org)（App Router）開發，負責呈現公開內容頁面（活動、關於我們等），資料來源為 [xenophobia-backend](../xenophobia-backend) 提供的 REST API。
 
-First, run the development server:
+## 專案結構
+
+`src/` 下依職責分層，遵循 Next.js App Router 慣例：
+
+- `src/app/` — 路由層：僅負責頁面組成與資料抓取（`page.tsx`、`layout.tsx`）
+- `src/components/` — 可重用 UI 元件（`components/party/`、`components/layout/`）
+- `src/hooks/` — 封裝狀態／副作用的自訂 hook（例如 `use-countdown.ts`）
+- `src/lib/` — 呼叫後端 REST API 的請求函式（`public-content-client.ts`）
+- `src/types/` — API 請求／回應的型別定義
+- `src/utils/` — 與 UI 無關的純函式（例如 `countdown.ts`、`party-lifecycle.ts`）
+
+## 環境需求
+
+- Node.js 20+
+- 已啟動的後端服務（預設 `http://localhost:3001`），參考 [apps/xenophobia-backend/README.md](../xenophobia-backend/README.md)
+
+## 環境變數
+
+在專案根目錄建立 `.env.local`：
+
+```bash
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+```
+
+未設定時預設會指向 `http://localhost:3001`。
+
+## 開始使用
+
+安裝依賴：
+
+```bash
+npm install
+```
+
+啟動開發伺服器：
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+開啟 [http://localhost:3000](http://localhost:3000) 即可看到畫面。頁面會隨檔案修改自動熱更新。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 常用指令
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| 指令 | 說明 |
+| --- | --- |
+| `npm run dev` | 啟動開發伺服器 |
+| `npm run build` | 建置正式環境版本 |
+| `npm run start` | 以正式環境模式啟動（需先 `build`） |
+| `npm run lint` | 執行 ESLint 檢查 |
+| `npm run test` | 執行單元測試 |
+| `npm run test:watch` | 以 watch 模式執行單元測試 |
 
-## Learn More
+## 測試
 
-To learn more about Next.js, take a look at the following resources:
+單元與元件測試使用 Jest + React Testing Library，並透過 Next.js 官方的 `next/jest` 整合進行設定：
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run test
+npm run test:watch
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 技術棧
 
-## Deploy on Vercel
+- [Next.js](https://nextjs.org) 16（App Router）
+- [React](https://react.dev) 19
+- TypeScript
+- Jest + React Testing Library
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 延伸閱讀
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Learn Next.js](https://nextjs.org/learn)

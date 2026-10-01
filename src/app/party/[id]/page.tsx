@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { fetchPartyDetail, type PartyDetail } from "@/lib/public-content-client";
-
-const toLifecycle = (partyStatus: string) => (partyStatus === "expired" ? "ended" : "ongoing");
+import { resolvePartyLifecycleStatus } from "@/utils/party-lifecycle";
+import { PartyStatusBadges } from "@/components/party/party-status-badges";
 
 export default function PartyDetailPage() {
   const params = useParams();
@@ -19,7 +19,7 @@ export default function PartyDetailPage() {
 
   if (!party) return <main className="page-shell"><section className="detail-shell">Loading...</section></main>;
 
-  const lifecycle = toLifecycle(party.status);
+  const lifecycle = resolvePartyLifecycleStatus(party.status);
 
   return (
     <main className="page-shell">
@@ -31,15 +31,9 @@ export default function PartyDetailPage() {
             {party.category.toUpperCase()}
           </span>
         </div>
-        <div className="event-card__status">
-          <span className="status-badge status-badge--format">
-            {party.format === "online" ? "[ONLINE]" : "[OFFLINE]"}
-          </span>
-          <span className="status-badge status-badge--lifecycle">
-            {lifecycle === "ongoing" ? "ACTIVE" : "ENDED"}
-          </span>
-        </div>
+        <PartyStatusBadges format={party.format} lifecycle={lifecycle} />
         <p>{party.description}</p>
+
 
         <div className="detail-grid">
           <div>

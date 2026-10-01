@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SiteHeader } from "@/components/layout/site-header";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,27 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
         <div className="site-shell">
-          <header className="site-header">
-            <div className="brand-block">
-              <Image
-                src="/brand/xpa-logo.png"
-                alt="XPA"
-                width={40}
-                height={40}
-                className="brand-mark"
-                priority
-              />
-              <div>
-                <strong>Xenophobia</strong>
-                <span>Official Team</span>
-              </div>
-            </div>
-            <nav className="top-nav" aria-label="Main navigation">
-              <Link href="/">Home</Link>
-              <Link href="/party">Party</Link>
-              <Link href="/about">About</Link>
-            </nav>
-          </header>
+          <SiteHeader />
           {children}
           <footer className="site-footer">
             <p>© 2026 Xenophobia Team</p>
@@ -55,3 +34,4 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     </html>
   );
 }
+

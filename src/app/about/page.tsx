@@ -4,24 +4,24 @@ import { useEffect, useState } from "react";
 import { fetchAboutContent, type AboutContent } from "@/lib/public-content-client";
 
 export default function AboutPage() {
-  const [data, setData] = useState<AboutContent>({});
+  const [aboutContent, setAboutContent] = useState<AboutContent>({});
 
   useEffect(() => {
-    fetchAboutContent().then(setData);
+    fetchAboutContent().then(setAboutContent);
   }, []);
 
   return (
     <main className="page-shell">
       <section className="about-shell">
-        <h1>{data.teamProfile?.name ?? "Team profile"}</h1>
-        <p>{data.teamProfile?.introduction ?? "Loading team introduction..."}</p>
-        <p style={{ marginTop: 12 }}>{data.teamProfile?.mission ?? "Loading mission statement..."}</p>
+        <h1>{aboutContent.teamProfile?.name ?? "Team profile"}</h1>
+        <p>{aboutContent.teamProfile?.introduction ?? "Loading team introduction..."}</p>
+        <p style={{ marginTop: 12 }}>{aboutContent.teamProfile?.mission ?? "Loading mission statement..."}</p>
 
         <div className="about-grid">
           <div className="info-block">
             <h2>Milestones</h2>
             <ul>
-              {(data.milestones ?? []).map((item) => (
+              {(aboutContent.milestones ?? []).map((item) => (
                 <li key={item.id}>
                   <strong>{item.title}</strong> — {item.date}
                   <p>{item.description}</p>
@@ -33,7 +33,7 @@ export default function AboutPage() {
           <div className="info-block">
             <h2>Contact</h2>
             <ul>
-              {(data.contactInfo ?? []).map((item) => (
+              {(aboutContent.contactInfo ?? []).map((item) => (
                 <li key={item.id}>
                   <strong>{item.label}</strong>: {item.value}
                 </li>
@@ -44,7 +44,7 @@ export default function AboutPage() {
           <div className="info-block">
             <h2>Website highlights</h2>
             <ul>
-              {(data.highlights ?? []).map((item) => (
+              {(aboutContent.highlights ?? []).map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
@@ -54,3 +54,4 @@ export default function AboutPage() {
     </main>
   );
 }
+
