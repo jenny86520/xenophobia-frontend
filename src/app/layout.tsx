@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Noto_Serif_TC } from "next/font/google";
+import { BackToTop } from "@/components/layout/back-to-top";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { fetchAboutContent } from "@/lib/public-content-client";
@@ -49,6 +50,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="zh-Hant-TW" className={`dark ${geistSans.variable} ${geistMono.variable} ${notoSerifTc.variable}`}>
       <body className="flex min-h-screen flex-col antialiased">
+        <span id="top" />
         <a
           href="#main"
           className="sr-only z-50 bg-cta px-4 py-2 text-cta-ink focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
@@ -58,6 +60,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader brandName={brandName} cta={cta} />
         <div className="flex flex-1 flex-col">{children}</div>
         <SiteFooter brandName={brandName} about={about} version={version} />
+        <BackToTop />
       </body>
     </html>
   );

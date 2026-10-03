@@ -55,4 +55,12 @@ describe("SiteFooter", () => {
     expect(screen.getByText(/Build 0\.1\.0/)).toBeInTheDocument();
     expect(screen.getByText("待提供：隱私權政策")).toBeInTheDocument();
   });
+
+  it("shows the brand name with its uppercase letters in red, and plain text in the copyright", () => {
+    const { container } = render(<SiteFooter brandName="XenoPhobiA" version="0.1.0" about={null} />);
+
+    const red = Array.from(container.querySelectorAll(".text-signal")).map((el) => el.textContent);
+    expect(red).toEqual(["X", "P", "A"]);
+    expect(screen.getByText(/© [0-9]{4} XenoPhobiA/)).toBeInTheDocument();
+  });
 });

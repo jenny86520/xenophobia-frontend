@@ -88,6 +88,11 @@ describe("HomePage", () => {
     expect(screen.getByRole("link", { name: /Night of Strategy/ })).toHaveAttribute("href", "/party/p0");
   });
 
+  it("has no inline back-to-top text link (the floating button lives in the layout)", async () => {
+    await renderHome();
+    expect(screen.queryByRole("link", { name: /top|回到頁首/i })).toBeNull();
+  });
+
   it("shows the no-event message and no countdown when nextParty is null", async () => {
     await renderHome({ nextParty: null });
 

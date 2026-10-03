@@ -31,7 +31,7 @@ export function Closing({ profile }: { profile: TeamProfile }) {
           placeholderLabel="向量 LOGO（SVG）"
           className="col-span-2 md:col-span-2 lg:col-span-2 lg:col-start-11 lg:row-start-1"
         />
-        <div className="col-span-4 flex flex-wrap items-center gap-x-8 gap-y-4 md:col-span-6 lg:col-span-8">
+        <div className="col-span-4 flex flex-wrap items-center gap-x-8 gap-y-4 md:col-span-8 lg:col-span-9">
           {profile.primaryCtaLabel && profile.primaryCtaUrl ? (
             <CtaLink href={profile.primaryCtaUrl} label={profile.primaryCtaLabel} size="large" />
           ) : (
@@ -41,12 +41,6 @@ export function Closing({ profile }: { profile: TeamProfile }) {
             <CtaLink href={profile.secondaryCtaUrl} label={profile.secondaryCtaLabel} variant="secondary" />
           )}
         </div>
-        <a
-          href="#main"
-          className="link-underline col-span-4 justify-self-start font-mono text-meta text-ink-muted uppercase md:col-span-2 md:col-start-7 md:justify-self-end lg:col-start-12 lg:col-span-1"
-        >
-          ↑ Top
-        </a>
       </EditorialGrid>
     </Section>
   );

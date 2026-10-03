@@ -883,6 +883,32 @@
   }
 }
 
+/*
+ * Floating BackToTop: hidden (and unfocusable) near the top, fades in after ~one
+ * viewport of scrolling. The default is visible, so without support, JavaScript or
+ * with reduced motion the button is simply always there.
+ */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .back-to-top {
+      animation: xpa-back-to-top linear both;
+      animation-timeline: scroll(root);
+      animation-range: 60vh 100vh;
+    }
+  }
+}
+
+@keyframes xpa-back-to-top {
+  from {
+    opacity: 0;
+    visibility: hidden;
+  }
+  to {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
 @keyframes xpa-reveal {
   from {
     opacity: 0;

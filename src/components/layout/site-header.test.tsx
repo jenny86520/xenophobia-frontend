@@ -17,6 +17,13 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "關於" })).not.toHaveAttribute("aria-current");
   });
 
+  it("shows the brand name with its uppercase letters in red", () => {
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
+
+    const home = screen.getByRole("link", { name: "XenoPhobiA" });
+    expect(Array.from(home.querySelectorAll(".text-signal")).map((el) => el.textContent)).toEqual(["X", "P", "A"]);
+  });
+
   it("hides the CTA when the backend has none", () => {
     render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
     expect(screen.queryByRole("link", { name: /加入/ })).toBeNull();

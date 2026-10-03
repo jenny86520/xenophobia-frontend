@@ -1,3 +1,4 @@
+import { BrandName } from "@/components/brand/brand-name";
 import { Container } from "@/components/brand/container";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { MetaLabel } from "@/components/brand/meta-label";
@@ -49,10 +50,13 @@ export function SiteFooter({ brandName, about, version }: SiteFooterProps) {
 
   return (
     <footer className="mt-auto border-t border-line">
-      <Container className="py-section-tight">
+      {/* pb-24 keeps the last row clear of the floating BackToTop button. */}
+      <Container className="pt-section-tight pb-24">
         <EditorialGrid className="gap-y-10">
           <div className="col-span-4 flex flex-col gap-3 md:col-span-8 lg:col-span-4">
-            <p className="font-mono text-label tracking-[0.12em] text-ink uppercase">{brandName}</p>
+            <p className="font-mono text-label tracking-[0.12em] text-ink uppercase">
+              <BrandName name={brandName} />
+            </p>
             {about &&
               (tagline ? (
                 <p className="text-body text-ink-secondary">{tagline}</p>

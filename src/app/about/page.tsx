@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BrandName } from "@/components/brand/brand-name";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { formatCount, MetaLabel } from "@/components/brand/meta-label";
@@ -28,7 +29,7 @@ export default async function AboutPage() {
       <Section spacing="tight" labelledBy="page-title">
         <PageHeader
           eyebrow="TEAM / PROFILE"
-          title={teamProfile.name}
+          title={<BrandName name={teamProfile.name} />}
           description={
             teamProfile.brandStatement || <Placeholder name="brand.statement" label="品牌宣言" className="min-h-24" />
           }

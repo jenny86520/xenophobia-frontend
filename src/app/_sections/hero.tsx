@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandName } from "@/components/brand/brand-name";
 import { Container } from "@/components/brand/container";
 import { CtaLink } from "@/components/brand/cta-link";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
@@ -44,7 +45,7 @@ export function Hero({ profile, nextParty }: HeroProps) {
         </div>
 
         <Display as="h1" id="hero-title" className="hero-parallax mt-8 -mr-[6vw] break-words whitespace-nowrap max-md:whitespace-normal lg:text-[min(14.5vw,15rem)]">
-          {profile.name}
+          <BrandName name={profile.name} />
         </Display>
 
         <EditorialGrid className="mt-12 gap-y-10">
