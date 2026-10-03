@@ -7,18 +7,46 @@ import { fetchPartyDetail, type PartyDetail } from "@/lib/public-content-client"
 import { resolvePartyLifecycleStatus } from "@/utils/party-lifecycle";
 import { PartyStatusBadges } from "@/components/party/party-status-badges";
 
+type PartyDetailState =
+  | { status: "loading" }
+  | { status: "loaded"; party: PartyDetail }
+  | { status: "not-found" }
+  | { status: "error" };
+
 export default function PartyDetailPage() {
   const params = useParams();
-  const [party, setParty] = useState<PartyDetail | null>(null);
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  // Results are tagged with the id they belong to, so navigating to another party shows "loading" until its own result arrives.
+  const [result, setResult] = useState<{ id: string; state: PartyDetailState } | null>(null);
+  const state: PartyDetailState = result && result.id === id ? result.state : { status: "loading" };
 
   useEffect(() => {
-    const id = Array.isArray(params.id) ? params.id[0] : params.id;
     if (!id) return;
-    fetchPartyDetail(id).then(setParty);
-  }, [params.id]);
+    fetchPartyDetail(id)
+      .then((party) => setResult({ id, state: party ? { status: "loaded", party } : { status: "not-found" } }))
+      .catch(() => setResult({ id, state: { status: "error" } }));
+  }, [id]);
 
-  if (!party) return <main className="page-shell"><section className="detail-shell">Loading...</section></main>;
+  if (state.status === "loading") {
+    return <main className="page-shell"><section className="detail-shell">Loading...</section></main>;
+  }
 
+  if (state.status === "not-found" || state.status === "error") {
+    return (
+      <main className="page-shell">
+        <section className="detail-shell">
+          <Link href="/party">← Back to party list</Link>
+          {state.status === "not-found" ? (
+            <p className="empty-state">Party not found.</p>
+          ) : (
+            <p className="empty-state" role="alert">Failed to load this party. Please try again later.</p>
+          )}
+        </section>
+      </main>
+    );
+  }
+
+  const { party } = state;
   const lifecycle = resolvePartyLifecycleStatus(party.status);
 
   return (

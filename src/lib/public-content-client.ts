@@ -35,10 +35,14 @@ export async function fetchPartyList(filters: PartyListFilters): Promise<PartyLi
   return Array.isArray(data) ? data : [];
 }
 
+/** Resolves to `null` when the party does not exist (404); throws on any other failed response. */
 export async function fetchPartyDetail(id: string): Promise<PartyDetail | null> {
-  const response = await fetch(`${BACKEND_BASE_URL}/api/parties/${id}`);
-  const data = await response.json();
-  return data ?? null;
+  const response = await fetch(`${BACKEND_BASE_URL}/api/parties/${encodeURIComponent(id)}`);
+  if (response.status === 404) return null;
+  if (!response.ok) {
+    throw new Error(`Failed to load party ${id}: HTTP ${response.status}`);
+  }
+  return response.json();
 }
 
 export async function fetchAboutContent(): Promise<AboutContent> {
