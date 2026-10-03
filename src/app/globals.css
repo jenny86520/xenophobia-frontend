@@ -642,39 +642,85 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Dark-only theme (shadcn radix-nova, neutral base). <html> always carries
- * class="dark" so component `dark:` variants apply; the values live on :root
- * because there is no light theme to switch to.
- * --primary is the brand red, darkened from #ff0000 so white text meets WCAG AA.
+ * XPA design tokens (redesign-brand-website, design §3).
+ * Dark only: <html> always carries class="dark" so component `dark:` variants
+ * apply; values live on :root because there is no light theme.
+ *
+ * Brand token names avoid shadcn's: shadcn `accent` is a neutral hover surface
+ * and Tailwind `text-primary` would mean "red text", so the design's
+ * text-primary / accent are exposed as `ink` / `signal`.
  */
 :root {
   --radius: 0.25rem;
-  --background: oklch(0.14 0.003 285);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.175 0.004 285);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.19 0.004 285);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.577 0.245 27.325);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.637 0.237 25.331);
+
+  /* Brand palette (design §3.1) */
+  --xpa-background: oklch(0.14 0.003 285);
+  --xpa-surface: oklch(0.175 0.004 285);
+  --xpa-surface-elevated: oklch(0.21 0.005 285);
+  --xpa-ink: oklch(0.95 0.006 85);
+  --xpa-ink-secondary: oklch(0.78 0.006 70);
+  --xpa-ink-muted: oklch(0.66 0.006 70);
+  --xpa-line-subtle: oklch(1 0 0 / 7%);
+  --xpa-line: oklch(1 0 0 / 12%);
+  --xpa-line-strong: oklch(1 0 0 / 24%);
+  --xpa-signal: oklch(0.637 0.237 25.331);
+  --xpa-cta: oklch(0.577 0.245 27.325);
+  --xpa-cta-ink: oklch(0.985 0 0);
+  --xpa-success: oklch(0.74 0.11 160);
+  --xpa-warning: oklch(0.82 0.11 85);
+  --xpa-error: oklch(0.7 0.15 25);
+
+  /* shadcn semantic tokens, mapped onto the brand palette */
+  --background: var(--xpa-background);
+  --foreground: var(--xpa-ink);
+  --card: var(--xpa-surface);
+  --card-foreground: var(--xpa-ink);
+  --popover: var(--xpa-surface-elevated);
+  --popover-foreground: var(--xpa-ink);
+  --primary: var(--xpa-cta);
+  --primary-foreground: var(--xpa-cta-ink);
+  --secondary: var(--xpa-surface-elevated);
+  --secondary-foreground: var(--xpa-ink);
+  --muted: var(--xpa-surface);
+  --muted-foreground: var(--xpa-ink-muted);
+  --accent: var(--xpa-surface-elevated);
+  --accent-foreground: var(--xpa-ink);
+  --destructive: var(--xpa-error);
+  --border: var(--xpa-line);
+  --input: var(--xpa-line-strong);
+  --ring: var(--xpa-signal);
+
+  /* Layout (design §3.3, §4) */
+  --container-max: 90rem;
+  --container-gutter: clamp(1rem, 4vw, 3rem);
+  --space-section: clamp(4rem, 10vw, 10rem);
+  --space-section-tight: clamp(3rem, 6vw, 6rem);
+  --space-section-loose: clamp(6rem, 14vw, 14rem);
 }
 
 @theme inline {
-  /* Subtle Cyber layer: interactive hover/focus and live indicators only, never static text. */
-  --shadow-glow: 0 0 16px color-mix(in oklch, var(--primary) 22%, transparent);
+  /* Fonts (design §3.2): Geist for UI and the Latin wordmark, Noto Serif TC for headings, Geist Mono for metadata. */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-noto-serif-tc), "Noto Serif TC", ui-serif, Georgia, serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Brand colors */
+  --color-ink: var(--xpa-ink);
+  --color-ink-secondary: var(--xpa-ink-secondary);
+  --color-ink-muted: var(--xpa-ink-muted);
+  --color-surface: var(--xpa-surface);
+  --color-surface-elevated: var(--xpa-surface-elevated);
+  --color-line-subtle: var(--xpa-line-subtle);
+  --color-line: var(--xpa-line);
+  --color-line-strong: var(--xpa-line-strong);
+  --color-signal: var(--xpa-signal);
+  --color-cta: var(--xpa-cta);
+  --color-cta-ink: var(--xpa-cta-ink);
+  --color-success: var(--xpa-success);
+  --color-warning: var(--xpa-warning);
+  --color-error: var(--xpa-error);
+
+  /* shadcn semantic colors */
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -693,6 +739,48 @@
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+
+  /* Type scale (design §3.2) -> text-display, text-h1 ... text-label */
+  --text-display: clamp(3.5rem, 1rem + 10vw, 11rem);
+  --text-display--line-height: 0.88;
+  --text-display--letter-spacing: -0.045em;
+  --text-display--font-weight: 800;
+  --text-h1: clamp(2.25rem, 1rem + 4.5vw, 4.5rem);
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.02em;
+  --text-h1--font-weight: 600;
+  --text-h2: clamp(1.75rem, 1rem + 2.5vw, 3rem);
+  --text-h2--line-height: 1.15;
+  --text-h2--letter-spacing: -0.015em;
+  --text-h2--font-weight: 600;
+  --text-h3: clamp(1.25rem, 1rem + 0.75vw, 1.5rem);
+  --text-h3--line-height: 1.3;
+  --text-h3--font-weight: 600;
+  --text-body: 1rem;
+  --text-body--line-height: 1.75;
+  --text-lead: 1.125rem;
+  --text-lead--line-height: 1.75;
+  --text-caption: 0.875rem;
+  --text-caption--line-height: 1.5;
+  --text-meta: 0.6875rem;
+  --text-meta--line-height: 1.4;
+  --text-meta--letter-spacing: 0.08em;
+  --text-meta--font-weight: 500;
+  --text-label: 0.75rem;
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.02em;
+  --text-label--font-weight: 500;
+
+  /* Section rhythm -> py-section, py-section-tight, py-section-loose, gap-section ... */
+  --spacing-section: var(--space-section);
+  --spacing-section-tight: var(--space-section-tight);
+  --spacing-section-loose: var(--space-section-loose);
+  --spacing-gutter: var(--container-gutter);
+  --container-page: var(--container-max);
+
+  /* Subtle Cyber layer: interactive hover/focus and live indicators only, never static text. */
+  --shadow-glow: 0 0 16px color-mix(in oklch, var(--xpa-signal) 22%, transparent);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -707,10 +795,108 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-body text-foreground;
   }
   html {
     @apply font-sans;
+  }
+}
+
+/*
+ * Interaction (design §7). Colour and underline changes are immediate-safe; anything
+ * that moves is gated on prefers-reduced-motion: no-preference.
+ */
+@layer components {
+  /* TextLink and nav: underline grows from the left. */
+  .link-underline {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    background-size: 0% 1px;
+    transition: background-size 200ms ease-out, color 200ms ease-out;
+  }
+  .link-underline:hover,
+  .link-underline:focus-visible,
+  .link-underline[aria-current="page"] {
+    background-size: 100% 1px;
+  }
+
+  /* Primary CTA: darker fill, signal glow, arrow nudges right. */
+  .cta-primary {
+    transition: background-color 160ms ease-out, box-shadow 160ms ease-out;
+  }
+  .cta-primary:hover,
+  .cta-primary:focus-visible {
+    background-color: color-mix(in oklch, var(--xpa-cta) 85%, black);
+    @apply shadow-glow;
+  }
+
+  /* List rows (EditorialList, PartyRow): surface fill, signal index, stronger rule. */
+  .list-row {
+    transition: background-color 200ms ease-out, border-color 200ms ease-out;
+  }
+  .list-row:hover,
+  .list-row:focus-within {
+    background-color: var(--xpa-surface);
+    border-top-color: var(--xpa-line-strong);
+  }
+  .list-row-index {
+    transition: color 200ms ease-out;
+  }
+  .list-row:hover .list-row-index,
+  .list-row:focus-within .list-row-index {
+    color: var(--xpa-signal);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cta-arrow,
+    .list-row-arrow {
+      transition: translate 160ms ease-out;
+    }
+    .cta-primary:hover .cta-arrow,
+    .cta-primary:focus-visible .cta-arrow,
+    .cta-secondary:hover .cta-arrow,
+    .cta-secondary:focus-visible .cta-arrow,
+    .list-row:hover .list-row-arrow,
+    .list-row:focus-within .list-row-arrow {
+      translate: 4px 0;
+    }
+  }
+}
+
+/*
+ * Reveal and Hero parallax: pure CSS scroll-driven animation. Without support, without
+ * JavaScript or with reduced motion, content is simply visible and static.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: xpa-reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+    .hero-parallax {
+      animation: xpa-parallax linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100vh;
+    }
+  }
+}
+
+@keyframes xpa-reveal {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes xpa-parallax {
+  to {
+    translate: 0 -8%;
   }
 }
 

@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { PartyCard } from "./party-card";
+import { PartyRow } from "./party-row";
 import type { PartyListItem, PartySummary } from "@/types/party";
 
 const partySummary: PartySummary = {
@@ -25,9 +25,9 @@ const partyListItem: PartyListItem = {
   summary: "Strategy-focused game night.",
 };
 
-describe("PartyCard", () => {
+describe("PartyRow", () => {
   it("renders the home-page usage without a lifecycle badge and shows date + time", () => {
-    render(<PartyCard party={partySummary} showLifecycleBadge={false} metaFields="date-time" />);
+    render(<PartyRow party={partySummary} showLifecycleBadge={false} metaFields="date-time" />);
 
     expect(screen.queryByText("ACTIVE")).not.toBeInTheDocument();
     expect(screen.queryByText("ENDED")).not.toBeInTheDocument();
@@ -36,7 +36,7 @@ describe("PartyCard", () => {
   });
 
   it("renders the party-list usage with a lifecycle badge and shows date + category", () => {
-    render(<PartyCard party={partyListItem} showLifecycleBadge={true} metaFields="date-category" />);
+    render(<PartyRow party={partyListItem} showLifecycleBadge={true} metaFields="date-category" />);
 
     expect(screen.getByText("ACTIVE")).toBeInTheDocument();
     expect(screen.getByText("2026-09-30")).toBeInTheDocument();

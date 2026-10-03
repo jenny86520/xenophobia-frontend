@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Serif_TC } from "next/font/google";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { MetaLabel } from "@/components/layout/meta-label";
+import { fetchAboutContent } from "@/lib/public-content-client";
 // Read on the server only (this layout is a Server Component), so package.json never reaches the client bundle.
 import { version } from "../../package.json";
 import "./globals.css";
@@ -11,31 +12,53 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
+// Chinese editorial headings. No CJK subset exists to preload, so Google Fonts
+// serves unicode-range slices on demand; only the two weights in use are loaded.
+const notoSerifTc = Noto_Serif_TC({
+  variable: "--font-noto-serif-tc",
+  weight: ["600", "900"],
+  preload: false,
+  display: "swap",
+});
+
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Xenophobia Team | Official Site",
-  description:
-    "Official team website for events, community updates, and team profile information.",
+  title: { default: "XenoPhobiA | Official Site", template: "%s | XenoPhobiA" },
+  description: "XenoPhobiA 遊戲社群官方網站：活動、里程碑與團隊介紹。",
+  openGraph: {
+    type: "website",
+    siteName: "XenoPhobiA",
+    locale: "zh_TW",
+    title: "XenoPhobiA | Official Site",
+    description: "XenoPhobiA 遊戲社群官方網站：活動、里程碑與團隊介紹。",
+  },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Header and footer must not take the whole site down with the backend; pages that
+  // need this data fetch it themselves (React.cache de-duplicates) and surface errors.
+  const about = await fetchAboutContent().catch(() => null);
+  const profile = about?.teamProfile;
+  const brandName = profile?.name || "XenoPhobiA";
+  const cta = profile?.primaryCtaLabel && profile.primaryCtaUrl ? { label: profile.primaryCtaLabel, href: profile.primaryCtaUrl } : null;
+
   return (
-    <html lang="en" className={`dark ${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="zh-Hant-TW" className={`dark ${geistSans.variable} ${geistMono.variable} ${notoSerifTc.variable}`}>
       <body className="flex min-h-screen flex-col antialiased">
-        <SiteHeader />
-        <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:py-16">{children}</div>
-        <footer className="border-t">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2026 Xenophobia Team</p>
-            <MetaLabel>Build {version}</MetaLabel>
-          </div>
-        </footer>
+        <a
+          href="#main"
+          className="sr-only z-50 bg-cta px-4 py-2 text-cta-ink focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
+        >
+          跳到主要內容
+        </a>
+        <SiteHeader brandName={brandName} cta={cta} />
+        <div className="flex flex-1 flex-col">{children}</div>
+        <SiteFooter brandName={brandName} about={about} version={version} />
       </body>
     </html>
   );
 }
-

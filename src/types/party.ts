@@ -8,18 +8,20 @@ export type PartySummary = {
   startTime: string;
 };
 
+export type NextParty = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  format: string;
+  startDate: string;
+  startTime: string;
+  location: string;
+};
+
 export type UpcomingPartyResponse = {
-  nextParty?: {
-    id: string;
-    title: string;
-    description: string;
-    category: string;
-    format: string;
-    startDate: string;
-    startTime: string;
-    location: string;
-  };
-  recentParties?: PartySummary[];
+  nextParty: NextParty | null;
+  recentParties: PartySummary[];
 };
 
 export type PartyTimelineItem = {

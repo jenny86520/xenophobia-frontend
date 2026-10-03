@@ -20,13 +20,15 @@
 
 ## 環境變數
 
-在專案根目錄建立 `.env.local`：
+複製 `.env.example` 為 `.env.local`：
 
 ```bash
+BACKEND_URL=http://localhost:3001
 NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
 ```
 
-未設定時預設會指向 `http://localhost:3001`。
+- 頁面在伺服器端（Server Component）向後端取資料，優先使用 `BACKEND_URL`；可以設成只有伺服器連得到的內部位址（例如容器網路中的 `http://backend:3001`）。
+- `BACKEND_URL` 未設定時改用 `NEXT_PUBLIC_BACKEND_URL`，兩者都未設定時預設為 `http://localhost:3001`。
 
 ## 開始使用
 
@@ -54,6 +56,7 @@ npm run dev
 | `npm run lint` | 執行 ESLint 檢查 |
 | `npm run test` | 執行單元測試 |
 | `npm run test:watch` | 以 watch 模式執行單元測試 |
+| `npm run check:content` | 依頁面列出尚待提供的內容（placeholder），有任何一項時以非 0 狀態結束，可作為上線前檢查 |
 
 ## 測試
 

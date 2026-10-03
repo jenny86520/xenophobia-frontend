@@ -1,129 +1,105 @@
-"use client";
-
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { fetchPartyDetail, type PartyDetail } from "@/lib/public-content-client";
-import { resolvePartyLifecycleStatus } from "@/utils/party-lifecycle";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { ArchiveTimeline } from "@/components/brand/archive-timeline";
+import { EditorialGrid } from "@/components/brand/editorial-grid";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { formatCount, MetaLabel } from "@/components/brand/meta-label";
+import { Section } from "@/components/brand/section";
+import { TextLink } from "@/components/brand/text-link";
+import { Heading } from "@/components/brand/typography";
 import { PartyStatusBadges } from "@/components/party/party-status-badges";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/layout/page-header";
-import { MetaLabel, formatCount } from "@/components/layout/meta-label";
-import { Separator } from "@/components/ui/separator";
+import { fetchPartyDetail } from "@/lib/public-content-client";
+import { formatTimelineTime } from "@/utils/datetime";
+import { resolvePartyLifecycleStatus } from "@/utils/party-lifecycle";
 
-type PartyDetailState =
-  | { status: "loading" }
-  | { status: "loaded"; party: PartyDetail }
-  | { status: "not-found" }
-  | { status: "error" };
-
-function BackToList() {
-  return (
-    <Button variant="ghost" asChild className="w-fit">
-      <Link href="/party">
-        <ArrowLeft aria-hidden="true" />
-        Back to party list
-      </Link>
-    </Button>
-  );
+export async function generateMetadata({ params }: PageProps<"/party/[id]">): Promise<Metadata> {
+  const { id } = await params;
+  const party = await fetchPartyDetail(id).catch(() => null);
+  if (!party) return { title: "找不到活動" };
+  const description = party.summary || party.description;
+  return {
+    title: party.title,
+    description,
+    openGraph: { title: `${party.title} | XenoPhobiA`, description },
+  };
 }
 
-export default function PartyDetailPage() {
-  const params = useParams();
-  const id = Array.isArray(params.id) ? params.id[0] : params.id;
-  // Results are tagged with the id they belong to, so navigating to another party shows "loading" until its own result arrives.
-  const [result, setResult] = useState<{ id: string; state: PartyDetailState } | null>(null);
-  const state: PartyDetailState = result && result.id === id ? result.state : { status: "loading" };
+/** Party detail: oversized date, metadata table, and the night's timeline. */
+export default async function PartyDetailPage({ params }: PageProps<"/party/[id]">) {
+  const { id } = await params;
+  const party = await fetchPartyDetail(id);
+  if (!party) notFound();
 
-  useEffect(() => {
-    if (!id) return;
-    fetchPartyDetail(id)
-      .then((party) => setResult({ id, state: party ? { status: "loaded", party } : { status: "not-found" } }))
-      .catch(() => setResult({ id, state: { status: "error" } }));
-  }, [id]);
-
-  if (state.status === "loading") {
-    return (
-      <main>
-        <p className="text-muted-foreground">Loading...</p>
-      </main>
-    );
-  }
-
-  if (state.status === "not-found" || state.status === "error") {
-    return (
-      <main className="flex flex-col gap-4">
-        <BackToList />
-        {state.status === "not-found" ? (
-          <p className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
-            Party not found.
-          </p>
-        ) : (
-          <p
-            role="alert"
-            className="rounded-lg border border-destructive/50 p-8 text-center text-destructive"
-          >
-            Failed to load this party. Please try again later.
-          </p>
-        )}
-      </main>
-    );
-  }
-
-  const { party } = state;
   const lifecycle = resolvePartyLifecycleStatus(party.status);
+  const timeline = party.timeline ?? [];
   const details = [
     { label: "Location", value: party.location },
     { label: "Date", value: party.startDate },
     { label: "Time", value: party.startTime },
+    { label: "Type", value: party.category },
     { label: "Created_by", value: party.createdBy },
     { label: "Updated_by", value: party.updatedBy ?? "—" },
   ];
-  const timeline = party.timeline ?? [];
 
   return (
-    <main className="flex flex-col gap-8 sm:gap-16">
-      <div className="flex flex-col gap-6">
-        <BackToList />
-        <PageHeader eyebrow="PARTY / DETAIL" title={party.title} description={party.description} />
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="secondary">{party.category.toUpperCase()}</Badge>
-          <PartyStatusBadges format={party.format} lifecycle={lifecycle} />
-        </div>
-      </div>
-
-      <dl className="grid border-t sm:grid-cols-2 lg:grid-cols-3">
-        {details.map((item) => (
-          <div key={item.label} className="flex flex-col gap-1 border-b py-4 sm:pr-6">
-            <dt>
-              <MetaLabel>{item.label}</MetaLabel>
-            </dt>
-            <dd className="text-lg font-medium">{item.value}</dd>
+    <main id="main">
+      <Section spacing="tight" labelledBy="page-title">
+        <TextLink href="/party" className="text-body text-ink-secondary hover:text-ink">
+          ← 返回活動列表
+        </TextLink>
+        <EditorialGrid className="mt-10 gap-y-8">
+          <div className="col-span-4 flex flex-col gap-2 md:col-span-3 lg:col-span-4">
+            <MetaLabel>{party.startDate.slice(0, 4)}</MetaLabel>
+            <p className="font-mono text-[clamp(3rem,1rem+7vw,8rem)] leading-none font-medium tracking-tight text-ink tabular-nums">
+              {party.startDate.slice(5).replace("-", "/")}
+            </p>
           </div>
-        ))}
-      </dl>
+          <header className="col-span-4 flex flex-col gap-6 md:col-span-5 lg:col-span-8">
+            <Eyebrow>PARTY / DETAIL</Eyebrow>
+            <Heading level={1} id="page-title">
+              {party.title}
+            </Heading>
+            <PartyStatusBadges format={party.format} lifecycle={lifecycle} />
+            {party.description && (
+              <p className="max-w-[60ch] text-lead whitespace-pre-line text-ink-secondary">{party.description}</p>
+            )}
+          </header>
+        </EditorialGrid>
+
+        <dl className="mt-section-tight grid grid-cols-1 border-t border-line md:grid-cols-2 lg:grid-cols-3">
+          {details.map((item) => (
+            <div key={item.label} className="flex flex-col gap-1 border-b border-line py-4 md:pr-6">
+              <dt>
+                <MetaLabel>{item.label}</MetaLabel>
+              </dt>
+              <dd className="text-lead text-ink">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
 
       {timeline.length > 0 && (
-        <section className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <MetaLabel>Timeline / {formatCount(timeline.length)}</MetaLabel>
-            <h2 className="text-2xl font-semibold tracking-tight">Timeline</h2>
-          </div>
-          <Separator />
-          <ol className="flex flex-col gap-6 border-l pl-6">
-            {timeline.map((item, index) => (
-              <li key={item.id} className="flex flex-col gap-1">
-                <MetaLabel>
-                  {formatCount(index + 1)} — {new Date(item.startDateTime).toLocaleString()}
-                </MetaLabel>
-                <strong className="text-lg font-medium">{item.title}</strong>
-                <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
+        <Section labelledBy="timeline-title" ruled>
+          <EditorialGrid className="gap-y-8">
+            <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-4">
+              <Eyebrow>{`Timeline / ${formatCount(timeline.length)}`}</Eyebrow>
+              <Heading level={2} id="timeline-title">
+                時間軸
+              </Heading>
+            </div>
+            <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
+              <ArchiveTimeline
+                items={timeline.map((item) => ({
+                  id: item.id,
+                  marker: formatTimelineTime(item.startDateTime),
+                  dateTime: item.startDateTime,
+                  title: item.title,
+                  description: item.description,
+                }))}
+              />
+            </div>
+          </EditorialGrid>
+        </Section>
       )}
     </main>
   );

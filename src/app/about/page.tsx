@@ -1,96 +1,121 @@
-"use client";
+import type { Metadata } from "next";
+import { EditorialGrid } from "@/components/brand/editorial-grid";
+import { Eyebrow } from "@/components/brand/eyebrow";
+import { formatCount, MetaLabel } from "@/components/brand/meta-label";
+import { PageHeader } from "@/components/brand/page-header";
+import { Placeholder } from "@/components/brand/placeholder";
+import { Section } from "@/components/brand/section";
+import { TextLink } from "@/components/brand/text-link";
+import { Heading } from "@/components/brand/typography";
+import { fetchAboutContent } from "@/lib/public-content-client";
+import { contactHref } from "@/utils/contact";
+import { Archive } from "../_sections/archive";
+import { Games } from "../_sections/games";
 
-import { useEffect, useState } from "react";
-import { fetchAboutContent, type AboutContent } from "@/lib/public-content-client";
-import { PageHeader } from "@/components/layout/page-header";
-import { MetaLabel, formatCount } from "@/components/layout/meta-label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+export const metadata: Metadata = {
+  title: "關於",
+  description: "XenoPhobiA 的品牌宣言、使命、遊戲項目與里程碑。",
+  openGraph: { title: "關於 | XenoPhobiA", description: "XenoPhobiA 的品牌宣言、使命、遊戲項目與里程碑。" },
+};
 
-export default function AboutPage() {
-  const [aboutContent, setAboutContent] = useState<AboutContent>({});
-
-  useEffect(() => {
-    fetchAboutContent().then(setAboutContent);
-  }, []);
-
-  const milestones = aboutContent.milestones ?? [];
-  const contactInfo = aboutContent.contactInfo ?? [];
-  const highlights = aboutContent.highlights ?? [];
+/** Brand and team: statement, mission, games, milestone archive, contact, highlights. */
+export default async function AboutPage() {
+  const { teamProfile, games, milestones, contactInfo, highlights } = await fetchAboutContent();
+  const paragraphs = teamProfile.mission.split(/\n\s*\n/).filter(Boolean);
 
   return (
-    <main className="flex flex-col gap-8 sm:gap-16">
-      <section className="flex flex-col gap-6">
+    <main id="main">
+      <Section spacing="tight" labelledBy="page-title">
         <PageHeader
           eyebrow="TEAM / PROFILE"
-          title={aboutContent.teamProfile?.name ?? "Team profile"}
-          description={aboutContent.teamProfile?.introduction ?? "Loading team introduction..."}
+          title={teamProfile.name}
+          description={
+            teamProfile.brandStatement || <Placeholder name="brand.statement" label="品牌宣言" className="min-h-24" />
+          }
         />
-        <p className="max-w-prose leading-relaxed text-muted-foreground">
-          {aboutContent.teamProfile?.mission ?? "Loading mission statement..."}
-        </p>
-      </section>
+      </Section>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card>
-          <CardHeader className="gap-2">
-            <MetaLabel>Milestones / {formatCount(milestones.length)}</MetaLabel>
-            <CardTitle>
-              <h2 className="text-xl font-semibold tracking-tight">Milestones</h2>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ol className="flex flex-col gap-5 border-l pl-4">
-              {milestones.map((item) => (
-                <li key={item.id} className="flex flex-col gap-1">
-                  <MetaLabel>{item.date}</MetaLabel>
-                  <strong className="font-medium">{item.title}</strong>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
+      <Section labelledBy="mission-title" ruled className="reveal">
+        <EditorialGrid className="gap-y-8">
+          <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-4">
+            <Eyebrow index={1}>Mission</Eyebrow>
+            <Heading level={2} id="mission-title">
+              使命
+            </Heading>
+          </div>
+          <div className="col-span-4 flex flex-col gap-6 md:col-span-8 lg:col-span-6 lg:col-start-5">
+            {paragraphs.length > 0 ? (
+              paragraphs.map((text, i) => (
+                <p key={i} className="max-w-[65ch] text-lead text-ink-secondary">
+                  {text}
+                </p>
+              ))
+            ) : (
+              <Placeholder name="brand.mission" label="使命" className="min-h-32" />
+            )}
+          </div>
+        </EditorialGrid>
+      </Section>
 
-        <Card>
-          <CardHeader className="gap-2">
-            <MetaLabel>Contact / {formatCount(contactInfo.length)}</MetaLabel>
-            <CardTitle>
-              <h2 className="text-xl font-semibold tracking-tight">Contact</h2>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="flex flex-col gap-4">
-              {contactInfo.map((item) => (
-                <div key={item.id} className="flex flex-col gap-1">
-                  <dt>
-                    <MetaLabel>{item.label}</MetaLabel>
-                  </dt>
-                  <dd className="text-sm break-all">{item.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </CardContent>
-        </Card>
+      <Games games={games} index={2} />
+      <Archive milestones={milestones} index={3} layout="stacked" />
 
-        <Card>
-          <CardHeader className="gap-2">
-            <MetaLabel>Highlights / {formatCount(highlights.length)}</MetaLabel>
-            <CardTitle>
-              <h2 className="text-xl font-semibold tracking-tight">Website highlights</h2>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="flex flex-col gap-3 text-sm text-muted-foreground">
-              {highlights.map((item, index) => (
-                <li key={item} className="flex gap-3">
-                  <span className="font-mono text-xs text-primary">{formatCount(index + 1)}</span>
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
-      </div>
+      <Section labelledBy="contact-title" ruled className="reveal">
+        <EditorialGrid className="gap-y-12">
+          <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-4">
+            <Eyebrow index={4}>Contact</Eyebrow>
+            <Heading level={2} id="contact-title">
+              聯絡
+            </Heading>
+          </div>
+          <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
+            {contactInfo.length > 0 ? (
+              <dl className="border-b border-line">
+                {contactInfo.map((item) => {
+                  const href = contactHref(item);
+                  return (
+                    <div key={item.id} className="grid grid-cols-1 gap-1 border-t border-line py-5 md:grid-cols-[12rem_1fr] md:gap-6">
+                      <dt>
+                        <MetaLabel>{item.label}</MetaLabel>
+                      </dt>
+                      <dd className="text-lead break-all text-ink">
+                        {href ? <TextLink href={href}>{item.value}</TextLink> : item.value}
+                      </dd>
+                    </div>
+                  );
+                })}
+              </dl>
+            ) : (
+              <Placeholder name="contact.any" label="聯絡資訊" className="min-h-24" />
+            )}
+          </div>
+        </EditorialGrid>
+      </Section>
+
+      <Section labelledBy="highlights-title" ruled className="reveal">
+        <EditorialGrid className="gap-y-12">
+          <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-3 lg:col-start-10 lg:row-start-1 lg:items-end lg:text-right">
+            <Eyebrow index={5}>Highlights</Eyebrow>
+            <Heading level={2} id="highlights-title">
+              網站特色
+            </Heading>
+          </div>
+          <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-1 lg:row-start-1">
+            {highlights.length > 0 ? (
+              <ol className="border-b border-line">
+                {highlights.map((item, index) => (
+                  <li key={item} className="flex gap-6 border-t border-line py-5">
+                    <span className="font-mono text-meta text-signal">{formatCount(index + 1)}</span>
+                    <span className="text-lead text-ink">{item}</span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <Placeholder name="highlights" label="網站特色" className="min-h-24" />
+            )}
+          </div>
+        </EditorialGrid>
+      </Section>
     </main>
   );
 }
