@@ -10,6 +10,7 @@ const partySummary: PartySummary = {
   format: "offline",
   startDate: "2026-09-30",
   startTime: "18:30",
+  coverUrl: null,
 };
 
 const partyListItem: PartyListItem = {
@@ -23,6 +24,7 @@ const partyListItem: PartyListItem = {
   startTime: "18:30",
   location: "Red Room Studio, Taipei",
   summary: "Strategy-focused game night.",
+  coverUrl: null,
 };
 
 describe("PartyRow", () => {
@@ -41,5 +43,40 @@ describe("PartyRow", () => {
     expect(screen.getByText("ACTIVE")).toBeInTheDocument();
     expect(screen.getByText("2026-09-30")).toBeInTheDocument();
     expect(screen.getAllByText("games").length).toBeGreaterThan(0);
+  });
+
+  it("draws the cover as a backdrop hidden from assistive technology and keeps the row one link", () => {
+    const { container } = render(
+      <ul>
+        <PartyRow
+          party={{ ...partyListItem, coverUrl: "/media/images/cover.png" }}
+          showLifecycleBadge={true}
+          metaFields="date-category"
+        />
+      </ul>,
+    );
+
+    const backdrop = container.querySelector("[data-cover-backdrop]") as HTMLElement;
+    expect(backdrop).toHaveAttribute("aria-hidden", "true");
+    const image = backdrop.querySelector("img") as HTMLImageElement;
+    expect(image).toHaveAttribute("alt", "");
+    expect(image.getAttribute("src")).toMatch(/\/media\/images\/cover\.png$/);
+    expect(screen.queryByRole("img")).toBeNull();
+
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute("href", "/party/1");
+    expect(links[0]).toHaveTextContent("Night of Strategy");
+  });
+
+  it("has no backdrop without a cover", () => {
+    const { container } = render(
+      <ul>
+        <PartyRow party={partySummary} showLifecycleBadge={false} metaFields="date-time" />
+      </ul>,
+    );
+
+    expect(container.querySelector("[data-cover-backdrop]")).toBeNull();
+    expect(container.querySelector("img")).toBeNull();
   });
 });

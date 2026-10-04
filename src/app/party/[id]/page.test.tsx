@@ -48,12 +48,22 @@ describe("PartyDetailPage", () => {
     await expect(renderPage()).rejects.toThrow("HTTP 500");
   });
 
-  it("renders the title, metadata and a fixed-format timeline", async () => {
+  const subParty = (overrides: Record<string, unknown>) => ({
+    id: "s1",
+    title: "Setup and greetings",
+    description: "Check-in",
+    startDateTime: "2026-09-30T18:30:00+08:00",
+    location: "",
+    coverUrl: null,
+    ...overrides,
+  });
+
+  it("renders the title, metadata and the sub-parties in order with fixed-format times", async () => {
     mockedFetchPartyDetail.mockResolvedValue({
       ...party,
-      timeline: [
-        { id: "t1", title: "Setup and greetings", description: "Check-in", startDateTime: "2026-09-30T18:30:00Z" },
-        { id: "t2", title: "Game rounds", description: "Sessions", startDateTime: "2026-09-30T19:00:00Z" },
+      subParties: [
+        subParty({}),
+        subParty({ id: "s2", title: "Game rounds", description: "Sessions", startDateTime: "2026-09-30T19:00:00+08:00" }),
       ],
     });
 
@@ -62,18 +72,54 @@ describe("PartyDetailPage", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Night of Strategy" })).toBeInTheDocument();
     expect(screen.getByText("Red Room Studio, Taipei")).toBeInTheDocument();
     expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "子派對" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
+      "Setup and greetings",
+      "Game rounds",
+    ]);
     expect(screen.getAllByRole("listitem").map((li) => li.querySelector("time")?.textContent)).toEqual([
       "09/30 18:30",
       "09/30 19:00",
     ]);
   });
 
-  it("omits the timeline section when there are no entries", async () => {
-    mockedFetchPartyDetail.mockResolvedValue({ ...party, timeline: [] });
+  it("shows the party cover with its alt text, and a sub-party's address and cover only when set", async () => {
+    mockedFetchPartyDetail.mockResolvedValue({
+      ...party,
+      coverUrl: "/media/images/party.jpg",
+      subParties: [
+        subParty({ location: "台北市信義區", coverUrl: "/media/images/sub.png" }),
+        subParty({ id: "s2", title: "Game rounds" }),
+      ],
+    });
 
     await renderPage();
 
-    expect(screen.queryByRole("heading", { name: "時間軸" })).toBeNull();
+    expect(screen.getByRole("img", { name: "Night of Strategy 封面" }).getAttribute("src")).toMatch(
+      /\/media\/images\/party\.jpg$/,
+    );
+    const [withExtras, plain] = screen.getAllByRole("listitem");
+    expect(withExtras).toHaveTextContent("台北市信義區");
+    expect(withExtras.querySelector("img")).toHaveAttribute("alt", "Setup and greetings 封面");
+    expect(plain).not.toHaveTextContent("Where");
+    expect(plain.querySelector("img")).toBeNull();
+  });
+
+  it("has no cover image when the party has none", async () => {
+    mockedFetchPartyDetail.mockResolvedValue({ ...party, coverUrl: null, subParties: [] });
+
+    await renderPage();
+
+    expect(screen.queryByRole("img")).toBeNull();
+  });
+
+  it("omits the sub-party section when there are none", async () => {
+    mockedFetchPartyDetail.mockResolvedValue({ ...party, coverUrl: null, subParties: [] });
+
+    await renderPage();
+
+    expect(screen.queryByRole("heading", { name: "子派對" })).toBeNull();
+    expect(screen.queryByRole("list")).toBeNull();
   });
 });
 

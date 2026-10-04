@@ -11,7 +11,7 @@ export type {
   NextParty,
   PartySummary,
   UpcomingPartyResponse,
-  PartyTimelineItem,
+  SubParty,
   PartyListItem,
   PartyDetail,
   PartyListFilters,

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArchiveTimeline } from "@/components/brand/archive-timeline";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { formatCount, MetaLabel } from "@/components/brand/meta-label";
@@ -8,8 +7,9 @@ import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
 import { PartyStatusBadges } from "@/components/party/party-status-badges";
+import { SubPartyList } from "@/components/party/sub-party-list";
 import { fetchPartyDetail } from "@/lib/public-content-client";
-import { formatTimelineTime } from "@/utils/datetime";
+import { mediaUrl } from "@/utils/media";
 import { resolvePartyLifecycleStatus } from "@/utils/party-lifecycle";
 
 export async function generateMetadata({ params }: PageProps<"/party/[id]">): Promise<Metadata> {
@@ -24,14 +24,14 @@ export async function generateMetadata({ params }: PageProps<"/party/[id]">): Pr
   };
 }
 
-/** Party detail: oversized date, metadata table, and the night's timeline. */
+/** Party detail: cover, oversized date, metadata table, and the night's sub-parties. */
 export default async function PartyDetailPage({ params }: PageProps<"/party/[id]">) {
   const { id } = await params;
   const party = await fetchPartyDetail(id);
   if (!party) notFound();
 
   const lifecycle = resolvePartyLifecycleStatus(party.status);
-  const timeline = party.timeline ?? [];
+  const subParties = party.subParties ?? [];
   const details = [
     { label: "Location", value: party.location },
     { label: "Date", value: party.startDate },
@@ -47,6 +47,15 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
         <TextLink href="/party" className="text-body text-ink-secondary hover:text-ink">
           ← 返回活動列表
         </TextLink>
+        {party.coverUrl && (
+          // eslint-disable-next-line @next/next/no-img-element -- original upload on the backend origin
+          <img
+            src={mediaUrl(party.coverUrl)}
+            alt={`${party.title} 封面`}
+            fetchPriority="high"
+            className="mt-8 aspect-video w-full rounded-sm border border-line object-cover"
+          />
+        )}
         <EditorialGrid className="mt-10 gap-y-8">
           <div className="col-span-4 flex flex-col gap-2 md:col-span-3 lg:col-span-4">
             <MetaLabel>{party.startDate.slice(0, 4)}</MetaLabel>
@@ -78,25 +87,17 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
         </dl>
       </Section>
 
-      {timeline.length > 0 && (
-        <Section labelledBy="timeline-title" ruled>
+      {subParties.length > 0 && (
+        <Section labelledBy="sub-parties-title" ruled>
           <EditorialGrid className="gap-y-8">
             <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-4">
-              <Eyebrow>{`Timeline / ${formatCount(timeline.length)}`}</Eyebrow>
-              <Heading level={2} id="timeline-title">
-                時間軸
+              <Eyebrow>{`Sub-parties / ${formatCount(subParties.length)}`}</Eyebrow>
+              <Heading level={2} id="sub-parties-title">
+                子派對
               </Heading>
             </div>
             <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
-              <ArchiveTimeline
-                items={timeline.map((item) => ({
-                  id: item.id,
-                  marker: formatTimelineTime(item.startDateTime),
-                  dateTime: item.startDateTime,
-                  title: item.title,
-                  description: item.description,
-                }))}
-              />
+              <SubPartyList subParties={subParties} />
             </div>
           </EditorialGrid>
         </Section>

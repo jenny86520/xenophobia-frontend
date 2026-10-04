@@ -39,6 +39,7 @@ const upcoming: UpcomingPartyResponse = {
     startDate: "2099-10-05",
     startTime: "20:00",
     location: "Discord",
+    coverUrl: null,
   },
   recentParties: [
     {
@@ -49,6 +50,7 @@ const upcoming: UpcomingPartyResponse = {
       format: "offline",
       startDate: "2026-09-30",
       startTime: "18:30",
+      coverUrl: null,
     },
   ],
 };
@@ -129,5 +131,24 @@ describe("HomePage", () => {
 
     expect(closing.querySelector('[data-placeholder="contact.any"]')).not.toBeNull();
     expect(within(closing).getByRole("img", { name: "XenoPhobiA LOGO" })).toBeInTheDocument();
+  });
+
+  it("puts each party's cover behind the next-party block and its recent row, and none without one", async () => {
+    const { container } = await renderHome({
+      nextParty: { ...upcoming.nextParty!, coverUrl: "/media/images/next.webp" },
+      recentParties: [
+        { ...upcoming.recentParties[0], coverUrl: "/media/images/recent.jpg" },
+        { ...upcoming.recentParties[0], id: "p9", title: "No Cover Night", coverUrl: null },
+      ],
+    });
+
+    const nextBlock = container.querySelector('article[aria-labelledby="next-party-title"]') as HTMLElement;
+    expect(nextBlock.querySelector("[data-cover-backdrop] img")?.getAttribute("src")).toMatch(
+      /\/media\/images\/next\.webp$/,
+    );
+
+    const rows = Array.from(container.querySelectorAll("#events li"));
+    expect(rows[0].querySelector("[data-cover-backdrop] img")?.getAttribute("src")).toMatch(/recent\.jpg$/);
+    expect(rows[1].querySelector("[data-cover-backdrop]")).toBeNull();
   });
 });

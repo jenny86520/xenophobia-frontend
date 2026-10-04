@@ -1,3 +1,6 @@
+/** Public path of a cover image (`/media/images/…`), or null when there is none. */
+export type CoverUrl = string | null;
+
 export type PartySummary = {
   id: string;
   title: string;
@@ -6,6 +9,7 @@ export type PartySummary = {
   format: string;
   startDate: string;
   startTime: string;
+  coverUrl: CoverUrl;
 };
 
 export type NextParty = {
@@ -17,6 +21,7 @@ export type NextParty = {
   startDate: string;
   startTime: string;
   location: string;
+  coverUrl: CoverUrl;
 };
 
 export type UpcomingPartyResponse = {
@@ -24,11 +29,14 @@ export type UpcomingPartyResponse = {
   recentParties: PartySummary[];
 };
 
-export type PartyTimelineItem = {
+export type SubParty = {
   id: string;
   title: string;
   description: string;
   startDateTime: string;
+  /** Empty string when no address was given. */
+  location: string;
+  coverUrl: CoverUrl;
 };
 
 export type PartyListItem = {
@@ -42,6 +50,7 @@ export type PartyListItem = {
   startTime: string;
   location: string;
   summary: string;
+  coverUrl: CoverUrl;
 };
 
 export type PartyDetail = PartyListItem & {
@@ -49,7 +58,7 @@ export type PartyDetail = PartyListItem & {
   createdAt: string;
   updatedBy?: string;
   updatedAt?: string;
-  timeline?: PartyTimelineItem[];
+  subParties: SubParty[];
 };
 
 export type PartyListFilters = {

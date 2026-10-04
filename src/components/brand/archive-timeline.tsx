@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 export type ArchiveTimelineItem = {
   id: string;
-  /** Large mono marker: a year on /about, a fixed-format time on party detail. */
+  /** Large mono marker, e.g. a milestone year. */
   marker: string;
   /** Machine-readable value for <time>, when the marker is a date or time. */
   dateTime?: string;

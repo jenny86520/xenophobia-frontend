@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { MetaLabel } from "@/components/brand/meta-label";
 import type { PartyListItem, PartySummary } from "@/types/party";
 import { resolvePartyLifecycleStatus } from "@/utils/party-lifecycle";
+import { PartyCoverBackdrop } from "./party-cover-backdrop";
 import { PartyStatusBadges } from "./party-status-badges";
 
 type PartyRowProps = (
@@ -16,7 +17,8 @@ type PartyRowProps = (
 /**
  * Editorial list row for a party (design §5): date (mono), title, category, format and
  * lifecycle, summary. The whole row is one link to the detail page. Render inside a
- * <ul>/<ol>; rows are separated by hairline rules.
+ * <ul>/<ol>; rows are separated by hairline rules. A party with a cover gets it as a
+ * dimmed backdrop behind the row.
  */
 export function PartyRow({ party, showLifecycleBadge, metaFields, titleAs: Title = "h3" }: PartyRowProps) {
   const lifecycle = showLifecycleBadge
@@ -24,7 +26,8 @@ export function PartyRow({ party, showLifecycleBadge, metaFields, titleAs: Title
     : undefined;
 
   return (
-    <li className="list-row border-t border-line">
+    <li className="list-row relative isolate overflow-hidden border-t border-line">
+      <PartyCoverBackdrop coverUrl={party.coverUrl} />
       <Link
         href={`/party/${party.id}`}
         className="grid grid-cols-4 gap-x-4 gap-y-3 px-2 py-6 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none md:grid-cols-8 md:gap-x-6 lg:grid-cols-12"

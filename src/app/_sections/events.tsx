@@ -5,9 +5,11 @@ import { MetaLabel } from "@/components/brand/meta-label";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
+import { PartyCoverBackdrop } from "@/components/party/party-cover-backdrop";
 import { PartyRow } from "@/components/party/party-row";
 import { PartyStatusBadges } from "@/components/party/party-status-badges";
 import type { NextParty, PartySummary } from "@/types/party";
+import { cn } from "@/lib/utils";
 
 type EventsProps = {
   nextParty: NextParty | null;
@@ -31,7 +33,14 @@ export function Events({ nextParty, recentParties }: EventsProps) {
       </div>
 
       {nextParty ? (
-        <article aria-labelledby="next-party-title" className="mt-12 border-t border-line-strong pt-8">
+        <article
+          aria-labelledby="next-party-title"
+          className={cn(
+            "relative isolate mt-12 overflow-hidden border-t border-line-strong pt-8",
+            nextParty.coverUrl && "px-4 pb-8 md:px-6",
+          )}
+        >
+          <PartyCoverBackdrop coverUrl={nextParty.coverUrl} />
           <EditorialGrid className="gap-y-6">
             <div className="col-span-4 md:col-span-2 lg:col-span-3">
               <MetaLabel>Next</MetaLabel>
