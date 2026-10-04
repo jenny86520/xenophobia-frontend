@@ -66,6 +66,22 @@ async function renderHome(
 }
 
 describe("HomePage", () => {
+  it("fills at least the first viewport with the hero and shows no key visual", async () => {
+    const { container } = await renderHome();
+
+    expect(container.querySelector("#hero")).toHaveClass("min-h-svh");
+    expect(container.querySelector('[data-placeholder="brand.key-visual"]')).toBeNull();
+  });
+
+  it("draws the diagonal band only inside the hero, hidden from assistive technology", async () => {
+    const { container } = await renderHome();
+
+    const bands = container.querySelectorAll("[data-hero-band]");
+    expect(bands).toHaveLength(1);
+    expect(bands[0].closest("#hero")).not.toBeNull();
+    expect(bands[0]).toHaveAttribute("aria-hidden", "true");
+  });
+
   it("renders the sections in the specified order", async () => {
     const { container } = await renderHome();
 

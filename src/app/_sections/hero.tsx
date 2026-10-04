@@ -3,7 +3,6 @@ import { BrandName } from "@/components/brand/brand-name";
 import { Container } from "@/components/brand/container";
 import { CtaLink } from "@/components/brand/cta-link";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
-import { MediaFrame } from "@/components/brand/media-frame";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
 import { Display } from "@/components/brand/typography";
@@ -31,12 +30,18 @@ function ColumnGuides() {
   );
 }
 
-/** 1 · Hero: who is this? Oversized wordmark, tagline, CTAs, the next party. */
+/** A static diagonal brand-red band behind the hero (`.hero-band` in globals.css). Decorative only. */
+function HeroBand() {
+  return <div aria-hidden="true" data-hero-band className="hero-band pointer-events-none absolute inset-0" />;
+}
+
+/** 1 · Hero: who is this? Oversized wordmark, tagline, CTAs, the next party. At least one viewport tall. */
 export function Hero({ profile, nextParty }: HeroProps) {
   const mmdd = nextParty ? nextParty.startDate.slice(5).replace("-", "/") : null;
 
   return (
-    <section aria-labelledby="hero-title" id="hero" className="relative overflow-clip py-section-loose">
+    <section aria-labelledby="hero-title" id="hero" className="relative flex min-h-svh flex-col justify-center overflow-clip py-section-loose">
+      <HeroBand />
       <ColumnGuides />
       <Container className="relative">
         <div className="flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-4">
@@ -94,15 +99,6 @@ export function Hero({ profile, nextParty }: HeroProps) {
             </div>
           )}
         </EditorialGrid>
-
-        <MediaFrame
-          ratio="21/9"
-          alt=""
-          placeholderName="brand.key-visual"
-          placeholderLabel="主視覺"
-          className="mt-section-tight"
-          sizes="100vw"
-        />
       </Container>
     </section>
   );

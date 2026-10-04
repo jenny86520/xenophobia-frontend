@@ -24,6 +24,11 @@ describe("SiteHeader", () => {
     expect(Array.from(home.querySelectorAll(".text-signal")).map((el) => el.textContent)).toEqual(["X", "P", "A"]);
   });
 
+  it("carries the site-header hook the home-page reveal CSS targets", () => {
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
+    expect(screen.getByRole("banner")).toHaveClass("site-header");
+  });
+
   it("hides the CTA when the backend has none", () => {
     render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
     expect(screen.queryByRole("link", { name: /加入/ })).toBeNull();

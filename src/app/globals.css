@@ -987,6 +987,82 @@
 }
 
 /*
+ * Hero band: one static diagonal brand-red stripe that fades to transparent on both
+ * sides. Only the home hero has it; text over it is checked for WCAG AA.
+ */
+.hero-band {
+  background: linear-gradient(
+    115deg,
+    transparent 28%,
+    color-mix(in oklab, var(--xpa-signal) 22%, transparent) 46%,
+    color-mix(in oklab, var(--xpa-signal) 22%, transparent) 54%,
+    transparent 72%
+  );
+}
+
+/*
+ * Party cover scrim: darker on the left (date, title) and lighter to the right so more of
+ * the cover shows. Every stop stays dark enough that text over a pure white cover still
+ * meets WCAG AA wherever it sits (measured; see the change's tasks).
+ */
+.cover-scrim {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--background) 96%, transparent) 0%,
+    color-mix(in oklab, var(--background) 92%, transparent) 55%,
+    color-mix(in oklab, var(--background) 87%, transparent) 100%
+  );
+}
+
+/*
+ * Home header: hidden over the hero, then fixed at the top and fading in as the hero
+ * scrolls out (a view timeline on #hero, shared through timeline-scope). Only opacity
+ * and pointer-events animate: a transform would make the header the containing block
+ * of the fixed full-screen MobileMenu panel. Keyboard focus inside shows it at once. Without
+ * support, with reduced motion or on other pages, it stays the ordinary header.
+ */
+@supports (animation-timeline: view()) and (timeline-scope: --hero) and selector(:has(*)) {
+  @media (prefers-reduced-motion: no-preference) {
+    body:has(#hero) {
+      timeline-scope: --hero;
+    }
+    #hero {
+      view-timeline: --hero block;
+    }
+    body:has(#hero) .site-header {
+      position: fixed;
+      inset-inline: 0;
+      top: 0;
+      z-index: 30;
+      background-color: var(--background);
+      animation: xpa-header-reveal linear both;
+      animation-timeline: --hero;
+      animation-range: exit 40% exit 90%;
+    }
+    /* Keyboard focus only: after clicking the logo to return home, focus stays on that
+       link (not :focus-visible), and the header must start hidden like a fresh visit. */
+    body:has(#hero) .site-header:has(:focus-visible) {
+      animation: none;
+    }
+    /* Anchored sections are not hidden under the fixed header. */
+    body:has(#hero) main section[id] {
+      scroll-margin-top: 5rem;
+    }
+  }
+}
+
+@keyframes xpa-header-reveal {
+  from {
+    opacity: 0;
+    pointer-events: none;
+  }
+  to {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/*
  * Floating BackToTop: hidden (and unfocusable) near the top, fades in after ~one
  * viewport of scrolling. The default is visible, so without support, JavaScript or
  * with reduced motion the button is simply always there.

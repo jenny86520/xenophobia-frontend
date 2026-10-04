@@ -61,6 +61,7 @@ describe("PartyRow", () => {
     const image = backdrop.querySelector("img") as HTMLImageElement;
     expect(image).toHaveAttribute("alt", "");
     expect(image.getAttribute("src")).toMatch(/\/media\/images\/cover\.png$/);
+    expect(backdrop.querySelector("[data-cover-scrim]")).toHaveClass("cover-scrim");
     expect(screen.queryByRole("img")).toBeNull();
 
     const links = screen.getAllByRole("link");

@@ -12,10 +12,14 @@ type SiteHeaderProps = {
   cta: { label: string; href: string } | null;
 };
 
-/** Brand, primary navigation and CTA (design §1). Below 1024px nav and CTA move into MobileMenu. */
+/**
+ * Brand, primary navigation and CTA (design §1). Below 1024px nav and CTA move into MobileMenu.
+ * On the home page `.site-header` (globals.css) is hidden over the hero and fades in fixed at
+ * the top once the hero scrolls away; without support for that it stays an ordinary header.
+ */
 export function SiteHeader({ brandName, cta }: SiteHeaderProps) {
   return (
-    <header className="border-b border-line-subtle">
+    <header className="site-header border-b border-line-subtle">
       <Container className="flex min-h-16 items-center justify-between gap-6 py-3">
         <Link
           href="/"

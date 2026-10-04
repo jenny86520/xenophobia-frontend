@@ -7,7 +7,6 @@
  * Keep in sync with the <Placeholder name="..."> usages.
  */
 export const STATIC_PLACEHOLDERS = [
-  { name: "brand.key-visual", label: "主視覺", pages: ["/"] },
   { name: "gallery.photo-1", label: "活動照片", pages: ["/"] },
   { name: "gallery.photo-2", label: "活動照片", pages: ["/"] },
   { name: "gallery.photo-3", label: "活動照片", pages: ["/"] },
