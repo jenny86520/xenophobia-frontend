@@ -848,10 +848,46 @@
     color: var(--xpa-signal);
   }
 
+  /*
+   * Home next-party block: the title link stretches over the whole article. Feedback never
+   * changes the background (a cover and its scrim sit there, and their contrast is measured):
+   * signal top rule, title underline, arrow nudge, and a block-wide focus ring for keyboards.
+   * The idle colours live here, not in utility classes, so the hover rules (same layer, more
+   * specific) win; a utility would sit in a later layer and override them.
+   */
+  .next-party {
+    border-top-color: var(--xpa-line-strong);
+    transition: border-color 200ms ease-out;
+  }
+  .next-party-arrow {
+    color: var(--xpa-ink-muted);
+  }
+  .next-party:hover,
+  .next-party:has(a:focus-visible) {
+    border-top-color: var(--xpa-signal);
+  }
+  .next-party:hover .link-underline,
+  .next-party:has(a:focus-visible) .link-underline {
+    background-size: 100% 1px;
+  }
+  .next-party:has(a:focus-visible) {
+    outline: 3px solid color-mix(in oklab, var(--ring) 50%, transparent);
+    outline-offset: 2px;
+  }
+  .next-party:hover .next-party-arrow,
+  .next-party:has(a:focus-visible) .next-party-arrow {
+    color: var(--xpa-signal);
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     .cta-arrow,
-    .list-row-arrow {
-      transition: translate 160ms ease-out;
+    .list-row-arrow,
+    .next-party-arrow {
+      transition: translate 160ms ease-out, color 160ms ease-out;
+    }
+    .next-party:hover .next-party-arrow,
+    .next-party:has(a:focus-visible) .next-party-arrow {
+      translate: 4px 0;
     }
     .cta-primary:hover .cta-arrow,
     .cta-primary:focus-visible .cta-arrow,

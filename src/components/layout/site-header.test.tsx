@@ -13,8 +13,17 @@ describe("SiteHeader", () => {
     mockPathname.mockReturnValue("/party");
     render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
 
-    expect(screen.getByRole("link", { name: "活動" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByRole("link", { name: "關於" })).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: "Party" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "About" })).not.toHaveAttribute("aria-current");
+  });
+
+  it("labels the primary navigation in English, marked as English for screen readers", () => {
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
+
+    const nav = screen.getByRole("navigation", { name: "主要導覽" });
+    const links = within(nav).getAllByRole("link");
+    expect(links.map((a) => a.textContent)).toEqual(["Party", "About"]);
+    links.forEach((a) => expect(a).toHaveAttribute("lang", "en"));
   });
 
   it("shows the brand name with its uppercase letters in red", () => {
@@ -52,7 +61,7 @@ describe("SiteHeader", () => {
     expect(trigger).toHaveAttribute("aria-expanded", "true");
 
     const dialog = screen.getByRole("dialog");
-    await waitFor(() => expect(document.activeElement).toBe(within(dialog).getByRole("link", { name: "活動" })));
+    await waitFor(() => expect(document.activeElement).toBe(within(dialog).getByRole("link", { name: "Party" })));
 
     await act(async () => {
       fireEvent.keyDown(document.activeElement as HTMLElement, { key: "Escape" });
@@ -71,7 +80,7 @@ describe("SiteHeader", () => {
     });
     const dialog = screen.getByRole("dialog");
     await act(async () => {
-      fireEvent.click(within(dialog).getByRole("link", { name: "關於" }));
+      fireEvent.click(within(dialog).getByRole("link", { name: "About" }));
     });
     expect(screen.queryByRole("dialog")).toBeNull();
   });

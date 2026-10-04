@@ -11,8 +11,8 @@ export default function PartyNotFound() {
         <Eyebrow>PARTY / 404</Eyebrow>
         <Heading level={1}>找不到活動</Heading>
         <p className="text-lead text-ink-secondary">Party not found.</p>
-        <TextLink href="/party" className="text-body text-ink">
-          ← 返回活動列表
+        <TextLink href="/party" lang="en" className="text-body text-ink">
+          <span aria-hidden="true">←</span> Back to Party
         </TextLink>
       </Container>
     </main>

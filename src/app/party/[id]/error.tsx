@@ -23,8 +23,8 @@ export default function PartyDetailError({ reset }: { error: Error & { digest?: 
           >
             重新載入
           </button>
-          <TextLink href="/party" className="text-body text-ink">
-            ← 返回活動列表
+          <TextLink href="/party" lang="en" className="text-body text-ink">
+            <span aria-hidden="true">←</span> Back to Party
           </TextLink>
         </div>
       </Container>

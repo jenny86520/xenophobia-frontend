@@ -44,8 +44,8 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
   return (
     <main id="main">
       <Section spacing="tight" labelledBy="page-title">
-        <TextLink href="/party" className="text-body text-ink-secondary hover:text-ink">
-          ← 返回活動列表
+        <TextLink href="/party" lang="en" className="text-body text-ink-secondary hover:text-ink">
+          <span aria-hidden="true">←</span> Back to Party
         </TextLink>
         {party.coverUrl && (
           // eslint-disable-next-line @next/next/no-img-element -- original upload on the backend origin
@@ -93,7 +93,7 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
             <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-4">
               <Eyebrow>{`Sub-parties / ${formatCount(subParties.length)}`}</Eyebrow>
               <Heading level={2} id="sub-parties-title">
-                子派對
+                子活動
               </Heading>
             </div>
             <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">

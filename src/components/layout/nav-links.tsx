@@ -5,7 +5,7 @@ import { TextLink } from "@/components/brand/text-link";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-items";
 
-/** True when `pathname` is `href` or one of its sub-pages (/party/3 is under 活動). */
+/** True when `pathname` is `href` or one of its sub-pages (/party/3 is under Party). */
 export function isCurrentPath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -22,7 +22,12 @@ export function NavLinks({ className, linkClassName }: NavLinksProps) {
     <ul className={cn("flex", className)}>
       {NAV_ITEMS.map((item) => (
         <li key={item.href}>
-          <TextLink href={item.href} current={isCurrentPath(pathname, item.href)} className={linkClassName}>
+          <TextLink
+            href={item.href}
+            lang={item.lang}
+            current={isCurrentPath(pathname, item.href)}
+            className={linkClassName}
+          >
             {item.label}
           </TextLink>
         </li>

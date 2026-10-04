@@ -13,13 +13,15 @@ type TextLinkProps = {
   className?: string;
   /** Marks the current page in navigation. */
   current?: boolean;
+  /** Language of the link text when it differs from the page (e.g. "en" for English nav labels). */
+  lang?: string;
 };
 
 /**
  * Inline link with the animated underline (design §7). External links open in a
  * new tab, get rel="noopener noreferrer" and an announced "opens in a new window" hint.
  */
-export function TextLink({ href, children, className, current }: TextLinkProps) {
+export function TextLink({ href, children, className, current, lang }: TextLinkProps) {
   const classes = cn("link-underline", className);
   if (isExternalHref(href)) {
     const opensTab = /^https?:/i.test(href);
@@ -27,6 +29,7 @@ export function TextLink({ href, children, className, current }: TextLinkProps) 
       <a
         href={href}
         className={classes}
+        lang={lang}
         {...(opensTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       >
         {children}
@@ -40,7 +43,7 @@ export function TextLink({ href, children, className, current }: TextLinkProps) 
     );
   }
   return (
-    <Link href={href} className={classes} aria-current={current ? "page" : undefined}>
+    <Link href={href} className={classes} lang={lang} aria-current={current ? "page" : undefined}>
       {children}
     </Link>
   );

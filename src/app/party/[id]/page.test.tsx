@@ -70,9 +70,10 @@ describe("PartyDetailPage", () => {
     await renderPage();
 
     expect(screen.getByRole("heading", { level: 1, name: "Night of Strategy" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to Party" })).toHaveAttribute("href", "/party");
     expect(screen.getByText("Red Room Studio, Taipei")).toBeInTheDocument();
     expect(screen.getByText("—")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "子派對" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "子活動" })).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
       "Setup and greetings",
       "Game rounds",
@@ -118,7 +119,7 @@ describe("PartyDetailPage", () => {
 
     await renderPage();
 
-    expect(screen.queryByRole("heading", { name: "子派對" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "子活動" })).toBeNull();
     expect(screen.queryByRole("list")).toBeNull();
   });
 });
@@ -127,12 +128,16 @@ describe("party detail fallbacks", () => {
   it("not-found shows the message with a link back to the list", () => {
     render(<PartyNotFound />);
     expect(screen.getByText("Party not found.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /返回活動列表/ })).toHaveAttribute("href", "/party");
+    const back = screen.getByRole("link", { name: "Back to Party" });
+    expect(back).toHaveAttribute("href", "/party");
+    expect(back).toHaveAttribute("lang", "en");
   });
 
   it("error shows the message with a link back to the list", () => {
     render(<PartyDetailError error={new Error("x")} reset={() => {}} />);
     expect(screen.getByRole("alert")).toHaveTextContent("Failed to load this party.");
-    expect(screen.getByRole("link", { name: /返回活動列表/ })).toHaveAttribute("href", "/party");
+    const back = screen.getByRole("link", { name: "Back to Party" });
+    expect(back).toHaveAttribute("href", "/party");
+    expect(back).toHaveAttribute("lang", "en");
   });
 });

@@ -66,6 +66,35 @@ async function renderHome(
 }
 
 describe("HomePage", () => {
+  it("makes the whole next-party block one link to its detail page", async () => {
+    const { container } = await renderHome();
+
+    const block = container.querySelector('article[aria-labelledby="next-party-title"]') as HTMLElement;
+    expect(block).toHaveClass("next-party");
+    const links = within(block).getAllByRole("link");
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAccessibleName("Online Hangout");
+    expect(links[0]).toHaveAttribute("href", "/party/p1");
+    expect(links[0].className).toContain("after:inset-0");
+    expect(block.querySelector(".next-party-arrow")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("links the events section to the full list in English, without reading the arrow", async () => {
+    const { container } = await renderHome();
+
+    const events = container.querySelector("#events") as HTMLElement;
+    const more = within(events).getByRole("link", { name: "More Party" });
+    expect(more).toHaveAttribute("href", "/party");
+    expect(more).toHaveAttribute("lang", "en");
+  });
+
+  it("links the Who we are section to the about page", async () => {
+    const { container } = await renderHome();
+
+    const statement = container.querySelector("#statement") as HTMLElement;
+    expect(within(statement).getByRole("link", { name: /About us/ })).toHaveAttribute("href", "/about");
+  });
+
   it("fills at least the first viewport with the hero and shows no key visual", async () => {
     const { container } = await renderHome();
 

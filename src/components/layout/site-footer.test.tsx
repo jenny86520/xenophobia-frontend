@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import type { AboutContent } from "@/types/about";
 import { SiteFooter } from "./site-footer";
 
@@ -22,6 +22,17 @@ const about = (contactInfo: AboutContent["contactInfo"]): AboutContent => ({
 });
 
 describe("SiteFooter", () => {
+  it("lists Home, Party and About in English, marked as English", () => {
+    render(<SiteFooter brandName="XenoPhobiA" version="0.1.0" about={about([])} />);
+
+    const links = within(screen.getByRole("navigation", { name: "Index" })).getAllByRole("link");
+    expect(links.map((a) => [a.textContent, a.getAttribute("href"), a.getAttribute("lang")])).toEqual([
+      ["Home", "/", "en"],
+      ["Party", "/party", "en"],
+      ["About", "/about", "en"],
+    ]);
+  });
+
   it("shows a placeholder when there are no social links", () => {
     const { container } = render(
       <SiteFooter

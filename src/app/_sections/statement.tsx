@@ -1,3 +1,4 @@
+import { CtaLink } from "@/components/brand/cta-link";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { formatCount } from "@/components/brand/meta-label";
@@ -12,7 +13,7 @@ type StatementProps = {
   stats: { parties: number; games: number; milestones: number };
 };
 
-/** 2 · Statement: what do we believe? Manifesto, mission, and data-derived figures. */
+/** 2 · Statement: what do we believe? Manifesto, mission, data-derived figures and a link to /about. */
 export function Statement({ profile, stats }: StatementProps) {
   const paragraphs = profile.mission.split(/\n\s*\n/).filter(Boolean);
 
@@ -43,6 +44,7 @@ export function Statement({ profile, stats }: StatementProps) {
               {text}
             </p>
           ))}
+          <CtaLink href="/about" label="About us" variant="secondary" className="self-start text-body" />
         </div>
 
         <dl className="col-span-4 grid grid-cols-1 gap-x-6 gap-y-4 self-start md:col-span-8 md:grid-cols-2 lg:col-span-4 lg:col-start-9 lg:grid-cols-1">

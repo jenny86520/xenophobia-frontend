@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { MetaLabel } from "@/components/brand/meta-label";
@@ -16,7 +17,11 @@ type EventsProps = {
   recentParties: PartySummary[];
 };
 
-/** 4 · Events: the next party as this issue's cover story, then recent issues. */
+/**
+ * 4 · Events: the next party as this issue's cover story, then recent issues. The whole
+ * next-party block is clickable through its one title link (stretched with ::after); any
+ * other interactive element added inside must sit above it (`relative z-10`).
+ */
 export function Events({ nextParty, recentParties }: EventsProps) {
   return (
     <Section labelledBy="events-title" ruled className="reveal" id="events">
@@ -27,8 +32,8 @@ export function Events({ nextParty, recentParties }: EventsProps) {
             活動
           </Heading>
         </div>
-        <TextLink href="/party" className="cta-secondary text-body text-ink">
-          全部活動 →
+        <TextLink href="/party" lang="en" className="cta-secondary text-body text-ink">
+          More Party <span aria-hidden="true">→</span>
         </TextLink>
       </div>
 
@@ -36,7 +41,7 @@ export function Events({ nextParty, recentParties }: EventsProps) {
         <article
           aria-labelledby="next-party-title"
           className={cn(
-            "relative isolate mt-12 overflow-hidden border-t border-line-strong pt-8",
+            "next-party relative isolate mt-12 overflow-hidden border-t pt-8",
             nextParty.coverUrl && "px-4 pb-8 md:px-6",
           )}
         >
@@ -50,9 +55,13 @@ export function Events({ nextParty, recentParties }: EventsProps) {
             </div>
             <div className="col-span-4 flex flex-col gap-3 md:col-span-6 lg:col-span-5">
               <h3 id="next-party-title" className="font-heading text-h2 text-balance text-ink">
-                <Link href={`/party/${nextParty.id}`} className="link-underline">
+                <Link
+                  href={`/party/${nextParty.id}`}
+                  className="link-underline after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+                >
                   {nextParty.title}
                 </Link>
+                <ArrowRight aria-hidden="true" className="next-party-arrow ml-3 inline size-6 align-middle" />
               </h3>
               {nextParty.description && (
                 <p className="max-w-[60ch] text-body text-ink-secondary">{nextParty.description}</p>
