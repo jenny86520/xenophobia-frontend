@@ -48,8 +48,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const cta = profile?.primaryCtaLabel && profile.primaryCtaUrl ? { label: profile.primaryCtaLabel, href: profile.primaryCtaUrl } : null;
 
   return (
-    <html lang="zh-Hant-TW" className={`dark ${geistSans.variable} ${geistMono.variable} ${notoSerifTc.variable}`}>
-      <body className="flex min-h-screen flex-col antialiased">
+    <html
+      lang="zh-Hant-TW"
+      className={`dark ${geistSans.variable} ${geistMono.variable} ${notoSerifTc.variable}`}
+      suppressHydrationWarning
+    >
+      {/* Browser extensions (e.g. ColorZilla's cz-shortcut-listen) add attributes to <html>/<body>
+         before hydration; suppressHydrationWarning ignores only these elements' own attributes. */}
+      <body className="flex min-h-screen flex-col antialiased" suppressHydrationWarning>
         <span id="top" />
         <a
           href="#main"
