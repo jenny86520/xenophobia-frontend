@@ -10,7 +10,6 @@ export type TeamProfile = {
   primaryCtaUrl: string;
   secondaryCtaLabel: string;
   secondaryCtaUrl: string;
-  closingStatement: string;
 };
 
 export type Milestone = { id: string; title: string; description: string; date: string };

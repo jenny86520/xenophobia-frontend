@@ -17,7 +17,7 @@ export default async function HomePage() {
     fetchUpcomingParty(),
     fetchAllParties(),
   ]);
-  const { teamProfile, games, milestones } = about;
+  const { teamProfile, games, milestones, contactInfo } = about;
 
   return (
     <main id="main">
@@ -30,7 +30,7 @@ export default async function HomePage() {
       <Events nextParty={upcoming.nextParty} recentParties={upcoming.recentParties} />
       <Archive milestones={milestones} index={4} />
       <Gallery />
-      <Closing profile={teamProfile} />
+      <Closing profile={teamProfile} contacts={contactInfo} />
     </main>
   );
 }

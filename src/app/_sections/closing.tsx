@@ -1,36 +1,44 @@
+import Image from "next/image";
 import { CtaLink } from "@/components/brand/cta-link";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
-import { MediaFrame } from "@/components/brand/media-frame";
+import { Eyebrow } from "@/components/brand/eyebrow";
 import { Placeholder } from "@/components/brand/placeholder";
 import { Section } from "@/components/brand/section";
-import type { TeamProfile } from "@/types/about";
+import { Heading } from "@/components/brand/typography";
+import { ContactList } from "@/components/contact/contact-list";
+import type { ContactInfo, TeamProfile } from "@/types/about";
 
-/** 7 · Closing: a weighty last word and the primary CTA. */
-export function Closing({ profile }: { profile: TeamProfile }) {
+type ClosingProps = {
+  profile: TeamProfile;
+  contacts: ContactInfo[];
+};
+
+/** 7 · Closing: how to reach the team, the site logo, and the CTAs. */
+export function Closing({ profile, contacts }: ClosingProps) {
   return (
     <Section labelledBy="closing-title" ruled spacing="loose" className="reveal" id="closing">
       <EditorialGrid className="gap-y-12">
-        <div className="col-span-4 md:col-span-8 lg:col-span-9">
-          {profile.closingStatement ? (
-            <h2 id="closing-title" className="font-heading text-h1 text-balance text-ink lg:text-[clamp(3rem,1rem+5vw,6rem)] lg:leading-[1.1]">
-              {profile.closingStatement}
-            </h2>
+        <div className="col-span-4 flex flex-col gap-6 md:col-span-8 lg:col-span-9">
+          <Eyebrow index={6}>Contact</Eyebrow>
+          <Heading level={2} id="closing-title">
+            聯絡我們
+          </Heading>
+          {contacts.length > 0 ? (
+            <ContactList contacts={contacts} />
           ) : (
-            <>
-              <h2 id="closing-title" className="sr-only">
-                結尾宣言
-              </h2>
-              <Placeholder name="brand.closing-statement" label="結尾宣言" className="min-h-40" />
-            </>
+            <Placeholder name="contact.any" label="聯絡資訊" className="min-h-24" />
           )}
         </div>
-        <MediaFrame
-          ratio="1/1"
-          alt=""
-          placeholderName="brand.vector-logo"
-          placeholderLabel="向量 LOGO（SVG）"
-          className="col-span-2 md:col-span-2 lg:col-span-2 lg:col-start-11 lg:row-start-1"
-        />
+        <div className="col-span-2 md:col-span-2 lg:col-span-2 lg:col-start-11 lg:row-start-1">
+          <Image
+            src="/brand/xpa-logo.png"
+            alt={`${profile.name} LOGO`}
+            width={256}
+            height={256}
+            sizes="(min-width: 1024px) 14vw, 40vw"
+            className="h-auto w-full"
+          />
+        </div>
         <div className="col-span-4 flex flex-wrap items-center gap-x-8 gap-y-4 md:col-span-8 lg:col-span-9">
           {profile.primaryCtaLabel && profile.primaryCtaUrl ? (
             <CtaLink href={profile.primaryCtaUrl} label={profile.primaryCtaLabel} size="large" />

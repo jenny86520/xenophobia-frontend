@@ -2,14 +2,13 @@ import type { Metadata } from "next";
 import { BrandName } from "@/components/brand/brand-name";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { formatCount, MetaLabel } from "@/components/brand/meta-label";
+import { formatCount } from "@/components/brand/meta-label";
 import { PageHeader } from "@/components/brand/page-header";
 import { Placeholder } from "@/components/brand/placeholder";
 import { Section } from "@/components/brand/section";
-import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
+import { ContactList } from "@/components/contact/contact-list";
 import { fetchAboutContent } from "@/lib/public-content-client";
-import { contactHref } from "@/utils/contact";
 import { Archive } from "../_sections/archive";
 import { Games } from "../_sections/games";
 
@@ -71,21 +70,7 @@ export default async function AboutPage() {
           </div>
           <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
             {contactInfo.length > 0 ? (
-              <dl className="border-b border-line">
-                {contactInfo.map((item) => {
-                  const href = contactHref(item);
-                  return (
-                    <div key={item.id} className="grid grid-cols-1 gap-1 border-t border-line py-5 md:grid-cols-[12rem_1fr] md:gap-6">
-                      <dt>
-                        <MetaLabel>{item.label}</MetaLabel>
-                      </dt>
-                      <dd className="text-lead break-all text-ink">
-                        {href ? <TextLink href={href}>{item.value}</TextLink> : item.value}
-                      </dd>
-                    </div>
-                  );
-                })}
-              </dl>
+              <ContactList contacts={contactInfo} />
             ) : (
               <Placeholder name="contact.any" label="聯絡資訊" className="min-h-24" />
             )}

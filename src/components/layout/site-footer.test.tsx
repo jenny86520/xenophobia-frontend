@@ -14,7 +14,6 @@ const about = (contactInfo: AboutContent["contactInfo"]): AboutContent => ({
     primaryCtaUrl: "",
     secondaryCtaLabel: "",
     secondaryCtaUrl: "",
-    closingStatement: "",
   },
   milestones: [],
   contactInfo,

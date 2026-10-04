@@ -19,7 +19,6 @@ const base: AboutContent = {
     primaryCtaUrl: "",
     secondaryCtaLabel: "",
     secondaryCtaUrl: "",
-    closingStatement: "",
   },
   milestones: [],
   contactInfo: [{ id: "c1", label: "Email", type: "email", value: "team@x.team" }],

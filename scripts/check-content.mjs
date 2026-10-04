@@ -41,7 +41,6 @@ if (!p.brandStatement) add(["/", "/about"], "brand.statement", "品牌宣言");
 if (p.foundedYear == null) add(["/"], "brand.founded-year", "成立年份");
 if (!(p.primaryCtaLabel && p.primaryCtaUrl)) add(["/"], "brand.primary-cta", "主要 CTA");
 if (!(p.secondaryCtaLabel && p.secondaryCtaUrl)) add(["/"], "brand.secondary-cta", "次要 CTA");
-if (!p.closingStatement) add(["/"], "brand.closing-statement", "結尾宣言");
 if (!p.mission.trim()) add(["/about"], "brand.mission", "使命");
 if (games.length === 0) add(["/", "/about"], "games", "遊戲項目");
 for (const game of games) {

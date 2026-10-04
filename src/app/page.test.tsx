@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { fetchAboutContent, fetchAllParties, fetchUpcomingParty } from "@/lib/public-content-client";
 import type { AboutContent } from "@/types/about";
 import type { UpcomingPartyResponse } from "@/types/party";
@@ -22,7 +22,6 @@ const about: AboutContent = {
     primaryCtaUrl: "",
     secondaryCtaLabel: "",
     secondaryCtaUrl: "",
-    closingStatement: "",
   },
   milestones: [{ id: "m1", title: "名稱創立", description: "Founded.", date: "2018" }],
   contactInfo: [],
@@ -54,8 +53,11 @@ const upcoming: UpcomingPartyResponse = {
   ],
 };
 
-async function renderHome(overrides: Partial<UpcomingPartyResponse> = {}) {
-  (fetchAboutContent as jest.Mock).mockResolvedValue(about);
+async function renderHome(
+  overrides: Partial<UpcomingPartyResponse> = {},
+  aboutOverrides: Partial<AboutContent> = {},
+) {
+  (fetchAboutContent as jest.Mock).mockResolvedValue({ ...about, ...aboutOverrides });
   (fetchUpcomingParty as jest.Mock).mockResolvedValue({ ...upcoming, ...overrides });
   (fetchAllParties as jest.Mock).mockResolvedValue([{}, {}, {}]);
   return render(await HomePage());
@@ -99,5 +101,33 @@ describe("HomePage", () => {
     expect(screen.getByText("目前沒有即將舉辦的活動")).toBeInTheDocument();
     expect(screen.queryByText("Countdown")).toBeNull();
     expect(screen.queryByText(/loading/i)).toBeNull();
+  });
+
+  it("closes with the contact list, the site logo and no closing-statement or vector-logo placeholders", async () => {
+    const { container } = await renderHome(
+      {},
+      {
+        contactInfo: [
+          { id: "c1", label: "Email", type: "email", value: "team@x.team" },
+          { id: "c2", label: "Discord", type: "social", value: "https://discord.gg/x" },
+        ],
+      },
+    );
+    const closing = container.querySelector("#closing") as HTMLElement;
+
+    expect(within(closing).getByRole("heading", { level: 2, name: "聯絡我們" })).toBeInTheDocument();
+    expect(within(closing).getAllByRole("term").map((dt) => dt.textContent)).toEqual(["Email", "Discord"]);
+    expect(within(closing).getByRole("link", { name: "team@x.team" })).toHaveAttribute("href", "mailto:team@x.team");
+    expect(within(closing).getByRole("img", { name: "XenoPhobiA LOGO" })).toBeInTheDocument();
+    expect(container.querySelector('[data-placeholder="brand.closing-statement"]')).toBeNull();
+    expect(container.querySelector('[data-placeholder="brand.vector-logo"]')).toBeNull();
+  });
+
+  it("shows a contact placeholder in the closing section when there is no contact info", async () => {
+    const { container } = await renderHome();
+    const closing = container.querySelector("#closing") as HTMLElement;
+
+    expect(closing.querySelector('[data-placeholder="contact.any"]')).not.toBeNull();
+    expect(within(closing).getByRole("img", { name: "XenoPhobiA LOGO" })).toBeInTheDocument();
   });
 });

@@ -44,7 +44,9 @@ export function Hero({ profile, nextParty }: HeroProps) {
           {mmdd && <MetaLabel>Next / {mmdd}</MetaLabel>}
         </div>
 
-        <Display as="h1" id="hero-title" className="hero-parallax mt-8 -mr-[6vw] break-words whitespace-nowrap max-md:whitespace-normal lg:text-[min(14.5vw,15rem)]">
+        {/* Centered, sized to always fit the container (14vw, capped at 13rem). The size is set
+            per breakpoint so the base text-display line-height/tracking/weight stay intact. */}
+        <Display as="h1" id="hero-title" className="hero-parallax mt-8 text-center whitespace-nowrap max-lg:text-[min(14vw,13rem)] lg:text-[min(14vw,13rem)]">
           <BrandName name={profile.name} />
         </Display>
 
