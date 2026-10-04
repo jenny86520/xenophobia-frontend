@@ -870,16 +870,119 @@
  */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
+    /* Sections stay hidden until 10% of their entry, then rise 48px and fade in by 45% (spec: ≤48px). */
     .reveal {
-      animation: xpa-reveal linear both;
+      animation: xpa-reveal cubic-bezier(0.2, 0, 0, 1) both;
       animation-timeline: view();
-      animation-range: entry 0% entry 60%;
+      animation-range: entry 30% entry 80%;
     }
     .hero-parallax {
       animation: xpa-parallax linear both;
       animation-timeline: scroll(root);
       animation-range: 0 100vh;
     }
+  }
+}
+
+/*
+ * Expanding games carousel (GameCarousel). Stacked below 768px; side by side from 768px,
+ * where collapsed panels are narrow strips with vertical names and the expanded panel
+ * takes the remaining width. Switching is instant by design (no width, height or fade
+ * transition). Collapsed bodies are inert and invisible.
+ */
+.game-panels {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--xpa-line);
+}
+.game-panel {
+  min-width: 0;
+  border-bottom: 1px solid var(--xpa-line);
+}
+.game-panel-heading {
+  margin: 0;
+}
+.game-panel-button {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 1.25rem 0.5rem;
+  text-align: left;
+}
+.game-panel-button:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 3px color-mix(in oklch, var(--xpa-signal) 50%, transparent);
+}
+.game-panel-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  padding: 0 0.5rem;
+}
+.game-panel-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+.game-panel[data-expanded="true"] .game-panel-body {
+  grid-template-rows: 1fr;
+}
+.game-panel[data-expanded="false"] .game-panel-body {
+  visibility: hidden;
+  opacity: 0;
+}
+.game-panel[data-expanded="false"] .game-panel-button:hover .game-panel-name {
+  color: var(--xpa-signal);
+}
+
+@media (min-width: 768px) {
+  .game-panels {
+    flex-direction: row;
+    border-top: 0;
+    border-left: 1px solid var(--xpa-line);
+  }
+  .game-panel {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    min-width: 4.5rem;
+    border-bottom: 0;
+    border-right: 1px solid var(--xpa-line);
+  }
+  .game-panel[data-expanded="true"] {
+    flex-grow: 12;
+  }
+  .game-panel-body,
+  .game-panel[data-expanded="true"] .game-panel-body {
+    grid-template-rows: 1fr;
+    padding: 0 1.25rem;
+  }
+  /* The whole collapsed strip is the button, not just the area behind the name. */
+  .game-panel[data-expanded="false"] .game-panel-heading {
+    flex: 1 1 auto;
+    display: flex;
+  }
+  .game-panel[data-expanded="false"] .game-panel-button {
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.25rem 0;
+  }
+  .game-panel[data-expanded="false"] .game-panel-name {
+    writing-mode: vertical-rl;
+  }
+  .game-panel[data-expanded="true"] .game-panel-button {
+    padding: 1.25rem;
+  }
+  .game-panel[data-expanded="false"] .game-panel-body {
+    height: 0;
+    padding: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .game-panel-name {
+    transition: color 200ms ease-out;
   }
 }
 
@@ -912,7 +1015,7 @@
 @keyframes xpa-reveal {
   from {
     opacity: 0;
-    translate: 0 12px;
+    translate: 0 48px;
   }
   to {
     opacity: 1;
@@ -920,9 +1023,11 @@
   }
 }
 
+/* Hero wordmark: rises up to 120px and fades to 35% over the first viewport of scrolling. */
 @keyframes xpa-parallax {
   to {
-    translate: 0 -8%;
+    opacity: 0.35;
+    translate: 0 -120px;
   }
 }
 

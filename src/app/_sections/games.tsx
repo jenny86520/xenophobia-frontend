@@ -1,10 +1,10 @@
 import { EditorialGrid } from "@/components/brand/editorial-grid";
-import { EditorialList } from "@/components/brand/editorial-list";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
 import { Section } from "@/components/brand/section";
 import { Heading } from "@/components/brand/typography";
+import { GameCarousel } from "@/components/games/game-carousel";
 import type { Game } from "@/types/about";
 
 type GamesProps = {
@@ -13,7 +13,7 @@ type GamesProps = {
   index: number;
 };
 
-/** 3 · What we play: a numbered contents page of the games the team plays. */
+/** 3 · What we play: a carousel of the games, each with its newest highlight video. */
 export function Games({ games, index }: GamesProps) {
   return (
     <Section labelledBy="games-title" ruled className="reveal" id="games">
@@ -27,17 +27,7 @@ export function Games({ games, index }: GamesProps) {
         </div>
         <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
           {games.length > 0 ? (
-            <EditorialList
-              summaryLabel="遊戲短述"
-              descriptionLabel="遊戲說明"
-              items={games.map((game) => ({
-                id: game.id,
-                title: game.name,
-                summary: game.summary,
-                description: game.description,
-                placeholderKey: `game.${game.id}`,
-              }))}
-            />
+            <GameCarousel games={games} />
           ) : (
             <Placeholder name="games" label="遊戲項目" className="min-h-32" />
           )}

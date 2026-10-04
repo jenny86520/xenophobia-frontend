@@ -17,7 +17,12 @@ export type Milestone = { id: string; title: string; description: string; date: 
 
 export type ContactInfo = { id: string; label: string; type: string; value: string };
 
-export type Game = { id: string; name: string; summary: string; description: string };
+/** A game's newest highlight video, chosen by the backend (newest date, then newest added). */
+export type LatestVideo =
+  | { source: "youtube"; title: string; recordedOn: string; youtubeId: string }
+  | { source: "upload"; title: string; recordedOn: string; url: string; mimeType: string };
+
+export type Game = { id: string; name: string; summary: string; latestVideo: LatestVideo | null };
 
 export type AboutContent = {
   teamProfile: TeamProfile;

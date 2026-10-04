@@ -29,6 +29,7 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
 
 - 頁面在伺服器端（Server Component）向後端取資料，優先使用 `BACKEND_URL`；可以設成只有伺服器連得到的內部位址（例如容器網路中的 `http://backend:3001`）。
 - `BACKEND_URL` 未設定時改用 `NEXT_PUBLIC_BACKEND_URL`，兩者都未設定時預設為 `http://localhost:3001`。
+- 上傳的 highlight 影片由瀏覽器直接向後端讀取（`/media/videos/...`），網址一律以 `NEXT_PUBLIC_BACKEND_URL` 組成，所以它必須是**訪客瀏覽器能連到**的公開位址，不能是內部位址。
 
 ## 開始使用
 

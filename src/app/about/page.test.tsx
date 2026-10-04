@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import type { AboutContent } from "@/types/about";
 import { fetchAboutContent } from "@/lib/public-content-client";
 import AboutPage from "./page";
@@ -25,8 +25,13 @@ const base: AboutContent = {
   contactInfo: [{ id: "c1", label: "Email", type: "email", value: "team@x.team" }],
   highlights: ["Community-first design"],
   games: [
-    { id: "g1", name: "Assetto Corsa", summary: "Sim racing", description: "Weekly league." },
-    { id: "g2", name: "CS2", summary: "", description: "" },
+    {
+      id: "g1",
+      name: "Assetto Corsa",
+      summary: "Sim racing",
+      latestVideo: { source: "youtube", title: "Hot lap", recordedOn: "2026-10-01", youtubeId: "dQw4w9WgXcQ" },
+    },
+    { id: "g2", name: "CS2", summary: "", latestVideo: null },
   ],
 };
 
@@ -45,15 +50,18 @@ describe("AboutPage", () => {
     expect(screen.getByText("Community-first design")).toBeInTheDocument();
   });
 
-  it("shows the description placeholder only inside the game that lacks one", async () => {
-    await renderAbout();
+  it("shows the games as a carousel, with placeholders only on the game that lacks content", async () => {
+    const { container } = await renderAbout();
 
-    fireEvent.click(screen.getByRole("button", { name: /CS2/ }));
-    expect(screen.getByText("待提供：遊戲說明")).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "遊戲項目輪播" })).toHaveAttribute("aria-roledescription", "carousel");
+    const cs2 = screen.getByRole("group", { name: /CS2/ });
+    expect(cs2.querySelector('[data-placeholder="game.g2.summary"]')).not.toBeNull();
+    expect(cs2.querySelector('[data-placeholder="game.g2.video"]')).not.toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: /Assetto Corsa/ }));
-    expect(screen.getByText("Weekly league.")).toBeInTheDocument();
-    expect(screen.getAllByText("待提供：遊戲說明")).toHaveLength(1);
+    const ac = screen.getByRole("group", { name: /Assetto Corsa/ });
+    expect(ac).toHaveTextContent("Sim racing");
+    expect(ac.querySelector("[data-placeholder]")).toBeNull();
+    expect(container.querySelectorAll('[data-placeholder$=".video"]')).toHaveLength(1);
   });
 
   it("shows the brand statement placeholder when it is empty", async () => {

@@ -27,7 +27,7 @@ const about: AboutContent = {
   milestones: [{ id: "m1", title: "名稱創立", description: "Founded.", date: "2018" }],
   contactInfo: [],
   highlights: [],
-  games: [{ id: "g1", name: "CS2", summary: "", description: "" }],
+  games: [{ id: "g1", name: "CS2", summary: "", latestVideo: null }],
 };
 
 const upcoming: UpcomingPartyResponse = {

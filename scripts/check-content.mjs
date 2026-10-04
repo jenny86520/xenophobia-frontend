@@ -4,7 +4,7 @@
  * per page, and exits non-zero while any remain.
  *
  *  - Data-driven placeholders come from GET /api/about (empty brand fields, games
- *    without summary/description, missing social links, ...). The rules mirror the
+ *    without a summary or highlight video, missing social links, ...). The rules mirror the
  *    <Placeholder> conditions in src/app and src/components/layout.
  *  - Fixed placeholders come from src/components/brand/placeholder-registry.ts.
  *
@@ -46,7 +46,7 @@ if (!p.mission.trim()) add(["/about"], "brand.mission", "使命");
 if (games.length === 0) add(["/", "/about"], "games", "遊戲項目");
 for (const game of games) {
   if (!game.summary) add(["/", "/about"], `game.${game.id}.summary`, `遊戲短述（${game.name}）`);
-  if (!game.description) add(["/", "/about"], `game.${game.id}.description`, `遊戲說明（${game.name}）`);
+  if (!game.latestVideo) add(["/", "/about"], `game.${game.id}.video`, `最新 highlight 影片（${game.name}）`);
 }
 if (milestones.length === 0) add(["/", "/about"], "milestones", "里程碑");
 if (highlights.length === 0) add(["/about"], "highlights", "網站特色");
