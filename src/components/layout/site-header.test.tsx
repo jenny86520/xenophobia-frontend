@@ -22,7 +22,11 @@ describe("SiteHeader", () => {
 
     const nav = screen.getByRole("navigation", { name: "主要導覽" });
     const links = within(nav).getAllByRole("link");
-    expect(links.map((a) => a.textContent)).toEqual(["Party", "About"]);
+    expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
+      ["Party", "/party"],
+      ["About", "/about"],
+      ["Member", "/member"],
+    ]);
     links.forEach((a) => expect(a).toHaveAttribute("lang", "en"));
   });
 

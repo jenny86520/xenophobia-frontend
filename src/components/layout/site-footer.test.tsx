@@ -27,7 +27,7 @@ const about = (
 });
 
 describe("SiteFooter", () => {
-  it("lists Home, Party and About in English, marked as English", () => {
+  it("lists Home, Party, About and Member in English, marked as English", () => {
     render(<SiteFooter brandName="XenoPhobiA" version="0.1.0" about={about([])} />);
 
     const links = within(screen.getByRole("navigation", { name: "Index" })).getAllByRole("link");
@@ -35,6 +35,7 @@ describe("SiteFooter", () => {
       ["Home", "/", "en"],
       ["Party", "/party", "en"],
       ["About", "/about", "en"],
+      ["Member", "/member", "en"],
     ]);
   });
 

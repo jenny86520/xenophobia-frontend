@@ -1,3 +1,5 @@
+import type { RegistrationSummary } from "./member";
+
 /** Public path of a cover image (`/media/images/…`), or null when there is none. */
 export type CoverUrl = string | null;
 
@@ -59,6 +61,8 @@ export type PartyDetail = PartyListItem & {
   updatedBy?: string;
   updatedAt?: string;
   subParties: SubParty[];
+  /** Registration state and count (never the participants). */
+  registration?: RegistrationSummary;
 };
 
 export type PartyListFilters = {

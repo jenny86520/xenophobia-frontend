@@ -1,8 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import PartyDetailPage from "./page";
 import PartyNotFound from "./not-found";
 import PartyDetailError from "./error";
 import { fetchPartyDetail } from "@/lib/public-content-client";
+import { fetchMemberRegistration } from "@/lib/member-session";
+import type { MemberRegistrationView } from "@/types/member";
 
 const NOT_FOUND = new Error("NEXT_NOT_FOUND");
 jest.mock("next/navigation", () => ({
@@ -15,7 +17,12 @@ jest.mock("@/lib/public-content-client", () => ({
   fetchPartyDetail: jest.fn(),
 }));
 
+jest.mock("@/lib/member-session", () => ({ fetchMemberRegistration: jest.fn() }));
+// The 參加 button posts to a Server Action; the page only needs it to exist.
+jest.mock("@/app/member/actions", () => ({ registrationAction: jest.fn() }));
+
 const mockedFetchPartyDetail = fetchPartyDetail as jest.Mock;
+const mockedFetchMemberRegistration = fetchMemberRegistration as jest.Mock;
 
 const party = {
   id: "1",
@@ -36,7 +43,10 @@ const renderPage = async (id = "1") =>
   render(await PartyDetailPage({ params: Promise.resolve({ id }), searchParams: Promise.resolve({}) }));
 
 describe("PartyDetailPage", () => {
-  beforeEach(() => mockedFetchPartyDetail.mockReset());
+  beforeEach(() => {
+    mockedFetchPartyDetail.mockReset();
+    mockedFetchMemberRegistration.mockReset().mockResolvedValue(null);
+  });
 
   it("calls notFound() when the party does not exist", async () => {
     mockedFetchPartyDetail.mockResolvedValue(null);
@@ -121,6 +131,66 @@ describe("PartyDetailPage", () => {
 
     expect(screen.queryByRole("heading", { name: "子活動" })).toBeNull();
     expect(screen.queryByRole("list")).toBeNull();
+  });
+});
+
+describe("party registration block", () => {
+  const openSummary = { status: "open", deadline: "2026-09-30T17:00", count: 5 } as const;
+  const view = (overrides: Partial<MemberRegistrationView> = {}): MemberRegistrationView => ({
+    ...openSummary,
+    registered: false,
+    blockedBy: null,
+    participants: [
+      { nickname: "小明", discordId: "ming#1", registeredAt: "2026-09-01T00:00:00Z", guest: false },
+      { nickname: "小華", discordId: "hua#1", registeredAt: "2026-09-02T00:00:00Z", guest: false },
+      { nickname: "朋友A", discordId: "", registeredAt: "2026-09-03T00:00:00Z", guest: true },
+    ],
+    ...overrides,
+  });
+  const block = () => screen.getByRole("region", { name: "報名" });
+
+  beforeEach(() => {
+    mockedFetchPartyDetail.mockReset().mockResolvedValue({ ...party, subParties: [], registration: openSummary });
+    mockedFetchMemberRegistration.mockReset().mockResolvedValue(null);
+  });
+
+  it("shows a visitor the count and how to register, but no names", async () => {
+    await renderPage();
+
+    expect(block()).toHaveTextContent("開放報名中");
+    expect(block()).toHaveTextContent("5 人參加");
+    expect(block()).toHaveTextContent("截止：09/30 17:00（台灣時間）");
+    expect(within(block()).getByRole("link", { name: "會員登入" })).toHaveAttribute("href", "/member/login");
+    expect(within(block()).queryByText("小明")).toBeNull();
+    expect(within(block()).queryByRole("button")).toBeNull();
+  });
+
+  it("lets a member who may register join, and lists the participants", async () => {
+    mockedFetchMemberRegistration.mockResolvedValue(view());
+    await renderPage();
+
+    expect(within(block()).getByRole("button", { name: "參加" })).toBeEnabled();
+    const names = within(block()).getAllByRole("listitem").map((li) => li.textContent);
+    expect(names).toEqual(["小明ming#1", "小華hua#1", "朋友A非會員—"]);
+  });
+
+  it("offers to leave once registered", async () => {
+    mockedFetchMemberRegistration.mockResolvedValue(view({ registered: true }));
+    await renderPage();
+
+    expect(within(block()).getByText("你已報名這個活動。")).toBeInTheDocument();
+    expect(within(block()).getByRole("button", { name: "取消參加" })).toBeEnabled();
+  });
+
+  it("disables the button and says why when closed or the role does not fit", async () => {
+    mockedFetchMemberRegistration.mockResolvedValue(view({ status: "closed", blockedBy: "closed" }));
+    await renderPage();
+    expect(within(block()).getByRole("button", { name: "參加" })).toBeDisabled();
+    expect(within(block()).getAllByText("報名已截止").length).toBeGreaterThan(0);
+
+    mockedFetchMemberRegistration.mockResolvedValue(view({ blockedBy: "role-not-allowed" }));
+    await renderPage();
+    expect(screen.getAllByRole("region", { name: "報名" }).at(-1)).toHaveTextContent("此活動限定特定角色報名");
   });
 });
 

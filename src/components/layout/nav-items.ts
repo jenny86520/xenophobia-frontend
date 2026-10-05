@@ -5,6 +5,7 @@
 export const NAV_ITEMS = [
   { href: "/party", label: "Party", lang: "en" },
   { href: "/about", label: "About", lang: "en" },
+  { href: "/member", label: "Member", lang: "en" },
 ] as const;
 
 /** The home link the footer lists before NAV_ITEMS. */

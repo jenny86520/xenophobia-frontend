@@ -6,8 +6,10 @@ import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
+import { PartyRegistration } from "@/components/party/party-registration";
 import { PartyStatusBadges } from "@/components/party/party-status-badges";
 import { SubPartyList } from "@/components/party/sub-party-list";
+import { fetchMemberRegistration } from "@/lib/member-session";
 import { fetchPartyDetail } from "@/lib/public-content-client";
 import { mediaUrl } from "@/utils/media";
 import { resolvePartyLifecycleStatus } from "@/utils/party-lifecycle";
@@ -29,6 +31,8 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
   const { id } = await params;
   const party = await fetchPartyDetail(id);
   if (!party) notFound();
+  // Signed-in members also get the participant list; visitors only the public count.
+  const memberRegistration = party.registration ? await fetchMemberRegistration(party.id) : null;
 
   const lifecycle = resolvePartyLifecycleStatus(party.status);
   const subParties = party.subParties ?? [];
@@ -86,6 +90,10 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
           ))}
         </dl>
       </Section>
+
+      {party.registration && (
+        <PartyRegistration partyId={party.id} summary={party.registration} member={memberRegistration} />
+      )}
 
       {subParties.length > 0 && (
         <Section labelledBy="sub-parties-title" ruled>
