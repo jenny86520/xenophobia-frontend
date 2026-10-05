@@ -5,7 +5,7 @@ import { contactHref } from "@/utils/contact";
 
 /**
  * Contact entries as hairline-ruled label/value rows, in the order given (the backend's
- * display order). Values that can be linked (email, phone, http(s) website/social)
+ * display order). Values that can be linked (email, phone, http(s) website)
  * become TextLinks; others stay plain text. Callers handle the empty case.
  */
 export function ContactList({ contacts }: { contacts: ContactInfo[] }) {

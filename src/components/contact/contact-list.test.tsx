@@ -7,13 +7,13 @@ describe("ContactList", () => {
       <ContactList
         contacts={[
           { id: "1", label: "Email", type: "email", value: "team@x.team" },
-          { id: "2", label: "Discord", type: "social", value: "https://discord.gg/x" },
+          { id: "2", label: "Website", type: "website", value: "https://discord.gg/x" },
           { id: "3", label: "LINE", type: "other", value: "@xpa" },
         ]}
       />,
     );
 
-    expect(screen.getAllByRole("term").map((dt) => dt.textContent)).toEqual(["Email", "Discord", "LINE"]);
+    expect(screen.getAllByRole("term").map((dt) => dt.textContent)).toEqual(["Email", "Website", "LINE"]);
     expect(screen.getByRole("link", { name: "team@x.team" })).toHaveAttribute("href", "mailto:team@x.team");
     const discord = screen.getByRole("link", { name: /discord\.gg/ });
     expect(discord).toHaveAttribute("rel", "noopener noreferrer");

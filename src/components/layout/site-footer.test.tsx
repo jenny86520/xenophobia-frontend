@@ -2,7 +2,10 @@ import { render, screen, within } from "@testing-library/react";
 import type { AboutContent } from "@/types/about";
 import { SiteFooter } from "./site-footer";
 
-const about = (contactInfo: AboutContent["contactInfo"]): AboutContent => ({
+const about = (
+  contactInfo: AboutContent["contactInfo"],
+  socialLinks: AboutContent["socialLinks"] = [],
+): AboutContent => ({
   teamProfile: {
     name: "XenoPhobiA",
     introduction: "",
@@ -19,6 +22,8 @@ const about = (contactInfo: AboutContent["contactInfo"]): AboutContent => ({
   contactInfo,
   highlights: [],
   games: [],
+  roadmap: [],
+  socialLinks,
 });
 
 describe("SiteFooter", () => {
@@ -47,17 +52,32 @@ describe("SiteFooter", () => {
     expect(screen.getByRole("link", { name: "team@x.team" })).toHaveAttribute("href", "mailto:team@x.team");
   });
 
-  it("lists social links when present", () => {
+  it("lists social links in order with the platform icon and name, opening in a new tab", () => {
     const { container } = render(
       <SiteFooter
         brandName="XenoPhobiA"
         version="0.1.0"
-        about={about([{ id: "2", label: "Discord", type: "social", value: "https://discord.gg/x" }])}
+        about={about(
+          [],
+          [
+            { id: "s1", platform: "discord", label: "", url: "https://discord.gg/x" },
+            { id: "s2", platform: "other", label: "官方部落格", url: "https://blog.x.team" },
+          ],
+        )}
       />,
     );
 
     expect(container.querySelector('[data-placeholder="contact.social"]')).toBeNull();
-    expect(screen.getByRole("link", { name: /discord\.gg/ })).toHaveAttribute("rel", "noopener noreferrer");
+    const links = within(screen.getByRole("region", { name: "Social" })).getAllByRole("link");
+    expect(links.map((a) => [a.textContent?.replace("（另開新視窗）", "").replace(" ↗", ""), a.getAttribute("href")])).toEqual([
+      ["Discord", "https://discord.gg/x"],
+      ["官方部落格", "https://blog.x.team"],
+    ]);
+    links.forEach((a) => {
+      expect(a).toHaveAttribute("rel", "noopener noreferrer");
+      expect(a.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    });
+    expect(links[0].querySelector('svg[data-platform="discord"]')).not.toBeNull();
   });
 
   it("shows the build version and legal placeholders", () => {

@@ -3,6 +3,7 @@ import { Container } from "@/components/brand/container";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
+import { SocialIcon, socialLinkName } from "@/components/brand/social-icon";
 import { TextLink } from "@/components/brand/text-link";
 import type { AboutContent, ContactInfo } from "@/types/about";
 import { contactHref } from "@/utils/contact";
@@ -44,8 +45,8 @@ function Column({ title, id, className, children }: { title: string; id: string;
 
 /** Official footer IA (design §1): brand, nav, contact, social, legal, build. */
 export function SiteFooter({ brandName, about, version }: SiteFooterProps) {
-  const contacts = about?.contactInfo.filter((c) => c.type !== "social") ?? [];
-  const socials = about?.contactInfo.filter((c) => c.type === "social") ?? [];
+  const contacts = about?.contactInfo ?? [];
+  const socials = about?.socialLinks ?? [];
   const tagline = about?.teamProfile.tagline ?? "";
 
   return (
@@ -94,7 +95,14 @@ export function SiteFooter({ brandName, about, version }: SiteFooterProps) {
               <Column title="Social" id="footer-social" className="col-span-4 md:col-span-3 lg:col-span-2">
                 {socials.length > 0 ? (
                   <ul className="flex flex-col gap-3">
-                    {socials.map((c) => <ContactLine key={c.id} contact={c} />)}
+                    {socials.map((link) => (
+                      <li key={link.id}>
+                        <TextLink href={link.url} className="inline-flex items-center gap-2 text-ink-secondary hover:text-ink">
+                          <SocialIcon platform={link.platform} />
+                          {socialLinkName(link)}
+                        </TextLink>
+                      </li>
+                    ))}
                   </ul>
                 ) : (
                   <Placeholder name="contact.social" label="社群連結" />

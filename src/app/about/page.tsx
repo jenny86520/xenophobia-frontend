@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/brand/page-header";
 import { Placeholder } from "@/components/brand/placeholder";
 import { Section } from "@/components/brand/section";
 import { Heading } from "@/components/brand/typography";
+import { RoadmapList } from "@/components/about/roadmap-list";
 import { ContactList } from "@/components/contact/contact-list";
 import { fetchAboutContent } from "@/lib/public-content-client";
 import { Archive } from "../_sections/archive";
@@ -18,9 +19,9 @@ export const metadata: Metadata = {
   openGraph: { title: "關於 | XenoPhobiA", description: "XenoPhobiA 的品牌宣言、使命、遊戲項目與里程碑。" },
 };
 
-/** Brand and team: statement, mission, games, milestone archive, contact, highlights. */
+/** Brand and team: statement, mission, games, milestone archive, contact, highlights, roadmap. */
 export default async function AboutPage() {
-  const { teamProfile, games, milestones, contactInfo, highlights } = await fetchAboutContent();
+  const { teamProfile, games, milestones, contactInfo, highlights, roadmap } = await fetchAboutContent();
   const paragraphs = teamProfile.mission.split(/\n\s*\n/).filter(Boolean);
 
   return (
@@ -90,9 +91,14 @@ export default async function AboutPage() {
             {highlights.length > 0 ? (
               <ol className="border-b border-line">
                 {highlights.map((item, index) => (
-                  <li key={item} className="flex gap-6 border-t border-line py-5">
+                  <li key={item.id} className="flex gap-6 border-t border-line py-5">
                     <span className="font-mono text-meta text-signal">{formatCount(index + 1)}</span>
-                    <span className="text-lead text-ink">{item}</span>
+                    <div className="flex min-w-0 flex-col gap-2">
+                      {item.title && <h3 className="font-heading text-h3 text-ink">{item.title}</h3>}
+                      {item.content && (
+                        <p className="max-w-[65ch] text-body whitespace-pre-line text-ink-secondary">{item.content}</p>
+                      )}
+                    </div>
                   </li>
                 ))}
               </ol>
@@ -102,6 +108,22 @@ export default async function AboutPage() {
           </div>
         </EditorialGrid>
       </Section>
+
+      {roadmap.length > 0 && (
+        <Section labelledBy="roadmap-title" ruled className="reveal">
+          <EditorialGrid className="gap-y-12">
+            <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-3">
+              <Eyebrow index={6}>Roadmap</Eyebrow>
+              <Heading level={2} id="roadmap-title">
+                未來規劃
+              </Heading>
+            </div>
+            <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
+              <RoadmapList items={roadmap} />
+            </div>
+          </EditorialGrid>
+        </Section>
+      )}
     </main>
   );
 }

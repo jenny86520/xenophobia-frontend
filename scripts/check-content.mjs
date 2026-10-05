@@ -25,7 +25,7 @@ try {
   process.exit(2);
 }
 
-const { teamProfile: p, games, milestones, contactInfo, highlights } = about;
+const { teamProfile: p, games, milestones, contactInfo, highlights, socialLinks } = about;
 const found = new Map(PAGES.map((page) => [page, new Map()]));
 const add = (pages, name, label) => {
   for (const page of pages[0] === "*" ? PAGES : pages) found.get(page).set(name, label);
@@ -33,8 +33,8 @@ const add = (pages, name, label) => {
 
 // Footer, on every page.
 if (!p.tagline) add(["*"], "brand.tagline", "品牌標語");
-if (!contactInfo.some((c) => c.type !== "social")) add(["*"], "contact.any", "聯絡資訊");
-if (!contactInfo.some((c) => c.type === "social")) add(["*"], "contact.social", "社群連結");
+if (contactInfo.length === 0) add(["*"], "contact.any", "聯絡資訊");
+if (socialLinks.length === 0) add(["*"], "contact.social", "社群連結");
 
 // Home and about.
 if (!p.brandStatement) add(["/", "/about"], "brand.statement", "品牌宣言");
