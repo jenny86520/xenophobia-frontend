@@ -29,13 +29,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: { default: "XenoPhobiA | Official Site", template: "%s | XenoPhobiA" },
-  description: "XenoPhobiA 遊戲社群官方網站：活動、里程碑與團隊介紹。",
+  description: "XPA Game players center. Include Assetto Corsa, CS2, APEX, and others.",
+  icons: {
+    icon: "/brand/xpa-logo.png",
+  },
   openGraph: {
     type: "website",
     siteName: "XenoPhobiA",
     locale: "zh_TW",
     title: "XenoPhobiA | Official Site",
-    description: "XenoPhobiA 遊戲社群官方網站：活動、里程碑與團隊介紹。",
+    description: "XPA Game players center. Include Assetto Corsa, CS2, APEX, and others.",
   },
 };
 
@@ -45,7 +48,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const about = await fetchAboutContent().catch(() => null);
   const profile = about?.teamProfile;
   const brandName = profile?.name || "XenoPhobiA";
-  const cta = profile?.primaryCtaLabel && profile.primaryCtaUrl ? { label: profile.primaryCtaLabel, href: profile.primaryCtaUrl } : null;
+  const cta =
+    profile?.primaryCtaLabel && profile.primaryCtaUrl
+      ? { label: profile.primaryCtaLabel, href: profile.primaryCtaUrl }
+      : null;
 
   return (
     <html
@@ -55,7 +61,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       {/* Browser extensions (e.g. ColorZilla's cz-shortcut-listen) add attributes to <html>/<body>
          before hydration; suppressHydrationWarning ignores only these elements' own attributes. */}
-      <body className="flex min-h-screen flex-col antialiased" suppressHydrationWarning>
+      <body
+        className="flex min-h-screen flex-col antialiased"
+        suppressHydrationWarning
+      >
         <span id="top" />
         <a
           href="#main"

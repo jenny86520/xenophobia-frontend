@@ -54,7 +54,7 @@ describe("AboutPage", () => {
     const { container } = await renderAbout({
       ...base,
       roadmap: [
-        { id: "r1", title: "成員系統", description: "成員登入與參加活動", status: "in_progress" },
+        { id: "r1", title: "會員系統", description: "會員登入與參加活動", status: "in_progress" },
         { id: "r2", title: "點數商店", description: "", status: "planned" },
         { id: "r3", title: "每日簽到", description: "", status: "launched" },
       ],
@@ -62,11 +62,11 @@ describe("AboutPage", () => {
 
     const section = screen.getByRole("region", { name: "未來規劃" });
     expect(within(section).getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
-      "成員系統",
+      "會員系統",
       "點數商店",
       "每日簽到",
     ]);
-    expect(within(section).getByText("成員登入與參加活動")).toBeInTheDocument();
+    expect(within(section).getByText("會員登入與參加活動")).toBeInTheDocument();
     expect(Array.from(section.querySelectorAll("[data-status]")).map((b) => b.textContent)).toEqual([
       "IN PROGRESS",
       "PLANNED",

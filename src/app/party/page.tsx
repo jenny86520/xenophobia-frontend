@@ -8,9 +8,9 @@ import { fetchPartyList } from "@/lib/public-content-client";
 import { parsePartyFilters } from "@/utils/party-filters";
 
 export const metadata: Metadata = {
-  title: "活動",
+  title: "Party",
   description: "依狀態、形式與類型瀏覽 XenoPhobiA 的社群活動。",
-  openGraph: { title: "活動 | XenoPhobiA", description: "依狀態、形式與類型瀏覽 XenoPhobiA 的社群活動。" },
+  openGraph: { title: "Party | XenoPhobiA", description: "依狀態、形式與類型瀏覽 XenoPhobiA 的社群活動。" },
 };
 
 /** Party index: filters live in the URL and results are rendered on the server. */

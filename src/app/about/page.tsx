@@ -14,9 +14,9 @@ import { Archive } from "../_sections/archive";
 import { Games } from "../_sections/games";
 
 export const metadata: Metadata = {
-  title: "關於",
+  title: "About",
   description: "XenoPhobiA 的品牌宣言、使命、遊戲項目與里程碑。",
-  openGraph: { title: "關於 | XenoPhobiA", description: "XenoPhobiA 的品牌宣言、使命、遊戲項目與里程碑。" },
+  openGraph: { title: "About | XenoPhobiA", description: "XenoPhobiA 的品牌宣言、使命、遊戲項目與里程碑。" },
 };
 
 /** Brand and team: statement, mission, games, milestone archive, contact, highlights, roadmap. */
