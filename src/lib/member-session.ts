@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { forwardedForHeader } from "@/lib/forwarded-for";
 import { backendBaseUrl } from "@/lib/public-content-client";
 import type { MemberProfile, MemberRegistrationView } from "@/types/member";
 
@@ -32,11 +33,12 @@ export async function clearMemberToken(): Promise<void> {
   (await cookies()).delete(MEMBER_COOKIE);
 }
 
-/** Calls the backend, adding the member's token when there is one. Never cached. */
+/** Calls the backend, adding the member's token when there is one and the visitor's X-Forwarded-For. Never cached. */
 export async function memberFetch(path: string, init: RequestInit = {}, token?: string | null): Promise<Response> {
   const bearer = token === undefined ? await memberToken() : token;
   const headers = new Headers(init.headers);
   if (bearer) headers.set("Authorization", `Bearer ${bearer}`);
+  for (const [name, value] of Object.entries(await forwardedForHeader())) headers.set(name, value);
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
   return fetch(`${backendBaseUrl()}${path}`, { ...init, headers, cache: "no-store" });
 }

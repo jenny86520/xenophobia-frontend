@@ -1,7 +1,11 @@
 const cookieStore = { get: jest.fn(), set: jest.fn(), delete: jest.fn() };
 // connection() in public-content-client needs a Next request scope (and the Request global jsdom lacks).
 jest.mock("next/server", () => ({ connection: jest.fn().mockResolvedValue(undefined) }));
-jest.mock("next/headers", () => ({ cookies: () => Promise.resolve(cookieStore) }));
+const requestHeaders = new Headers();
+jest.mock("next/headers", () => ({
+  cookies: () => Promise.resolve(cookieStore),
+  headers: () => Promise.resolve(requestHeaders),
+}));
 
 import {
   MEMBER_COOKIE,
@@ -22,6 +26,7 @@ function respond(status: number, body: unknown = {}) {
 beforeEach(() => {
   jest.clearAllMocks();
   cookieStore.get.mockReturnValue(undefined);
+  requestHeaders.delete("x-forwarded-for");
 });
 
 describe("member cookie", () => {
@@ -34,6 +39,25 @@ describe("member cookie", () => {
 });
 
 describe("memberFetch", () => {
+  it("passes the visitor's X-Forwarded-For on to the backend", async () => {
+    requestHeaders.set("x-forwarded-for", "203.0.113.5, 10.0.0.2");
+    respond(200);
+
+    await memberFetch("/api/member/auth/login", { method: "POST", body: "{}" }, null);
+
+    const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(new Headers(init.headers).get("X-Forwarded-For")).toBe("203.0.113.5, 10.0.0.2");
+  });
+
+  it("sends no X-Forwarded-For when the request had none", async () => {
+    respond(200);
+
+    await memberFetch("/api/member/auth/login", { method: "POST", body: "{}" }, null);
+
+    const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(new Headers(init.headers).has("X-Forwarded-For")).toBe(false);
+  });
+
   it("sends the member token from the cookie and never caches", async () => {
     cookieStore.get.mockReturnValue({ value: "jwt" });
     respond(200);

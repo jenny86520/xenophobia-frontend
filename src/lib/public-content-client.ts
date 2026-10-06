@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { cache } from "react";
+import { forwardedForHeader } from "@/lib/forwarded-for";
 import type {
   PartyDetail,
   PartyListItem,
@@ -32,7 +33,8 @@ async function getJson<T>(path: string): Promise<T | null> {
   // Backend content is edited in the admin, so never prerender it at build time: wait for
   // a request (connection) and fetch uncached, so edits show on the next visit.
   await connection();
-  const response = await fetch(`${backendBaseUrl()}${path}`);
+  // Pass the visitor's address on, so the backend's rate limit counts visitors, not this server.
+  const response = await fetch(`${backendBaseUrl()}${path}`, { headers: await forwardedForHeader() });
   if (response.status === 404) return null;
   if (!response.ok) {
     throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);

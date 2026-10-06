@@ -5,7 +5,10 @@ const mockRedirect = jest.fn((path: string) => {
 const mockRevalidate = jest.fn();
 // connection() in public-content-client needs a Next request scope (and the Request global jsdom lacks).
 jest.mock("next/server", () => ({ connection: jest.fn().mockResolvedValue(undefined) }));
-jest.mock("next/headers", () => ({ cookies: () => Promise.resolve(cookieStore) }));
+jest.mock("next/headers", () => ({
+  cookies: () => Promise.resolve(cookieStore),
+  headers: () => Promise.resolve(new Headers({ "x-forwarded-for": "203.0.113.5" })),
+}));
 jest.mock("next/navigation", () => ({ redirect: (path: string) => mockRedirect(path) }));
 jest.mock("next/cache", () => ({ revalidatePath: (path: string) => mockRevalidate(path) }));
 
@@ -61,6 +64,21 @@ describe("loginAction", () => {
       fields: undefined,
       values: { username: "ming" },
     });
+    expect(cookieStore.set).not.toHaveBeenCalled();
+  });
+
+  it("shows the backend's wait message when there were too many attempts", async () => {
+    respond(429, { statusCode: 429, error: "TOO_MANY_REQUESTS", message: "請求太頻繁，請在 15 分鐘後再試" });
+
+    await expect(loginAction({}, form({ username: "ming", password: "x" }))).resolves.toEqual({
+      ok: false,
+      message: "請求太頻繁，請在 15 分鐘後再試",
+      fields: undefined,
+      values: { username: "ming" },
+    });
+    // The visitor's address went along, so the backend counts the visitor rather than this server.
+    const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(new Headers(init.headers).get("X-Forwarded-For")).toBe("203.0.113.5");
     expect(cookieStore.set).not.toHaveBeenCalled();
   });
 });

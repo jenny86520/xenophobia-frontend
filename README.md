@@ -89,6 +89,7 @@ public/brand/             # 網站 logo
 - 所有公開內容都透過 `src/lib/public-content-client.ts` 取得。
   - 每個請求只呼叫後端一次（`React.cache`），也不會預先產生頁面，所以後台改的內容會立刻生效。
   - 後端回 404 時頁面顯示「找不到」，其他錯誤則交給 `error.tsx`。
+- **轉送訪客 IP**：後端以訪客 IP 限制請求次數，但頁面與會員表單都是由前台伺服器代為呼叫後端。所以 `public-content-client.ts` 和 `member-session.ts` 的 `memberFetch` 都會把收到的 `X-Forwarded-For` 轉給後端（`src/lib/forwarded-for.ts`）。前台本身不做任何限流判斷。
 - 專案刻意不放 `loading.tsx`：串流的載入畫面要靠 JavaScript 才會換成內容，關閉 JavaScript 的訪客會一直停在載入畫面。
 
 ## 會員 session
@@ -97,6 +98,7 @@ public/brand/             # 網站 logo
 - 登入、登出、註冊、設定密碼、修改暱稱、報名和取消報名都是 Server Action（`src/app/member/actions.ts`），只負責把請求轉給後端，再回傳後端的訊息。
 - 表單都用 `<form action>` 搭配 `useActionState`，**不開 JavaScript 也能運作**。
 - 後端回 401 時會清掉 cookie，並導回 `/member/login`。
+- 後端因請求太頻繁回 429 時，表單直接顯示後端的訊息（例如「請求太頻繁，請在 15 分鐘後再試」）；頁面讀取時遇到 429 則交給 `error.tsx`。
 
 ## 設計系統
 
@@ -112,6 +114,7 @@ public/brand/             # 網站 logo
 
 - `NEXT_PUBLIC_BACKEND_URL` 必須是訪客瀏覽器連得到的公開位址；圖片和影片由瀏覽器直接向後端讀取。它在 `npm run build` 時就會寫進程式，改了之後要重新建置。
 - 正式環境要使用 HTTPS，會員 cookie 才能帶上 `Secure`。
+- **前台只能經由 nginx 對外**：Next 會保留訪客自己帶來的 `X-Forwarded-For`，只有 nginx 附加的最後一個位址可信。前台伺服器的位址也要列在後端的 `TRUST_PROXY` 中。設定方式見 [docs/deploy](../../docs/deploy/README.md)。
 
 ## 相關文件
 

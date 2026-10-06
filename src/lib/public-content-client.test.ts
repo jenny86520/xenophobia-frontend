@@ -7,6 +7,8 @@ import {
 
 // connection() needs a Next request scope (and the Request global jsdom lacks).
 jest.mock("next/server", () => ({ connection: jest.fn().mockResolvedValue(undefined) }));
+const requestHeaders = new Headers();
+jest.mock("next/headers", () => ({ headers: () => Promise.resolve(requestHeaders) }));
 
 function mockFetchResponse(status: number, body: unknown) {
   global.fetch = jest.fn().mockResolvedValue({
@@ -34,6 +36,31 @@ describe("fetchPartyDetail", () => {
   it("throws instead of returning the error body on other failures", async () => {
     mockFetchResponse(500, { statusCode: 500, error: "INTERNAL_SERVER_ERROR", message: "boom" });
     await expect(fetchPartyDetail("1")).rejects.toThrow("HTTP 500");
+  });
+});
+
+describe("visitor address", () => {
+  afterEach(() => {
+    requestHeaders.delete("x-forwarded-for");
+  });
+
+  it("passes the visitor's X-Forwarded-For on to the backend", async () => {
+    requestHeaders.set("x-forwarded-for", "203.0.113.9");
+    mockFetchResponse(200, { id: "1" });
+
+    await fetchPartyDetail("1");
+
+    const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(init.headers).toEqual({ "X-Forwarded-For": "203.0.113.9" });
+  });
+
+  it("sends no X-Forwarded-For when the request had none", async () => {
+    mockFetchResponse(200, { id: "1" });
+
+    await fetchPartyDetail("1");
+
+    const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(init.headers).toEqual({});
   });
 });
 
