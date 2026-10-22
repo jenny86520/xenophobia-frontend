@@ -8,7 +8,7 @@ XenoPhobiA（XPA）團隊官網的公開前台，提供派對（活動）目錄�
 
 | 項目 | 使用 |
 | --- | --- |
-| 框架 | Next.js 16.3.6（App Router，頁面以 Server Component 為主） |
+| 框架 | Next.js 16.4.2（App Router，頁面以 Server Component 為主） |
 | UI | React 19.2.8、Tailwind CSS 4、shadcn/ui（已 eject，原始碼在 `src/components/ui/`）、lucide 圖示 |
 | 字型 | Geist、Geist Mono、Noto Serif TC（標題） |
 | 語言 | TypeScript 5 |
@@ -114,7 +114,17 @@ public/brand/             # 網站 logo
 
 - `NEXT_PUBLIC_BACKEND_URL` 必須是訪客瀏覽器連得到的公開位址；圖片和影片由瀏覽器直接向後端讀取。它在 `npm run build` 時就會寫進程式，改了之後要重新建置。
 - 正式環境要使用 HTTPS，會員 cookie 才能帶上 `Secure`。
-- **前台只能經由 nginx 對外**：Next 會保留訪客自己帶來的 `X-Forwarded-For`，只有 nginx 附加的最後一個位址可信。前台伺服器的位址也要列在後端的 `TRUST_PROXY` 中。設定方式見 [docs/deploy](../../docs/deploy/README.md)。
+- **前台只能經由 nginx 對外**：Next 會保留訪客自己帶來的 `X-Forwarded-For`，只有 nginx 設定的位址可信。前台伺服器的位址也要列在後端的 `TRUST_PROXY` 中。用根目錄 [deploy/](../../deploy/README.md) 的 Docker compose 部署時已設定好；其他部署方式見 [docs/deploy](../../docs/deploy/README.md)。
+
+## 以容器執行
+
+正式環境用根目錄 [deploy/](../../deploy/README.md) 的 Docker compose 執行整套服務，這裡只說明前台映像。
+
+- **standalone**：`next.config.ts` 設定了 `output: "standalone"`。`Dockerfile` 只把 `.next/standalone`、`.next/static` 與 `public` 放進映像，以 `node` 使用者執行 `node server.js`（3000 埠）。本機的 `npm run dev` 不受影響。
+- **建置參數 `NEXT_PUBLIC_BACKEND_URL`（必填）**：瀏覽器連得到的後端網址，用來組出圖片與影片網址，在建置時寫入。改了要重新建置。
+- **執行時的 `BACKEND_URL`**：前台伺服器呼叫後端的內部網址，例如 `http://backend:3001`。
+- **`.env*` 不會進入映像**（見 `.dockerignore`）。
+- **單獨建置**：`docker build --build-arg NEXT_PUBLIC_BACKEND_URL=https://api.example.com -t xpa-frontend .`
 
 ## 相關文件
 

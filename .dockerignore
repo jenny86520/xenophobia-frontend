@@ -1,0 +1,18 @@
+# 不進入映像的檔案：依賴與建置結果在映像內重新產生；.env* 會把本機網址寫進程式，不可帶入
+.git
+node_modules
+.next
+.swc
+out
+build
+coverage
+.env*
+!.env.example
+*.tsbuildinfo
+next-env.d.ts
+Dockerfile
+.dockerignore
+**/*.test.ts
+**/*.test.tsx
+jest.config.mjs
+jest.setup.ts
