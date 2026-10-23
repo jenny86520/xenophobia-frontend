@@ -58,9 +58,9 @@ describe("ArchiveTimeline", () => {
     render(
       <ArchiveTimeline
         items={[
-          { id: "a", marker: "2024", title: "成立" },
-          { id: "b", marker: "2019", title: "第一場" },
-          { id: "c", marker: "2026", title: "改版" },
+          { id: "a", marker: "2024", entries: [{ id: "a", title: "成立" }] },
+          { id: "b", marker: "2019", entries: [{ id: "b", title: "第一場" }] },
+          { id: "c", marker: "2026", entries: [{ id: "c", title: "改版" }] },
         ]}
       />,
     );

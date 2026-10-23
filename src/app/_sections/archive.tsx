@@ -1,4 +1,4 @@
-import { ArchiveTimeline } from "@/components/brand/archive-timeline";
+import { ArchiveTimeline, type ArchiveTimelineItem } from "@/components/brand/archive-timeline";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { Placeholder } from "@/components/brand/placeholder";
@@ -16,6 +16,29 @@ type ArchiveProps = {
   layout?: "split" | "stacked";
 };
 
+/**
+ * One timeline row per run of equal dates. The backend already sorts by date, so equal dates
+ * are adjacent; the row keeps their order and shows the date once.
+ */
+function groupByDate(milestones: Milestone[]): ArchiveTimelineItem[] {
+  const rows: ArchiveTimelineItem[] = [];
+  for (const m of milestones) {
+    const entry = { id: m.id, title: m.title, description: m.description };
+    const last = rows.at(-1);
+    if (last && last.marker === m.date) {
+      last.entries.push(entry);
+    } else {
+      rows.push({
+        id: m.id,
+        marker: m.date,
+        dateTime: /^\d{4}(-\d{2}){0,2}$/.test(m.date) ? m.date : undefined,
+        entries: [entry],
+      });
+    }
+  }
+  return rows;
+}
+
 /** 5 · Archive: the team's history as oversized years on a hairline. */
 export function Archive({ milestones, index, layout = "split" }: ArchiveProps) {
   const stacked = layout === "stacked";
@@ -31,13 +54,7 @@ export function Archive({ milestones, index, layout = "split" }: ArchiveProps) {
         <div className={stacked ? "col-span-full" : "col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5"}>
           {milestones.length > 0 ? (
             <ArchiveTimeline
-              items={milestones.map((m) => ({
-                id: m.id,
-                marker: m.date,
-                dateTime: /^\d{4}(-\d{2}){0,2}$/.test(m.date) ? m.date : undefined,
-                title: m.title,
-                description: m.description,
-              }))}
+              items={groupByDate(milestones)}
             />
           ) : (
             <Placeholder name="milestones" label="里程碑" className="min-h-32" />

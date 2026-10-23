@@ -849,6 +849,32 @@
   }
 
   /*
+   * Milestone timeline rows (ArchiveTimeline): on hover the row fills with surface, the date
+   * turns signal red and the rule strengthens. Rows are not interactive, so there is no focus
+   * state. Idle colours live here rather than in utilities so the hover rules win (see
+   * .next-party). Colour only, so no reduced-motion gate is needed beyond the global rule.
+   */
+  .archive-row,
+  .archive-row-body {
+    border-color: var(--xpa-line);
+    transition: background-color 200ms ease-out, border-color 200ms ease-out;
+  }
+  .archive-row-marker {
+    color: var(--xpa-ink);
+    transition: color 200ms ease-out;
+  }
+  .archive-row:hover {
+    background-color: var(--xpa-surface);
+  }
+  .archive-row:hover,
+  .archive-row:hover .archive-row-body {
+    border-color: var(--xpa-line-strong);
+  }
+  .archive-row:hover .archive-row-marker {
+    color: var(--xpa-signal);
+  }
+
+  /*
    * Home next-party block: the title link stretches over the whole article. Feedback never
    * changes the background (a cover and its scrim sit there, and their contrast is measured):
    * signal top rule, title underline, arrow nudge, and a block-wide focus ring for keyboards.
@@ -911,6 +937,15 @@
       animation: xpa-reveal cubic-bezier(0.2, 0, 0, 1) both;
       animation-timeline: view();
       animation-range: entry 30% entry 80%;
+    }
+    /*
+     * Milestones rise in one by one, each on its own view timeline (spec: ≤48px). Ease-in, so
+     * a row speeds up and stops dead at its place instead of easing out slowly.
+     */
+    .archive-row-reveal {
+      animation: xpa-reveal-row cubic-bezier(0.6, 0, 0, 1) both;
+      animation-timeline: view();
+      animation-range: entry 150% entry 250%;
     }
     .hero-parallax {
       animation: xpa-parallax linear both;
@@ -1121,6 +1156,17 @@
   to {
     opacity: 1;
     visibility: visible;
+  }
+}
+
+@keyframes xpa-reveal-row {
+  from {
+    opacity: 0;
+    translate: 0 24px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
   }
 }
 
