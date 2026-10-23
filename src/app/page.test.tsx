@@ -28,7 +28,7 @@ const about: AboutContent = {
   highlights: [],
   roadmap: [],
   socialLinks: [],
-  games: [{ id: "g1", name: "CS2", summary: "", latestVideo: null }],
+  games: [{ id: "g1", name: "CS2", summary: "", videos: [] }],
 };
 
 const upcoming: UpcomingPartyResponse = {

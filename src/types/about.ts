@@ -16,12 +16,13 @@ export type Milestone = { id: string; title: string; description: string; date: 
 
 export type ContactInfo = { id: string; label: string; type: string; value: string };
 
-/** A game's newest highlight video, chosen by the backend (newest date, then newest added). */
-export type LatestVideo =
-  | { source: "youtube"; title: string; recordedOn: string; youtubeId: string }
-  | { source: "upload"; title: string; recordedOn: string; url: string; mimeType: string };
+/** One of a game's featured highlight videos (the admin picks up to five and their order). */
+export type GameVideo =
+  | { id: string; source: "youtube"; title: string; recordedOn: string; youtubeId: string }
+  | { id: string; source: "upload"; title: string; recordedOn: string; url: string; mimeType: string };
 
-export type Game = { id: string; name: string; summary: string; latestVideo: LatestVideo | null };
+/** `videos`: the featured videos in play order; empty when the game has none. */
+export type Game = { id: string; name: string; summary: string; videos: GameVideo[] };
 
 export type Highlight = { id: string; title: string; content: string };
 

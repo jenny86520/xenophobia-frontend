@@ -12,14 +12,20 @@ const YOUTUBE_ID = /^[A-Za-z0-9_-]{11}$/;
 
 /**
  * Privacy-enhanced YouTube embed URL. Autoplay is always muted (browsers only allow
- * muted autoplay). Returns null for anything that is not a plain video id.
+ * muted autoplay). With `origin` (the page's own), the embed accepts the IFrame API
+ * (`enablejsapi`), which the carousel uses to notice when a video ends.
+ * Returns null for anything that is not a plain video id.
  */
-export function youtubeEmbedUrl(youtubeId: string, autoplay: boolean): string | null {
+export function youtubeEmbedUrl(youtubeId: string, autoplay: boolean, origin?: string): string | null {
   if (!YOUTUBE_ID.test(youtubeId)) return null;
   const params = new URLSearchParams({ playsinline: "1", rel: "0" });
   if (autoplay) {
     params.set("autoplay", "1");
     params.set("mute", "1");
+  }
+  if (origin) {
+    params.set("enablejsapi", "1");
+    params.set("origin", origin);
   }
   return `https://www.youtube-nocookie.com/embed/${youtubeId}?${params.toString()}`;
 }

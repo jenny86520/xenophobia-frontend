@@ -108,6 +108,7 @@ public/brand/             # 網站 logo
 - **版面**：用 `Section`、`Container`、`EditorialGrid` 排版，標題用 `Heading`，團隊名稱一律用 `BrandName`。
 - **缺內容**：還沒有內容的地方放 `Placeholder`，不要自己編寫文案，並登記到 `placeholder-registry.ts` 或 `check-content.mjs`。
 - **動態**：只用 CSS，全部包在 `prefers-reduced-motion: no-preference` 裡；保留清楚的焦點框。
+- **遊戲輪播的影片**（`GameCarousel`）：展開的遊戲依後端回傳的順序播放 `videos`（後台挑選的最多 5 部），播完自動切到下一部、最後一部之後回到第一部；只有一部時播完就停。播放器下方的「上一部／下一部」與編號按鈕可手動切換（只有手動切換會朗讀）。偏好減少動態效果時不自動播放。YouTube 用自己的 `youtube-nocookie.com` iframe，透過 YouTube IFrame Player API（`lib/youtube-iframe-api.ts`，只在畫面上有 YouTube 影片時載入 `https://www.youtube.com/iframe_api`）偵測播放結束；API 被擋時影片照常播放，只是不會自動切換。日後若加上 CSP，`script-src` 需要允許 `https://www.youtube.com`。
 - **里程碑時間軸**（`ArchiveTimeline`）：照後端回傳的順序顯示（依日期，方向由後台設定），相鄰相同日期的里程碑合併成同一列，日期只顯示一次。滑過一列的任何位置都會整列反白、日期變紅（`.archive-row`），捲動時逐列淡入（`.archive-row-reveal`）；列沒有可操作的元素，所以不讓它取得焦點。
 - **狀態標示**：狀態、形式、分類不能只靠顏色區分，一定要有文字標籤與圖示。
 

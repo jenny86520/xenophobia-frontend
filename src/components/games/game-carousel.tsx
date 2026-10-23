@@ -5,6 +5,7 @@ import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
 import type { Game } from "@/types/about";
 import { GameHighlightPlayer } from "./game-highlight-player";
+import { GameVideoControls } from "./game-video-controls";
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
@@ -48,10 +49,14 @@ function targetIndex(key: string, index: number, total: number): number | null {
  * instant, with no transition. The first panel is expanded in
  * the server HTML, so it is open without JavaScript too. Collapsed bodies are `inert`.
  * Only the expanded panel mounts a player, and only after hydration, so autoplay can
- * respect prefers-reduced-motion. It never switches by itself.
+ * respect prefers-reduced-motion. It never switches games by itself. Inside the expanded game it
+ * plays the featured videos in order: an ended video moves to the next, the last one back to the
+ * first (a single video just stops); previous/next and numbered buttons switch by hand.
  */
 export function GameCarousel({ games }: { games: Game[] }) {
   const [active, setActive] = useState(0);
+  // Index into the expanded game's videos; every newly expanded game starts at its first.
+  const [activeVideo, setActiveVideo] = useState(0);
   const [announcement, setAnnouncement] = useState("");
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const baseId = useId();
@@ -64,7 +69,20 @@ export function GameCarousel({ games }: { games: Game[] }) {
   function expand(index: number) {
     if (index === active) return;
     setActive(index);
+    setActiveVideo(0);
     setAnnouncement(`${games[index].name}（第 ${index + 1} 個，共 ${total} 個）`);
+  }
+
+  /** Manual switch: announced politely, unlike the automatic move after a video ends. */
+  function selectVideo(index: number) {
+    const videos = games[active].videos;
+    setActiveVideo(index);
+    setAnnouncement(`第 ${index + 1} 部，共 ${videos.length} 部：${videos[index].title}`);
+  }
+
+  function playNext() {
+    const total = games[active].videos.length;
+    if (total > 1) setActiveVideo((index) => (index + 1) % total);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -79,7 +97,9 @@ export function GameCarousel({ games }: { games: Game[] }) {
       <div className="game-panels">
         {games.map((game, index) => {
           const expanded = index === active;
-          const video = game.latestVideo;
+          const videos = game.videos;
+          const videoIndex = expanded ? activeVideo : 0;
+          const video = videos[videoIndex] ?? null;
           const buttonId = `${baseId}-button-${index}`;
           const bodyId = `${baseId}-body-${index}`;
           return (
@@ -113,7 +133,13 @@ export function GameCarousel({ games }: { games: Game[] }) {
                   <div className="flex flex-col gap-4 pb-6">
                     <div className="relative aspect-video overflow-hidden bg-surface">
                       {video && expanded && mounted ? (
-                        <GameHighlightPlayer gameName={game.name} video={video} autoplay={!reducedMotion} />
+                        <GameHighlightPlayer
+                          key={video.id}
+                          gameName={game.name}
+                          video={video}
+                          autoplay={!reducedMotion}
+                          onEnded={playNext}
+                        />
                       ) : video ? (
                         <div className="absolute inset-0 flex flex-col items-start justify-end gap-2 border border-line p-5">
                           <MetaLabel className="text-ink-secondary">▶ Highlight</MetaLabel>
@@ -127,11 +153,19 @@ export function GameCarousel({ games }: { games: Game[] }) {
                         />
                       )}
                     </div>
+                    {expanded && mounted && videos.length > 1 && (
+                      <GameVideoControls
+                        videos={videos}
+                        active={videoIndex}
+                        onSelect={selectVideo}
+                      />
+                    )}
                     <p className="max-w-[60ch] text-body text-ink-secondary">
                       {game.summary || <Placeholder name={`game.${game.id}.summary`} label="遊戲短述" inline />}
                     </p>
                     {video && (
                       <MetaLabel>
+                        {videos.length > 1 && `${videoIndex + 1} / ${videos.length} · `}
                         {video.title} · {video.recordedOn}
                       </MetaLabel>
                     )}

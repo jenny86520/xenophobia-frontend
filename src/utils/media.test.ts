@@ -30,6 +30,12 @@ describe("youtubeEmbedUrl", () => {
     );
   });
 
+  it("enables the IFrame API for the page's origin when given", () => {
+    expect(youtubeEmbedUrl("dQw4w9WgXcQ", false, "https://xpa.example.com")).toBe(
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?playsinline=1&rel=0&enablejsapi=1&origin=https%3A%2F%2Fxpa.example.com",
+    );
+  });
+
   it("rejects anything but a video id", () => {
     expect(youtubeEmbedUrl("dQw4w9WgXcQ?x=1", true)).toBeNull();
     expect(youtubeEmbedUrl("../evil", true)).toBeNull();

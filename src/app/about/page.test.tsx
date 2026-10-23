@@ -30,9 +30,9 @@ const base: AboutContent = {
       id: "g1",
       name: "Assetto Corsa",
       summary: "Sim racing",
-      latestVideo: { source: "youtube", title: "Hot lap", recordedOn: "2026-10-01", youtubeId: "dQw4w9WgXcQ" },
+      videos: [{ id: "y1", source: "youtube", title: "Hot lap", recordedOn: "2026-10-01", youtubeId: "dQw4w9WgXcQ" }],
     },
-    { id: "g2", name: "CS2", summary: "", latestVideo: null },
+    { id: "g2", name: "CS2", summary: "", videos: [] },
   ],
 };
 
