@@ -102,7 +102,7 @@ async function tabContent(tab: MemberTab, profile: MemberProfile) {
   }
 
   if (tab === "videos") {
-    const submissions = (await fetchMemberVideoSubmissions()) ?? { items: [], canSubmit: false, uploadsLeftToday: 0 };
+    const submissions = (await fetchMemberVideoSubmissions()) ?? { items: [], paused: false, canSubmit: false, uploadsLeftToday: 0 };
     const games = submissions.canSubmit ? ((await fetchAboutContent())?.games ?? []) : [];
     return (
       <MemberVideosPanel submissions={submissions} games={games.map((game) => ({ id: game.id, name: game.name }))} />

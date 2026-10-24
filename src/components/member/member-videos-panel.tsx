@@ -18,11 +18,13 @@ type MemberVideosPanelProps = {
   games: { id: string; name: string }[];
 };
 
-/** The 投稿影片 tab: the notice and forms (when the role may submit), then the member's history. */
+/** The 投稿影片 tab: the notice and forms (when not paused and the role may submit), then the member's history. */
 export function MemberVideosPanel({ submissions, games }: MemberVideosPanelProps) {
   return (
     <MemberTabPanel id="videos-title" eyebrow="Submit" title="投稿影片">
-      {!submissions.canSubmit ? (
+      {submissions.paused ? (
+        <p className="text-body text-ink-secondary">影片投稿目前暫停，恢復後即可投稿。</p>
+      ) : !submissions.canSubmit ? (
         <p className="text-body text-ink-secondary">目前的角色不能投稿影片，如有需要請聯絡管理員。</p>
       ) : (
         <>

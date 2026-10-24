@@ -25,7 +25,7 @@ export type MemberProfile = {
 export type RegistrationStatus = "open" | "not-open" | "closed";
 
 /** Why a member cannot register (or leave) right now; null when the action is allowed. */
-export type RegistrationBlock = "not-open" | "closed" | "no-permission" | "role-not-allowed" | null;
+export type RegistrationBlock = "not-open" | "closed" | "paused" | "no-permission" | "role-not-allowed" | null;
 
 /** Public registration state of a party: the count, never names. */
 export type RegistrationSummary = {
@@ -33,6 +33,8 @@ export type RegistrationSummary = {
   /** Taiwan time "YYYY-MM-DDTHH:mm", or null when registration closes at the start. */
   deadline: string | null;
   count: number;
+  /** Registration is switched off site-wide by the admin; members who registered may still leave. */
+  paused: boolean;
 };
 
 export type Participant = {
@@ -73,7 +75,9 @@ export type MemberVideoSubmission = {
 
 export type MemberVideoSubmissions = {
   items: MemberVideoSubmission[];
-  /** Whether the member's role may submit videos (decided by the backend). */
+  /** Submissions are switched off site-wide by the admin. */
+  paused: boolean;
+  /** Whether the member may submit now: not paused and their role allows it (decided by the backend). */
   canSubmit: boolean;
   /** Uploads still allowed today (YouTube links are not counted). */
   uploadsLeftToday: number;

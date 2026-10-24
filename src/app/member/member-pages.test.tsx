@@ -27,6 +27,7 @@ const memberProps = (tab?: string) =>
   ({ searchParams: Promise.resolve(tab ? { tab } : {}), params: Promise.resolve({}) }) as unknown as PageProps<"/member">;
 
 const submissions = (overrides: Partial<MemberVideoSubmissions> = {}): MemberVideoSubmissions => ({
+  paused: false,
   canSubmit: true,
   uploadsLeftToday: 5,
   items: [
@@ -180,6 +181,17 @@ describe("/member", () => {
       expect(screen.queryByRole("form", { name: "以 YouTube 連結投稿" })).not.toBeInTheDocument();
       expect(within(screen.getByRole("region", { name: "投稿紀錄" })).getAllByRole("listitem")).toHaveLength(2);
       expect(fetchAboutContent).not.toHaveBeenCalled();
+    });
+
+    it("says submissions are paused, with no form but the history kept", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberVideoSubmissions as jest.Mock).mockResolvedValue(submissions({ paused: true, canSubmit: false }));
+      render(await MemberPage(memberProps("videos")));
+
+      expect(screen.getByText("影片投稿目前暫停，恢復後即可投稿。")).toBeInTheDocument();
+      expect(screen.queryByText(/目前的角色不能投稿影片/)).not.toBeInTheDocument();
+      expect(screen.queryByRole("form", { name: "以 YouTube 連結投稿" })).not.toBeInTheDocument();
+      expect(within(screen.getByRole("region", { name: "投稿紀錄" })).getAllByRole("listitem")).toHaveLength(2);
     });
 
     it("says so when nothing has been submitted yet", async () => {

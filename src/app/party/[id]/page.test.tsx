@@ -135,7 +135,7 @@ describe("PartyDetailPage", () => {
 });
 
 describe("party registration block", () => {
-  const openSummary = { status: "open", deadline: "2026-09-30T17:00", count: 5 } as const;
+  const openSummary = { status: "open", deadline: "2026-09-30T17:00", count: 5, paused: false } as const;
   const view = (overrides: Partial<MemberRegistrationView> = {}): MemberRegistrationView => ({
     ...openSummary,
     registered: false,
@@ -191,6 +191,31 @@ describe("party registration block", () => {
     mockedFetchMemberRegistration.mockResolvedValue(view({ blockedBy: "role-not-allowed" }));
     await renderPage();
     expect(screen.getAllByRole("region", { name: "報名" }).at(-1)).toHaveTextContent("此活動限定特定角色報名");
+  });
+  it("tells a visitor registration is paused instead of offering to sign in", async () => {
+    mockedFetchPartyDetail.mockResolvedValue({
+      ...party,
+      subParties: [],
+      registration: { ...openSummary, paused: true },
+    });
+    await renderPage();
+
+    expect(block()).toHaveTextContent("活動報名目前暫停");
+    expect(block()).not.toHaveTextContent("開放報名中");
+    expect(within(block()).queryByRole("link", { name: "會員登入" })).toBeNull();
+  });
+
+  it("disables 參加 while paused but lets a registered member leave", async () => {
+    mockedFetchMemberRegistration.mockResolvedValue(view({ paused: true, blockedBy: "paused" }));
+    await renderPage();
+    expect(within(block()).getByRole("button", { name: "參加" })).toBeDisabled();
+    expect(within(block()).getAllByText("活動報名目前暫停").length).toBeGreaterThan(0);
+
+    mockedFetchMemberRegistration.mockResolvedValue(view({ paused: true, registered: true }));
+    await renderPage();
+    const latest = screen.getAllByRole("region", { name: "報名" }).at(-1) as HTMLElement;
+    expect(latest).toHaveTextContent("活動報名目前暫停");
+    expect(within(latest).getByRole("button", { name: "取消參加" })).toBeEnabled();
   });
 });
 

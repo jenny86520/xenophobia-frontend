@@ -1,4 +1,4 @@
-import { CalendarClock, CircleCheck, CircleSlash } from "lucide-react";
+import { CalendarClock, CircleCheck, CirclePause, CircleSlash } from "lucide-react";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { formatCount } from "@/components/brand/meta-label";
@@ -21,10 +21,14 @@ const STATUS_TEXT: Record<RegistrationStatus, string> = {
 
 const STATUS_ICON = { open: CircleCheck, "not-open": CircleSlash, closed: CalendarClock } as const;
 
+/** Shown instead of 開放報名中 while the admin has switched registration off site-wide. */
+const PAUSED_TEXT = "活動報名目前暫停";
+
 /** Wording for the backend's reason; the decision itself is the backend's. */
 const BLOCK_TEXT: Record<Exclude<RegistrationBlock, null>, string> = {
   "not-open": "此活動未開放報名",
   closed: "報名已截止",
+  paused: PAUSED_TEXT,
   "no-permission": "你的角色沒有報名活動的權限",
   "role-not-allowed": "此活動限定特定角色報名",
 };
@@ -45,7 +49,9 @@ type Props = {
 /** Registration block of a party page: status, count, the member's 參加 button and the participant list. */
 export function PartyRegistration({ partyId, summary, member }: Props) {
   const state = member ?? summary;
-  const StatusIcon = STATUS_ICON[state.status];
+  // A paused site only matters while the party itself is open.
+  const paused = state.paused && state.status === "open";
+  const StatusIcon = paused ? CirclePause : STATUS_ICON[state.status];
 
   return (
     <Section labelledBy="registration-title" ruled>
@@ -60,7 +66,7 @@ export function PartyRegistration({ partyId, summary, member }: Props) {
           <p className="flex flex-wrap items-center gap-x-4 gap-y-2 text-lead text-ink">
             <span className="inline-flex items-center gap-2">
               <StatusIcon aria-hidden="true" className="size-5 text-signal" />
-              {STATUS_TEXT[state.status]}
+              {paused ? PAUSED_TEXT : STATUS_TEXT[state.status]}
             </span>
             <span className="text-ink-secondary">{state.count} 人參加</span>
             {state.deadline && (
@@ -101,7 +107,8 @@ export function PartyRegistration({ partyId, summary, member }: Props) {
               </div>
             </>
           ) : (
-            state.status === "open" && (
+            state.status === "open" &&
+            !paused && (
               <p className="text-body text-ink-secondary">
                 會員登入後即可報名。<TextLink href="/member/login">會員登入</TextLink>
               </p>
