@@ -27,3 +27,11 @@ export function formatTaipeiDateTime(iso: string): string {
   const part = Object.fromEntries(TAIPEI_PARTS.formatToParts(date).map((p) => [p.type, p.value]));
   return `${part.year}/${part.month}/${part.day} ${part.hour}:${part.minute}`;
 }
+
+/** Fixed "YYYY-MM-DD", the Taiwan calendar day of a stored timestamp (e.g. a document's last update). */
+export function formatTaipeiDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const part = Object.fromEntries(TAIPEI_PARTS.formatToParts(date).map((p) => [p.type, p.value]));
+  return `${part.year}-${part.month}-${part.day}`;
+}

@@ -7,6 +7,7 @@ import type {
   UpcomingPartyResponse,
 } from "@/types/party";
 import type { AboutContent } from "@/types/about";
+import type { LegalDocument, LegalKey } from "@/types/legal";
 
 export type {
   NextParty,
@@ -77,4 +78,9 @@ export const fetchPartyDetail = cache(
 
 export const fetchAboutContent = cache(
   (): Promise<AboutContent> => getRequiredJson<AboutContent>("/api/about"),
+);
+
+/** A legal document for the footer dialogs; `null` when the backend does not know it (404). */
+export const fetchLegalDocument = cache(
+  (key: LegalKey): Promise<LegalDocument | null> => getJson<LegalDocument>(`/api/legal/${key}`),
 );

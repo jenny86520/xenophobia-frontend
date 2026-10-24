@@ -60,9 +60,11 @@ npm run dev                  # http://localhost:3000
 | `/party/[id]` | 派對詳情：封面、子派對、報名區塊（會員可報名並看到參加者名單） |
 | `/member` | 會員專區：上方是個人資料，下方以分頁切換「參加的活動」（預設）、「修改暱稱」（`?tab=nickname`）與「投稿影片」（`?tab=videos`）；未登入時只說明如何成為會員 |
 | `/member/login` | 會員登入、申請重設密碼 |
-| `/member/register` | 會員註冊（註冊後需由管理員開通） |
+| `/member/register` | 會員註冊（需勾選同意使用條款與隱私權政策；註冊後需由管理員開通） |
 | `/member/password` | 透過信件中的一次性連結設定密碼 |
 | `/member/videos/upload` | 上傳影片檔的 Route Handler（只接受 POST），見[會員投稿影片](#會員投稿影片) |
+
+隱私權政策與使用條款沒有獨立頁面，是每頁都有的彈出視窗，見[法律條款](#法律條款)。
 
 ## 專案結構
 
@@ -77,7 +79,7 @@ src/
 │   ├── brand/            # 設計系統元件（Section、Heading、BrandName、Placeholder…）
 │   ├── ui/               # shadcn/ui 元件（button、badge 有客製，不要用 CLI 覆蓋）
 │   ├── layout/           # Header、Footer、行動版選單、導覽項目（nav-items.ts）
-│   └── about/  contact/  games/  member/  party/
+│   └── about/  contact/  games/  legal/  member/  party/
 ├── hooks/                # 自訂 hook（use-countdown）
 ├── lib/                  # 後端存取：public-content-client.ts、member-session.ts
 ├── types/                # API 回應型別
@@ -114,11 +116,22 @@ public/brand/             # 網站 logo
 - 送出前會先檢查副檔名（MP4／WebM）與大小（500 MB），並依後端回傳的 `uploadsLeftToday` 停用上傳；最後一律以後端判斷為準。
 - **其他遊戲**：遊戲選單最後一項是「其他（自行輸入）」，選了才會顯示「遊戲名稱」欄位（用 CSS `:has` 控制，不開 JavaScript 也能用）。送出時前台把「其他」轉成 `otherGameName`（`utils/video-upload.ts` 的 `submissionGame`），名稱是否必填由後端判斷；投稿紀錄顯示「其他：名稱」。
 - 能不能投稿（`canSubmit`）由後端依角色權限決定，前台只照著顯示。
+- **權利確認**：兩種投稿表單都有必勾的「我擁有這部影片的權利，並同意公開與上傳」（`RightsField`）。YouTube 由 Server Action 只在勾選時送 `rightsConfirmed: true`；上傳表單在送出前先檢查，未勾選不會開始上傳。後端仍會擋下未確認的投稿，錯誤顯示在勾選框下方。
+
+## 法律條款
+
+- 隱私權政策與使用條款由後台編輯（`GET /api/legal/privacy|terms`），**沒有 `/privacy`、`/terms` 頁面**。根版型（`src/app/layout.tsx`）和 about 一起抓這兩份文件（失敗時當作 `null`），在頁尾之後放兩個 `LegalDialog`（`components/legal/`）。
+- 視窗用 HTML Popover API：`<div popover="auto" role="dialog">`，開啟按鈕是 `<button popoverTarget>`，所以**不開 JavaScript 也能開關**；Esc、點視窗外面、右上角「關閉」都能關閉，開啟時焦點在關閉按鈕，關閉後回到原本的按鈕，網址不變。
+- 開啟的地方：頁尾最底列的 `LegalLinks`（等寬小字、紅色斜線分隔），以及註冊與投稿勾選框文字裡的 `LegalDialogButton`。在註冊頁開啟視窗不會清空已填的表單。
+- 內文是純文字，由 `utils/legal-text.ts` 的 `parseLegalText` 轉成段落：空行分隔段落，`# ` 開頭是小標，連續的 `- ` 開頭成為清單，段內換行保留；內容只當文字顯示，不解析 HTML。還沒發布（內容為空）時顯示 `Placeholder`（`legal.privacy`／`legal.terms`），`check:content` 會列出；讀取失敗時顯示「目前無法載入，請稍後再試。」。
+- 樣式在 `globals.css` 的 `.legal-dialog`：最寬 720px、最高 85dvh、內文捲動，背景遮罩用 `--xpa-background`；淡入只在 `prefers-reduced-motion: no-preference` 下用 `@starting-style`。
+- 註冊表單的同意勾選框是 `CheckboxField`（`form-controls.tsx`），Server Action 只在勾選時送 `acceptTerms: true`，其餘由後端驗證並記錄同意的時間與條款版本。
 
 ## 設計系統
 
 完整規格見 [openspec/specs/visual-design-system](../../openspec/specs/visual-design-system/spec.md)。開發時最常用到的規則：
 
+- **合併 class**：一律用 `@/lib/utils` 的 `cn()`。它用 `createCn` 把自訂字級（`text-display`、`text-h1`…`text-label`）登記為字級，否則 tailwind-merge 會把它們當成顏色，和 `text-ink` 這類顏色 class 合併時把字級丟掉。新增字級 token 時要一起加到 `TEXT_SIZES`。
 - **顏色**：一律使用 `src/app/globals.css` 定義的 token（`ink`、`surface`、`line`、`signal`、`cta`…），不寫死色碼。網站只有深色模式。
 - **版面**：用 `Section`、`Container`、`EditorialGrid` 排版，標題用 `Heading`，團隊名稱一律用 `BrandName`。
 - **缺內容**：還沒有內容的地方放 `Placeholder`，不要自己編寫文案，並登記到 `placeholder-registry.ts` 或 `check-content.mjs`。

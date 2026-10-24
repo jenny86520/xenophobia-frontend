@@ -39,13 +39,18 @@ async function signInAgain(): Promise<never> {
   redirect("/member/login");
 }
 
+/** A ticked checkbox posts "on"; the backend gets true, or nothing (and refuses) when unticked. */
+const ticked = (form: FormData, name: string) => (form.get(name) === "on" ? { [name]: true } : {});
+
 export async function registerAction(_: MemberActionState, form: FormData): Promise<MemberActionState> {
-  const body = Object.fromEntries(
+  const fields = Object.fromEntries(
     ["name", "nickname", "username", "discordId", "email", "phone"].map((field) => [field, text(form, field)]),
   );
-  const response = await postPublic("/api/member/auth/register", body);
-  if (!response) return { ...UNREACHABLE, values: body };
-  if (!response.ok) return { ...(await errorState(response, "註冊失敗，請檢查欄位")), values: body };
+  // What was typed and ticked, so the form shows it again after an error.
+  const values = { ...fields, acceptTerms: text(form, "acceptTerms") };
+  const response = await postPublic("/api/member/auth/register", { ...fields, ...ticked(form, "acceptTerms") });
+  if (!response) return { ...UNREACHABLE, values };
+  if (!response.ok) return { ...(await errorState(response, "註冊失敗，請檢查欄位")), values };
   return { ok: true, message: "註冊完成，請聯絡管理員開通，開通後會寄送設定密碼的信到你的 email。" };
 }
 
@@ -104,13 +109,17 @@ export async function updateNicknameAction(_: MemberActionState, form: FormData)
 /** Submits a YouTube link for review; an empty date is left out, so the backend uses today. */
 export async function submitYoutubeVideoAction(_: MemberActionState, form: FormData): Promise<MemberActionState> {
   const values = Object.fromEntries(
-    ["gameId", "otherGameName", "title", "recordedOn", "youtubeUrl"].map((field) => [field, text(form, field)]),
+    ["gameId", "otherGameName", "title", "recordedOn", "youtubeUrl", "rightsConfirmed"].map((field) => [
+      field,
+      text(form, field),
+    ]),
   );
   const body = {
     ...submissionGame(values.gameId, values.otherGameName),
     title: values.title,
     youtubeUrl: values.youtubeUrl,
     ...(values.recordedOn ? { recordedOn: values.recordedOn } : {}),
+    ...ticked(form, "rightsConfirmed"),
   };
   let response: Response;
   try {

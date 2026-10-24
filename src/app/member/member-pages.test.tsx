@@ -215,6 +215,13 @@ describe("/member/register", () => {
     expect(screen.getByLabelText("手機")).not.toBeRequired();
     expect(screen.getByLabelText("手機").closest("div")).toHaveTextContent("選填");
     expect(document.querySelector('input[type="password"]')).toBeNull();
+
+    const consent = screen.getByRole("checkbox", { name: /我已閱讀並同意\s*使用條款\s*與\s*隱私權政策/ });
+    expect(consent).toBeRequired();
+    expect(consent).toHaveAttribute("name", "acceptTerms");
+    expect(consent.closest("div")).toHaveTextContent("必填");
+    expect(screen.getByRole("button", { name: "使用條款" })).toHaveAttribute("popovertarget", "legal-terms");
+    expect(screen.getByRole("button", { name: "隱私權政策" })).toHaveAttribute("popovertarget", "legal-privacy");
   });
 });
 

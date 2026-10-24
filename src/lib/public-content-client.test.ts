@@ -1,6 +1,7 @@
 import {
   backendBaseUrl,
   fetchAboutContent,
+  fetchLegalDocument,
   fetchPartyDetail,
   fetchPartyList,
 } from "./public-content-client";
@@ -91,6 +92,22 @@ describe("fetchPartyList", () => {
     await fetchPartyList("expired", "all", "games");
     const [url] = (global.fetch as jest.Mock).mock.calls[0] as [string];
     expect(url.endsWith("/api/parties?status=expired&category=games")).toBe(true);
+  });
+});
+
+describe("fetchLegalDocument", () => {
+  it("reads a document by key", async () => {
+    const doc = { key: "terms", title: "使用條款", content: "內容", version: 2, updatedAt: "2026-11-01T02:00:00.000Z" };
+    mockFetchResponse(200, doc);
+    await expect(fetchLegalDocument("terms")).resolves.toEqual(doc);
+    expect((global.fetch as jest.Mock).mock.calls[0][0]).toMatch(/\/api\/legal\/terms$/);
+  });
+
+  it("is null on 404 and throws on other failures", async () => {
+    mockFetchResponse(404, {});
+    await expect(fetchLegalDocument("privacy")).resolves.toBeNull();
+    mockFetchResponse(500, {});
+    await expect(fetchLegalDocument("privacy")).rejects.toThrow("HTTP 500");
   });
 });
 

@@ -821,6 +821,47 @@
     background-size: 100% 1px;
   }
 
+  /*
+   * Legal dialogs (privacy policy, terms of use): native popovers, so they open and close without
+   * JavaScript. Surface, thin rule and 4px radius like other panels; no heavy shadow. Only the body
+   * scrolls, so the title and close button stay in view. Colours are tokens only.
+   */
+  .legal-dialog {
+    margin: auto;
+    width: min(720px, calc(100vw - 2 * var(--container-gutter)));
+    max-height: 85dvh;
+    padding: 0;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--xpa-line);
+    border-radius: var(--radius);
+    background-color: var(--xpa-surface-elevated);
+    color: var(--xpa-ink);
+  }
+  .legal-dialog:popover-open {
+    display: flex;
+  }
+  .legal-dialog::backdrop {
+    background-color: color-mix(in oklch, var(--xpa-background) 80%, transparent);
+  }
+  .legal-dialog-body {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  /* Close button: the signal border and glow only on hover and keyboard focus. */
+  .legal-dialog-close {
+    transition: border-color 160ms ease-out, box-shadow 160ms ease-out, color 160ms ease-out;
+  }
+  .legal-dialog-close:hover,
+  .legal-dialog-close:focus-visible {
+    /* The border colour is a utility on the button: a utility would override it here. */
+    @apply shadow-glow;
+  }
+  .legal-dialog-close:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
   /* Primary CTA: darker fill, signal glow, arrow nudges right. */
   .cta-primary {
     transition: background-color 160ms ease-out, box-shadow 160ms ease-out;
@@ -1186,6 +1227,17 @@
   to {
     opacity: 0.35;
     translate: 0 -120px;
+  }
+}
+
+/* Legal dialogs fade in and rise 12px on open; reduced motion (or no @starting-style) shows them at once. */
+@media (prefers-reduced-motion: no-preference) {
+  .legal-dialog:popover-open {
+    transition: opacity 200ms ease-out, translate 200ms ease-out;
+    @starting-style {
+      opacity: 0;
+      translate: 0 12px;
+    }
   }
 }
 

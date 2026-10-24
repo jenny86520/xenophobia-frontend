@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { Heading } from "@/components/brand/typography";
+import { cn } from "@/lib/utils";
 import { MEMBER_TABS, memberTabHref, type MemberTab } from "@/utils/member-tabs";
 
 /**
@@ -23,14 +24,13 @@ export function MemberTabs({ current }: { current: MemberTab }) {
                 href={memberTabHref(tab.value)}
                 scroll={false}
                 aria-current={active ? "page" : undefined}
-                // Joined without cn(): tailwind-merge would drop the text-body size as clashing with the colour.
-                className={[
+                className={cn(
                   "-mb-px inline-block border-b-2 py-3 text-body whitespace-nowrap",
                   "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                   active
                     ? "border-signal font-medium text-ink"
                     : "border-transparent text-ink-secondary hover:border-line-strong hover:text-ink",
-                ].join(" ")}
+                )}
               >
                 {tab.label}
               </Link>

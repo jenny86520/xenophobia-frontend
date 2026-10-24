@@ -124,6 +124,51 @@ export function SelectField({ id, name, label, options, placeholder, error, ...s
   );
 }
 
+type CheckboxFieldProps = {
+  id: string;
+  name: string;
+  /** The label, which may hold buttons (e.g. ones opening the legal dialogs). */
+  children: ReactNode;
+  required?: boolean;
+  defaultChecked?: boolean;
+  /** The backend's message for this field. */
+  error?: string;
+};
+
+/** A labelled checkbox with the 必填 tag and its error linked through aria-describedby, like FormField. */
+export function CheckboxField({ id, name, children, required, defaultChecked, error }: CheckboxFieldProps) {
+  const errorId = error ? `${id}-error` : undefined;
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-start gap-3">
+        <input
+          id={id}
+          name={name}
+          type="checkbox"
+          required={required}
+          defaultChecked={defaultChecked}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={errorId}
+          className="mt-1 size-4 shrink-0 accent-signal focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+        />
+        <label htmlFor={id} className="text-body text-ink">
+          {children}
+        </label>
+        {required && (
+          <span aria-hidden="true" className="mt-0.5 shrink-0 font-mono text-meta text-signal">
+            必填
+          </span>
+        )}
+      </div>
+      {error && (
+        <p id={errorId} className="text-caption text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /** Primary submit button in the CTA style. */
 export function SubmitButton({ pending, children, className }: { pending: boolean; children: ReactNode; className?: string }) {
   return (

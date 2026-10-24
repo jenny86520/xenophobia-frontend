@@ -4,6 +4,7 @@ import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
 import { SocialIcon, socialLinkName } from "@/components/brand/social-icon";
+import { LegalLinks } from "@/components/legal/legal-links";
 import { TextLink } from "@/components/brand/text-link";
 import type { AboutContent, ContactInfo } from "@/types/about";
 import { contactHref } from "@/utils/contact";
@@ -116,10 +117,7 @@ export function SiteFooter({ brandName, about, version }: SiteFooterProps) {
           <MetaLabel>
             © {new Date().getFullYear()} {brandName}
           </MetaLabel>
-          <div className="flex flex-wrap items-center gap-3">
-            <Placeholder name="legal.privacy" label="隱私權政策" inline />
-            <Placeholder name="legal.terms" label="使用條款" inline />
-          </div>
+          <LegalLinks />
           <MetaLabel>Build {version}</MetaLabel>
         </div>
       </Container>

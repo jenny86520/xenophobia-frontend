@@ -81,17 +81,28 @@ describe("SiteFooter", () => {
     expect(links[0].querySelector('svg[data-platform="discord"]')).not.toBeNull();
   });
 
-  it("shows the build version and legal placeholders", () => {
+  it("shows the build version and the buttons that open the legal dialogs, styled as links", () => {
     render(<SiteFooter brandName="XenoPhobiA" version="0.1.0" about={null} />);
     expect(screen.getByText(/Build 0\.1\.0/)).toBeInTheDocument();
-    expect(screen.getByText("待提供：隱私權政策")).toBeInTheDocument();
+
+    const privacy = screen.getByRole("button", { name: "隱私權政策" });
+    const terms = screen.getByRole("button", { name: "使用條款" });
+    expect(privacy).toHaveAttribute("popovertarget", "legal-privacy");
+    expect(terms).toHaveAttribute("popovertarget", "legal-terms");
+    expect(privacy).toHaveAttribute("type", "button");
+    // Text links in the bottom row's mono metadata, not shadcn buttons.
+    expect(privacy).toHaveClass("link-underline", "text-ink-secondary");
+    expect(privacy.closest("p")).toHaveClass("font-mono", "text-meta");
+    expect(privacy).not.toHaveAttribute("data-slot", "button");
+    expect(screen.queryByText("待提供：隱私權政策")).not.toBeInTheDocument();
   });
 
   it("shows the brand name with its uppercase letters in red, and plain text in the copyright", () => {
     const { container } = render(<SiteFooter brandName="XenoPhobiA" version="0.1.0" about={null} />);
 
     const red = Array.from(container.querySelectorAll(".text-signal")).map((el) => el.textContent);
-    expect(red).toEqual(["X", "P", "A"]);
+    // The brand's capitals, then the signal slash between the two legal links.
+    expect(red).toEqual(["X", "P", "A", "/"]);
     expect(screen.getByText(/© [0-9]{4} XenoPhobiA/)).toBeInTheDocument();
   });
 });

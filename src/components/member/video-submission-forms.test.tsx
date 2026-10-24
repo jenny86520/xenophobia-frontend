@@ -53,6 +53,7 @@ function fillUpload(file: File) {
     target: { value: "Squad wipe" },
   });
   fireEvent.change(screen.getByLabelText("影片檔"), { target: { files: [file] } });
+  fireEvent.click(document.querySelector("#upload-rights") as HTMLInputElement);
 }
 
 beforeEach(() => {
@@ -97,6 +98,39 @@ describe("VideoSubmissionForms", () => {
     expect(name).not.toBeRequired();
     // Shown by CSS only while 其他 is selected (jsdom does not apply it, so check the rule's hook).
     expect(name.closest("div.hidden")?.className).toContain("group-has-[option[value=other]:checked]/game:block");
+  });
+
+  it("asks for the rights confirmation in both forms, with the terms opening in their dialog", () => {
+    render(<VideoSubmissionForms games={games} uploadsLeftToday={5} />);
+
+    for (const id of ["#youtube-rights", "#upload-rights"]) {
+      const box = document.querySelector(id) as HTMLInputElement;
+      expect(box).toHaveAttribute("name", "rightsConfirmed");
+      expect(box).toBeRequired();
+      expect(box.labels?.[0]).toHaveTextContent("我擁有這部影片的權利，並同意通過的影片公開在網站上、上傳至官網 YouTube 頻道");
+    }
+    const termsButtons = screen.getAllByRole("button", { name: "使用條款" });
+    expect(termsButtons).toHaveLength(2);
+    for (const button of termsButtons) {
+      expect(button).toHaveAttribute("type", "button");
+      expect(button).toHaveAttribute("popovertarget", "legal-terms");
+    }
+  });
+
+  it("does not upload until the rights box is ticked, and sends it", () => {
+    render(<VideoSubmissionForms games={games} uploadsLeftToday={5} />);
+    fillUpload(videoFile());
+    fireEvent.click(document.querySelector("#upload-rights") as HTMLInputElement);
+
+    fireEvent.submit(screen.getByRole("form", { name: "上傳影片檔投稿" }));
+    expect(FakeXhr.last).toBeUndefined();
+    expect(document.querySelector("#upload-rights")).toHaveAccessibleDescription(
+      "請確認你擁有這部影片的權利，並同意公開與上傳",
+    );
+
+    fireEvent.click(document.querySelector("#upload-rights") as HTMLInputElement);
+    fireEvent.submit(screen.getByRole("form", { name: "上傳影片檔投稿" }));
+    expect(FakeXhr.last!.body!.get("rightsConfirmed")).toBe("true");
   });
 
   it("uploads 其他 as the typed game name", () => {

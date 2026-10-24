@@ -9,7 +9,8 @@ import {
   updateNicknameAction,
 } from "@/app/member/actions";
 import type { MemberActionState } from "@/types/member";
-import { FormField, FormMessage, SubmitButton } from "./form-controls";
+import { LegalDialogButton } from "@/components/legal/legal-dialog-button";
+import { CheckboxField, FormField, FormMessage, SubmitButton } from "./form-controls";
 
 /**
  * Member forms. They are plain <form action={…}> elements bound to Server Actions, so they also
@@ -42,6 +43,16 @@ export function RegisterForm() {
       <FormField id="discordId" name="discordId" label="Discord ID" required maxLength={50} defaultValue={value("discordId")} error={error("discordId")} hint="參加活動將以此帳號來識別。"/>
       <FormField id="email" name="email" label="Email" type="email" autoComplete="email" required defaultValue={value("email")} error={error("email")} hint="開通後，設定密碼的信會寄到這裡。" />
       <FormField id="phone" name="phone" label="手機" type="tel" autoComplete="tel" defaultValue={value("phone")} error={error("phone")} hint="方便管理員聯絡用。" />
+      <CheckboxField
+        id="acceptTerms"
+        name="acceptTerms"
+        required
+        defaultChecked={value("acceptTerms") === "on"}
+        error={error("acceptTerms")}
+      >
+        我已閱讀並同意<LegalDialogButton kind="terms">使用條款</LegalDialogButton>與
+        <LegalDialogButton kind="privacy">隱私權政策</LegalDialogButton>
+      </CheckboxField>
       <FormMessage state={state} />
       <SubmitButton pending={pending} className="self-start">
         送出註冊

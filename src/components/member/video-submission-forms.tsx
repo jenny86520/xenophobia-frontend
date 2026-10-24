@@ -5,7 +5,8 @@ import { useActionState, useState, useSyncExternalStore, type ChangeEvent, type 
 import { submitYoutubeVideoAction } from "@/app/member/actions";
 import type { MemberActionState } from "@/types/member";
 import { OTHER_GAME, submissionGame, VIDEO_ACCEPT, videoFileProblem } from "@/utils/video-upload";
-import { FormField, FormMessage, SelectField, SubmitButton } from "./form-controls";
+import { LegalDialogButton } from "@/components/legal/legal-dialog-button";
+import { CheckboxField, FormField, FormMessage, SelectField, SubmitButton } from "./form-controls";
 
 type GameOption = { id: string; name: string };
 
@@ -116,6 +117,24 @@ function DetailsFields({ prefix, games, state }: { prefix: string; games: GameOp
   );
 }
 
+const RIGHTS_REQUIRED = "請確認你擁有這部影片的權利，並同意公開與上傳";
+
+/** The required confirmation before any submission; the terms open in their dialog on this page. */
+function RightsField({ prefix, state }: { prefix: string; state: MemberActionState }) {
+  return (
+    <CheckboxField
+      id={`${prefix}-rights`}
+      name="rightsConfirmed"
+      required
+      defaultChecked={state.values?.rightsConfirmed === "on"}
+      error={state.fields?.rightsConfirmed}
+    >
+      我擁有這部影片的權利，並同意通過的影片公開在網站上、上傳至官網 YouTube 頻道（詳見
+      <LegalDialogButton kind="terms">使用條款</LegalDialogButton>）
+    </CheckboxField>
+  );
+}
+
 function YoutubeSubmissionForm({ games }: { games: GameOption[] }) {
   const [state, action, pending] = useActionState(submitYoutubeVideoAction, EMPTY);
   return (
@@ -131,6 +150,7 @@ function YoutubeSubmissionForm({ games }: { games: GameOption[] }) {
         error={state.fields?.youtubeUrl}
         hint="例如 https://youtu.be/… 或 https://www.youtube.com/watch?v=…，也可以貼 Shorts 網址。"
       />
+      <RightsField prefix="youtube" state={state} />
       <FormMessage state={state} />
       <SubmitButton pending={pending} className="self-start">
         送出投稿
@@ -174,6 +194,11 @@ function VideoUploadForm({ games, uploadsLeftToday }: { games: GameOption[]; upl
       setState({ ok: false, message, fields: { file: message } });
       return;
     }
+    // Checked before sending, so an unticked box never costs a long upload (the backend checks again).
+    if (data.get("rightsConfirmed") !== "on") {
+      setState({ ok: false, fields: { rightsConfirmed: RIGHTS_REQUIRED } });
+      return;
+    }
 
     // Text fields first, the file last; an empty date is left out so the backend uses today.
     const body = new FormData();
@@ -184,6 +209,7 @@ function VideoUploadForm({ games, uploadsLeftToday }: { games: GameOption[]; upl
     for (const name of ["title", "recordedOn"]) {
       if (text(name)) body.set(name, text(name));
     }
+    body.set("rightsConfirmed", "true");
     body.set("file", file);
 
     const request = new XMLHttpRequest();
@@ -263,6 +289,7 @@ function VideoUploadForm({ games, uploadsLeftToday }: { games: GameOption[]; upl
             </p>
           )}
         </div>
+        <RightsField prefix="upload" state={state} />
         {uploading && (
           <div className="flex flex-col gap-2">
             <progress

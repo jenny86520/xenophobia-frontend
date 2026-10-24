@@ -4,8 +4,9 @@
  * per page, and exits non-zero while any remain.
  *
  *  - Data-driven placeholders come from GET /api/about (empty brand fields, games
- *    without a summary or highlight video, missing social links, ...). The rules mirror the
- *    <Placeholder> conditions in src/app and src/components/layout.
+ *    without a summary or highlight video, missing social links, ...) and GET /api/legal/*
+ *    (unpublished legal documents, shown in the footer dialogs on every page). The rules mirror
+ *    the <Placeholder> conditions in src/app and src/components.
  *  - Fixed placeholders come from src/components/brand/placeholder-registry.ts.
  *
  * Usage: npm run check:content   (BACKEND_URL / NEXT_PUBLIC_BACKEND_URL as in the app)
@@ -15,15 +16,19 @@ import { STATIC_PLACEHOLDERS } from "../src/components/brand/placeholder-registr
 const PAGES = ["/", "/party", "/party/[id]", "/about"];
 const backend = process.env.BACKEND_URL ?? process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:3001";
 
-let about;
-try {
-  const response = await fetch(`${backend}/api/about`);
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  about = await response.json();
-} catch (error) {
-  console.error(`無法取得 ${backend}/api/about：${error.message}`);
-  process.exit(2);
+async function getJson(path) {
+  try {
+    const response = await fetch(`${backend}${path}`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error(`無法取得 ${backend}${path}：${error.message}`);
+    process.exit(2);
+  }
 }
+
+const about = await getJson("/api/about");
+const legal = await Promise.all(["privacy", "terms"].map((key) => getJson(`/api/legal/${key}`)));
 
 const { teamProfile: p, games, milestones, contactInfo, highlights, socialLinks } = about;
 const found = new Map(PAGES.map((page) => [page, new Map()]));
@@ -35,6 +40,7 @@ const add = (pages, name, label) => {
 if (!p.tagline) add(["*"], "brand.tagline", "品牌標語");
 if (contactInfo.length === 0) add(["*"], "contact.any", "聯絡資訊");
 if (socialLinks.length === 0) add(["*"], "contact.social", "社群連結");
+for (const doc of legal) if (!doc.content.trim()) add(["*"], `legal.${doc.key}`, doc.title);
 
 // Home and about.
 if (!p.brandStatement) add(["/", "/about"], "brand.statement", "品牌宣言");

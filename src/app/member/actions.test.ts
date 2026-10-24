@@ -97,6 +97,18 @@ describe("registerAction", () => {
     expect(state).toMatchObject({ ok: false, fields: { username: "username is already taken" } });
   });
 
+  it("sends acceptTerms only when the box is ticked, and keeps it for the form", async () => {
+    const fields = { name: "王小明", nickname: "小明", username: "ming", discordId: "m#1", email: "m@x.com", phone: "" };
+    respond(201, { status: "pending" });
+    await registerAction({}, form({ ...fields, acceptTerms: "on" }));
+    expect(sentBody()).toEqual({ ...fields, acceptTerms: true });
+
+    respond(400, { message: ["請閱讀並同意使用條款與隱私權政策"], fields: { acceptTerms: "請閱讀並同意使用條款與隱私權政策" } });
+    const state = await registerAction({}, form(fields));
+    expect(sentBody()).toEqual(fields);
+    expect(state).toMatchObject({ ok: false, fields: { acceptTerms: "請閱讀並同意使用條款與隱私權政策" } });
+  });
+
   it("explains that an admin must activate the account", async () => {
     respond(201, { status: "pending" });
     const state = await registerAction({}, form({}));
@@ -155,6 +167,7 @@ describe("submitYoutubeVideoAction", () => {
     title: "Ace clutch",
     recordedOn: "",
     youtubeUrl: "https://youtu.be/dQw4w9WgXcQ",
+    rightsConfirmed: "on",
   };
 
   it("forwards the link without an empty date and refreshes the submissions page", async () => {
@@ -165,7 +178,12 @@ describe("submitYoutubeVideoAction", () => {
     const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
     expect(url).toMatch(/\/api\/member\/video-submissions$/);
     expect(init.method).toBe("POST");
-    expect(sentBody()).toEqual({ gameId: "g1", title: "Ace clutch", youtubeUrl: "https://youtu.be/dQw4w9WgXcQ" });
+    expect(sentBody()).toEqual({
+      gameId: "g1",
+      title: "Ace clutch",
+      youtubeUrl: "https://youtu.be/dQw4w9WgXcQ",
+      rightsConfirmed: true,
+    });
     expect(state).toEqual({ ok: true, message: "已送出投稿，請等待管理員審核。" });
     expect(mockRevalidate).toHaveBeenCalledWith("/member");
   });
@@ -177,6 +195,7 @@ describe("submitYoutubeVideoAction", () => {
       otherGameName: "Rainbow Six",
       title: "Ace clutch",
       youtubeUrl: "https://youtu.be/dQw4w9WgXcQ",
+      rightsConfirmed: true,
     });
   });
 
