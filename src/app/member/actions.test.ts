@@ -18,6 +18,7 @@ import {
   registrationAction,
   requestResetAction,
   setPasswordAction,
+  submitYoutubeVideoAction,
   updateNicknameAction,
 } from "./actions";
 
@@ -144,5 +145,66 @@ describe("member actions with a session", () => {
     respond(401, {});
     await expect(registrationAction("p1", "leave")).rejects.toThrow("REDIRECT /member/login");
     expect(cookieStore.delete).toHaveBeenCalledWith("xpa_member");
+  });
+});
+
+describe("submitYoutubeVideoAction", () => {
+  const video = {
+    gameId: "g1",
+    otherGameName: "",
+    title: "Ace clutch",
+    recordedOn: "",
+    youtubeUrl: "https://youtu.be/dQw4w9WgXcQ",
+  };
+
+  it("forwards the link without an empty date and refreshes the submissions page", async () => {
+    respond(201, { id: "s1", status: "pending" });
+
+    const state = await submitYoutubeVideoAction({}, form(video));
+
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/member\/video-submissions$/);
+    expect(init.method).toBe("POST");
+    expect(sentBody()).toEqual({ gameId: "g1", title: "Ace clutch", youtubeUrl: "https://youtu.be/dQw4w9WgXcQ" });
+    expect(state).toEqual({ ok: true, message: "已送出投稿，請等待管理員審核。" });
+    expect(mockRevalidate).toHaveBeenCalledWith("/member");
+  });
+
+  it("sends the typed name instead of a game for 其他", async () => {
+    respond(201, {});
+    await submitYoutubeVideoAction({}, form({ ...video, gameId: "other", otherGameName: "Rainbow Six" }));
+    expect(sentBody()).toEqual({
+      otherGameName: "Rainbow Six",
+      title: "Ace clutch",
+      youtubeUrl: "https://youtu.be/dQw4w9WgXcQ",
+    });
+  });
+
+  it("sends a chosen date", async () => {
+    respond(201, {});
+    await submitYoutubeVideoAction({}, form({ ...video, recordedOn: "2026-10-01" }));
+    expect(sentBody()).toMatchObject({ recordedOn: "2026-10-01" });
+  });
+
+  it("returns the backend's field errors with what was typed", async () => {
+    respond(400, { message: ["youtubeUrl must be a supported YouTube URL"], fields: { youtubeUrl: "不支援的網址" } });
+
+    await expect(submitYoutubeVideoAction({}, form({ ...video, youtubeUrl: "https://vimeo.com/1" }))).resolves.toEqual({
+      ok: false,
+      message: "youtubeUrl must be a supported YouTube URL",
+      fields: { youtubeUrl: "不支援的網址" },
+      values: { ...video, youtubeUrl: "https://vimeo.com/1" },
+    });
+  });
+
+  it("passes a permission refusal through, and signs in again on 401", async () => {
+    respond(403, { message: "目前的角色不能投稿影片" });
+    await expect(submitYoutubeVideoAction({}, form(video))).resolves.toMatchObject({
+      ok: false,
+      message: "目前的角色不能投稿影片",
+    });
+
+    respond(401, {});
+    await expect(submitYoutubeVideoAction({}, form(video))).rejects.toThrow("REDIRECT /member/login");
   });
 });

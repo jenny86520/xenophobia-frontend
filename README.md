@@ -58,10 +58,11 @@ npm run dev                  # http://localhost:3000
 | `/about` | 品牌宣言、使命、遊戲項目、里程碑、聯絡方式、網站特色、未來規劃 |
 | `/party` | 派對列表，可依狀態、形式、分類篩選（篩選條件放在網址上） |
 | `/party/[id]` | 派對詳情：封面、子派對、報名區塊（會員可報名並看到參加者名單） |
-| `/member` | 會員專區：個人資料、參加的活動、修改暱稱；未登入時只說明如何成為會員 |
+| `/member` | 會員專區：上方是個人資料，下方以分頁切換「參加的活動」（預設）、「修改暱稱」（`?tab=nickname`）與「投稿影片」（`?tab=videos`）；未登入時只說明如何成為會員 |
 | `/member/login` | 會員登入、申請重設密碼 |
 | `/member/register` | 會員註冊（註冊後需由管理員開通） |
 | `/member/password` | 透過信件中的一次性連結設定密碼 |
+| `/member/videos/upload` | 上傳影片檔的 Route Handler（只接受 POST），見[會員投稿影片](#會員投稿影片) |
 
 ## 專案結構
 
@@ -70,7 +71,8 @@ src/
 ├── app/                  # 路由：頁面組成與資料抓取
 │   ├── _sections/        # 首頁各區塊（部分與 /about 共用）
 │   ├── party/  about/  member/
-│   └── member/actions.ts # 會員相關的 Server Actions
+│   ├── member/actions.ts # 會員相關的 Server Actions
+│   └── member/videos/upload/route.ts # 投稿影片上傳的轉送（Route Handler）
 ├── components/
 │   ├── brand/            # 設計系統元件（Section、Heading、BrandName、Placeholder…）
 │   ├── ui/               # shadcn/ui 元件（button、badge 有客製，不要用 CLI 覆蓋）
@@ -100,6 +102,19 @@ public/brand/             # 網站 logo
 - 後端回 401 時會清掉 cookie，並導回 `/member/login`。
 - 後端因請求太頻繁回 429 時，表單直接顯示後端的訊息（例如「請求太頻繁，請在 15 分鐘後再試」）；頁面讀取時遇到 429 則交給 `error.tsx`。
 
+## 會員投稿影片
+
+- 位置：會員頁的「投稿影片」分頁（`/member?tab=videos`）。分頁是一般連結（`components/member/member-tabs.tsx`，`<nav>` 加 `aria-current`），由伺服器依網址渲染，不開 JavaScript 也能切換；只有打開的分頁才會向後端讀資料。角色沒有「可投稿影片」權限時只顯示說明與投稿紀錄。
+- **YouTube 連結**：和其他會員表單一樣是 Server Action（`submitYoutubeVideoAction`），不開 JavaScript 也能送出。
+- **上傳影片檔**：Server Action 無法顯示上傳進度，所以表單（`components/member/video-submission-forms.tsx`）用 `XMLHttpRequest` 送到同網域的 Route Handler `POST /member/videos/upload`，再由它轉送給後端。這個表單需要 JavaScript，頁面上有說明。
+  - Route Handler 沒有 Server Action 內建的來源檢查，所以自己比對 `Origin` 與 `Host`（或 nginx 帶的 `X-Forwarded-Host`），不同就回 403。
+  - 轉送用 `node:http` 加 `stream.pipeline`，後端讀得慢時會暫停讀取，記憶體不會隨檔案變大。**不要改用 `fetch(..., { duplex: 'half' })`**：實測它不等後端，300 MB 的上傳會讓前台伺服器多占約 330 MB 記憶體。
+  - **不要新增 `proxy.ts`**（舊稱 middleware）：有它時 Next 會把請求內容整個緩衝在記憶體，而且上限 10 MB，上傳會失敗。
+  - 後端的回應（含每日上限的 429）原樣回傳；後端回 401 時清掉會員 cookie，表單導回登入頁。
+- 送出前會先檢查副檔名（MP4／WebM）與大小（500 MB），並依後端回傳的 `uploadsLeftToday` 停用上傳；最後一律以後端判斷為準。
+- **其他遊戲**：遊戲選單最後一項是「其他（自行輸入）」，選了才會顯示「遊戲名稱」欄位（用 CSS `:has` 控制，不開 JavaScript 也能用）。送出時前台把「其他」轉成 `otherGameName`（`utils/video-upload.ts` 的 `submissionGame`），名稱是否必填由後端判斷；投稿紀錄顯示「其他：名稱」。
+- 能不能投稿（`canSubmit`）由後端依角色權限決定，前台只照著顯示。
+
 ## 設計系統
 
 完整規格見 [openspec/specs/visual-design-system](../../openspec/specs/visual-design-system/spec.md)。開發時最常用到的規則：
@@ -116,6 +131,7 @@ public/brand/             # 網站 logo
 
 - `NEXT_PUBLIC_BACKEND_URL` 必須是訪客瀏覽器連得到的公開位址；圖片和影片由瀏覽器直接向後端讀取。它在 `npm run build` 時就會寫進程式，改了之後要重新建置。
 - 正式環境要使用 HTTPS，會員 cookie 才能帶上 `Secure`。
+- nginx 要讓 `/member/videos/upload` 收 500 MB 的請求並關閉請求緩衝（[deploy/](../../deploy/README.md) 的設定已包含），其他路徑維持預設的 1 MB。
 - **前台只能經由 nginx 對外**：Next 會保留訪客自己帶來的 `X-Forwarded-For`，只有 nginx 設定的位址可信。前台伺服器的位址也要列在後端的 `TRUST_PROXY` 中。用根目錄 [deploy/](../../deploy/README.md) 的 Docker compose 部署時已設定好；其他部署方式見 [docs/deploy](../../docs/deploy/README.md)。
 
 ## 以容器執行

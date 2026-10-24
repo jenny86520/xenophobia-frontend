@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { forwardedForHeader } from "@/lib/forwarded-for";
 import { backendBaseUrl } from "@/lib/public-content-client";
-import type { MemberProfile, MemberRegistrationView } from "@/types/member";
+import type { MemberProfile, MemberRegistrationView, MemberVideoSubmissions } from "@/types/member";
 
 /**
  * The member's access token lives only in this httpOnly cookie: browser JavaScript cannot read it,
@@ -55,6 +55,17 @@ export async function fetchMemberProfile(): Promise<MemberProfile | null> {
   if (response.status === 401) return null;
   if (!response.ok) throw new Error(`Backend request failed: GET /api/member/me -> HTTP ${response.status}`);
   return (await response.json()) as MemberProfile;
+}
+
+/** The member's own video submissions and today's remaining uploads, or null when not signed in. */
+export async function fetchMemberVideoSubmissions(): Promise<MemberVideoSubmissions | null> {
+  const token = await memberToken();
+  if (!token) return null;
+  const path = "/api/member/video-submissions";
+  const response = await memberFetch(path, {}, token);
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
+  return (await response.json()) as MemberVideoSubmissions;
 }
 
 /** The member's view of a party's registration, or null when not signed in. */

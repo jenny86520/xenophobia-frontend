@@ -51,6 +51,34 @@ export type MemberRegistrationView = RegistrationSummary & {
   participants: Participant[];
 };
 
+export type VideoSubmissionStatus = "pending" | "accepted" | "rejected";
+
+/** One of the member's own highlight video submissions. */
+export type MemberVideoSubmission = {
+  id: string;
+  /** null for 其他: then `otherGameName` is the game the member typed. */
+  game: { id: string; name: string } | null;
+  otherGameName: string;
+  title: string;
+  /** "YYYY-MM-DD". */
+  recordedOn: string;
+  source: "youtube" | "upload";
+  youtubeId: string | null;
+  status: VideoSubmissionStatus;
+  /** Empty unless an admin gave a reason when rejecting. */
+  rejectReason: string;
+  createdAt: string;
+  reviewedAt: string | null;
+};
+
+export type MemberVideoSubmissions = {
+  items: MemberVideoSubmission[];
+  /** Whether the member's role may submit videos (decided by the backend). */
+  canSubmit: boolean;
+  /** Uploads still allowed today (YouTube links are not counted). */
+  uploadsLeftToday: number;
+};
+
 /** Result of a member form's Server Action, rendered next to the form. */
 export type MemberActionState = {
   ok?: boolean;

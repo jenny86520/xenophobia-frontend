@@ -1,4 +1,4 @@
-import { formatSubPartyTime } from "./datetime";
+import { formatSubPartyTime, formatTaipeiDateTime } from "./datetime";
 
 describe("formatSubPartyTime", () => {
   const originalTz = process.env.TZ;
@@ -23,5 +23,15 @@ describe("formatSubPartyTime", () => {
 
   it("returns the input unchanged when it is not a date", () => {
     expect(formatSubPartyTime("TBD")).toBe("TBD");
+  });
+});
+
+describe("formatTaipeiDateTime", () => {
+  it("shows a UTC timestamp as the Taiwan date and time", () => {
+    expect(formatTaipeiDateTime("2026-10-23T16:30:00.000Z")).toBe("2026/10/24 00:30");
+  });
+
+  it("returns the input unchanged when it is not a date", () => {
+    expect(formatTaipeiDateTime("nope")).toBe("nope");
   });
 });

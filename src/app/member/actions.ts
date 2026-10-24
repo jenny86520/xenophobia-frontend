@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearMemberToken, memberFetch, setMemberToken } from "@/lib/member-session";
 import type { MemberActionState } from "@/types/member";
+import { submissionGame } from "@/utils/video-upload";
 
 /**
  * Server Actions for the member pages. Each one only forwards the form to the backend and hands
@@ -98,6 +99,32 @@ export async function updateNicknameAction(_: MemberActionState, form: FormData)
   if (!response.ok) return errorState(response, "儲存失敗，請稍後再試");
   revalidatePath("/member");
   return { ok: true, message: "暱稱已更新。" };
+}
+
+/** Submits a YouTube link for review; an empty date is left out, so the backend uses today. */
+export async function submitYoutubeVideoAction(_: MemberActionState, form: FormData): Promise<MemberActionState> {
+  const values = Object.fromEntries(
+    ["gameId", "otherGameName", "title", "recordedOn", "youtubeUrl"].map((field) => [field, text(form, field)]),
+  );
+  const body = {
+    ...submissionGame(values.gameId, values.otherGameName),
+    title: values.title,
+    youtubeUrl: values.youtubeUrl,
+    ...(values.recordedOn ? { recordedOn: values.recordedOn } : {}),
+  };
+  let response: Response;
+  try {
+    response = await memberFetch("/api/member/video-submissions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return { ...UNREACHABLE, values };
+  }
+  if (response.status === 401) return signInAgain();
+  if (!response.ok) return { ...(await errorState(response, "投稿失敗，請檢查欄位")), values };
+  revalidatePath("/member");
+  return { ok: true, message: "已送出投稿，請等待管理員審核。" };
 }
 
 /** Join or leave a party; the party id and intent are bound when the form is rendered. */

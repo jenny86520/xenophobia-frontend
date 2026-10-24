@@ -10,6 +10,7 @@ jest.mock("next/headers", () => ({
 import {
   MEMBER_COOKIE,
   fetchMemberProfile,
+  fetchMemberVideoSubmissions,
   memberCookieOptions,
   memberFetch,
   setMemberToken,
@@ -100,5 +101,27 @@ describe("fetchMemberProfile", () => {
     cookieStore.get.mockReturnValue({ value: "jwt" });
     respond(500);
     await expect(fetchMemberProfile()).rejects.toThrow("HTTP 500");
+  });
+});
+
+describe("fetchMemberVideoSubmissions", () => {
+  it("is null without a session or when the backend refuses the token", async () => {
+    respond(200);
+    await expect(fetchMemberVideoSubmissions()).resolves.toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+
+    cookieStore.get.mockReturnValue({ value: "expired" });
+    respond(401);
+    await expect(fetchMemberVideoSubmissions()).resolves.toBeNull();
+  });
+
+  it("returns the member's submissions with the token", async () => {
+    cookieStore.get.mockReturnValue({ value: "jwt" });
+    respond(200, { items: [], uploadsLeftToday: 5 });
+
+    await expect(fetchMemberVideoSubmissions()).resolves.toEqual({ items: [], uploadsLeftToday: 5 });
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/member\/video-submissions$/);
+    expect(new Headers(init.headers).get("Authorization")).toBe("Bearer jwt");
   });
 });

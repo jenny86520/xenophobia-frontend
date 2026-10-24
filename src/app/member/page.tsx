@@ -1,23 +1,28 @@
 import type { Metadata } from "next";
 import { CtaLink } from "@/components/brand/cta-link";
-import { EditorialGrid } from "@/components/brand/editorial-grid";
-import { Eyebrow } from "@/components/brand/eyebrow";
 import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { PageHeader } from "@/components/brand/page-header";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
-import { Heading } from "@/components/brand/typography";
 import { NicknameForm } from "@/components/member/member-forms";
-import { fetchMemberProfile } from "@/lib/member-session";
+import { MemberTabPanel, MemberTabs } from "@/components/member/member-tabs";
+import { MemberVideosPanel } from "@/components/member/member-videos-panel";
+import { fetchMemberProfile, fetchMemberVideoSubmissions } from "@/lib/member-session";
+import { fetchAboutContent } from "@/lib/public-content-client";
+import type { MemberProfile } from "@/types/member";
+import { parseMemberTab, type MemberTab } from "@/utils/member-tabs";
 import { logoutAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Member",
-  description: "XenoPhobiA 會員頁：個人資料與參加的活動。",
+  description: "XenoPhobiA 會員頁：個人資料、參加的活動與投稿影片。",
 };
 
-/** Members-only: the profile and joined parties; everyone else sees how to become a member. */
-export default async function MemberPage() {
+/**
+ * Members-only: the profile, then tabs (?tab=) for joined parties, the nickname and video
+ * submissions; everyone else sees how to become a member. Only the open tab's data is fetched.
+ */
+export default async function MemberPage({ searchParams }: PageProps<"/member">) {
   const profile = await fetchMemberProfile();
 
   if (!profile) {
@@ -40,6 +45,7 @@ export default async function MemberPage() {
     );
   }
 
+  const tab = parseMemberTab((await searchParams).tab);
   const details = [
     { label: "會員編號", value: profile.memberCode ?? "—" },
     { label: "姓名", value: profile.name },
@@ -77,43 +83,55 @@ export default async function MemberPage() {
         </dl>
       </Section>
 
-      <Section labelledBy="joined-title" ruled>
-        <EditorialGrid className="gap-y-8">
-          <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-4">
-            <Eyebrow>{`Joined / ${formatCount(profile.parties.length)}`}</Eyebrow>
-            <Heading level={2} id="joined-title">
-              參加的活動
-            </Heading>
-          </div>
-          <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
-            {profile.parties.length === 0 ? (
-              <p className="text-body text-ink-secondary">
-                還沒有報名任何活動。<TextLink href="/party">看看有哪些活動</TextLink>
-              </p>
-            ) : (
-              <ol className="border-t border-line">
-                {profile.parties.map((party) => (
-                  <li key={party.id} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line py-4">
-                    <TextLink href={`/party/${party.id}`} className="text-lead text-ink">
-                      {party.title}
-                    </TextLink>
-                    <MetaLabel>
-                      {party.startDate} {party.startTime}
-                    </MetaLabel>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
-        </EditorialGrid>
-      </Section>
-
-      <Section labelledBy="nickname-title" ruled>
-        <Heading level={2} id="nickname-title" className="mb-6">
-          修改暱稱
-        </Heading>
-        <NicknameForm nickname={profile.nickname} />
+      <Section spacing="tight">
+        <MemberTabs current={tab} />
+        {await tabContent(tab, profile)}
       </Section>
     </main>
+  );
+}
+
+/** The open tab's content; only that tab's data is fetched. */
+async function tabContent(tab: MemberTab, profile: MemberProfile) {
+  if (tab === "nickname") {
+    return (
+      <MemberTabPanel id="nickname-title" eyebrow="Profile" title="修改暱稱">
+        <NicknameForm nickname={profile.nickname} />
+      </MemberTabPanel>
+    );
+  }
+
+  if (tab === "videos") {
+    const submissions = (await fetchMemberVideoSubmissions()) ?? { items: [], canSubmit: false, uploadsLeftToday: 0 };
+    const games = submissions.canSubmit ? ((await fetchAboutContent())?.games ?? []) : [];
+    return (
+      <MemberVideosPanel submissions={submissions} games={games.map((game) => ({ id: game.id, name: game.name }))} />
+    );
+  }
+
+  return (
+    <MemberTabPanel id="joined-title" eyebrow={`Joined / ${formatCount(profile.parties.length)}`} title="參加的活動">
+      {profile.parties.length === 0 ? (
+        <p className="text-body text-ink-secondary">
+          還沒有報名任何活動。<TextLink href="/party">看看有哪些活動</TextLink>
+        </p>
+      ) : (
+        <ol className="border-t border-line">
+          {profile.parties.map((party) => (
+            <li
+              key={party.id}
+              className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line py-4"
+            >
+              <TextLink href={`/party/${party.id}`} className="text-lead text-ink">
+                {party.title}
+              </TextLink>
+              <MetaLabel>
+                {party.startDate} {party.startTime}
+              </MetaLabel>
+            </li>
+          ))}
+        </ol>
+      )}
+    </MemberTabPanel>
   );
 }

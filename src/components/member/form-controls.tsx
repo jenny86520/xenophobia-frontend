@@ -6,7 +6,7 @@ type FormFieldProps = {
   id: string;
   name: string;
   label: string;
-  type?: "text" | "email" | "tel" | "password";
+  type?: "text" | "email" | "tel" | "password" | "url" | "date";
   autoComplete?: string;
   required?: boolean;
   defaultValue?: string;
@@ -15,6 +15,8 @@ type FormFieldProps = {
   hint?: ReactNode;
   /** The backend's message for this field. */
   error?: string;
+  /** Shows the 必填 tag without the required attribute (for a field only needed in some cases). */
+  markRequired?: boolean;
 };
 
 /**
@@ -22,9 +24,10 @@ type FormFieldProps = {
  * A 必填/選填 tag sits beside the label (outside it, so the accessible name stays the label text);
  * assistive tech gets "required" from the input itself.
  */
-export function FormField({ id, name, label, type = "text", hint, error, ...input }: FormFieldProps) {
+export function FormField({ id, name, label, type = "text", hint, error, markRequired, ...input }: FormFieldProps) {
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
+  const requiredTag = input.required || markRequired;
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-baseline gap-2">
@@ -33,9 +36,9 @@ export function FormField({ id, name, label, type = "text", hint, error, ...inpu
         </label>
         <span
           aria-hidden="true"
-          className={cn("font-mono text-meta", input.required ? "text-signal" : "text-ink-muted")}
+          className={cn("font-mono text-meta", requiredTag ? "text-signal" : "text-ink-muted")}
         >
-          {input.required ? "必填" : "選填"}
+          {requiredTag ? "必填" : "選填"}
         </span>
       </div>
       <input
@@ -56,6 +59,62 @@ export function FormField({ id, name, label, type = "text", hint, error, ...inpu
           {hint}
         </p>
       )}
+      {error && (
+        <p id={errorId} className="text-caption text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
+type SelectFieldProps = {
+  id: string;
+  name: string;
+  label: string;
+  options: { value: string; label: string }[];
+  required?: boolean;
+  defaultValue?: string;
+  /** The empty first option, e.g. 「請選擇遊戲」. */
+  placeholder: string;
+  error?: string;
+};
+
+/** A native <select> styled and labelled like FormField. */
+export function SelectField({ id, name, label, options, placeholder, error, ...select }: SelectFieldProps) {
+  const errorId = error ? `${id}-error` : undefined;
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-baseline gap-2">
+        <label htmlFor={id} className="text-body text-ink">
+          {label}
+        </label>
+        <span
+          aria-hidden="true"
+          className={cn("font-mono text-meta", select.required ? "text-signal" : "text-ink-muted")}
+        >
+          {select.required ? "必填" : "選填"}
+        </span>
+      </div>
+      <select
+        id={id}
+        name={name}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={errorId}
+        className={cn(
+          "w-full rounded-sm border border-line-strong bg-surface px-3 py-2.5 text-body text-ink",
+          "focus-visible:border-signal focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+          "aria-invalid:border-destructive",
+        )}
+        {...select}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
       {error && (
         <p id={errorId} className="text-caption text-destructive">
           {error}
