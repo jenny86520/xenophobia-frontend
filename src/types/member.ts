@@ -1,3 +1,5 @@
+import type { SteamAccount } from "./player";
+
 /** Shapes returned by the backend member API (declared locally, as with the other public types). */
 
 export type MemberPartySummary = {
@@ -20,6 +22,8 @@ export type MemberProfile = {
   phone: string;
   role: { id: string; name: string } | null;
   parties: MemberPartySummary[];
+  /** The linked Steam account, or null. */
+  steam: SteamAccount | null;
 };
 
 export type RegistrationStatus = "open" | "not-open" | "closed";

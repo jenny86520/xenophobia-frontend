@@ -7,6 +7,7 @@ import { TextLink } from "@/components/brand/text-link";
 import { NicknameForm } from "@/components/member/member-forms";
 import { MemberTabPanel, MemberTabs } from "@/components/member/member-tabs";
 import { MemberVideosPanel } from "@/components/member/member-videos-panel";
+import { MemberSteam } from "@/components/player/member-steam";
 import { fetchMemberProfile, fetchMemberVideoSubmissions } from "@/lib/member-session";
 import { fetchAboutContent } from "@/lib/public-content-client";
 import type { MemberProfile } from "@/types/member";
@@ -45,7 +46,8 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
     );
   }
 
-  const tab = parseMemberTab((await searchParams).tab);
+  const query = await searchParams;
+  const tab = parseMemberTab(query.tab);
   const details = [
     { label: "會員編號", value: profile.memberCode ?? "—" },
     { label: "姓名", value: profile.name },
@@ -81,6 +83,7 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
             </div>
           ))}
         </dl>
+        <MemberSteam steam={profile.steam} result={typeof query.steam === "string" ? query.steam : undefined} />
       </Section>
 
       <Section spacing="tight">

@@ -79,7 +79,12 @@ const profile: MemberProfile = {
   parties: [
     { id: "p1", title: "十一月賽車", startDate: "2026-11-01", startTime: "19:00", status: "active", registeredAt: "" },
   ],
+  steam: null,
 };
+
+/** Page props for /member with any query (e.g. ?steam= from /steam/callback). */
+const memberQuery = (query: Record<string, string>) =>
+  ({ searchParams: Promise.resolve(query), params: Promise.resolve({}) }) as unknown as PageProps<"/member">;
 
 describe("/member", () => {
   it("shows only how to become a member when nobody is signed in, whatever the tab", async () => {
@@ -114,6 +119,44 @@ describe("/member", () => {
     expect(screen.queryByLabelText("暱稱")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "登出" })).toBeInTheDocument();
     expect(fetchMemberVideoSubmissions).not.toHaveBeenCalled();
+  });
+
+  it("offers to link Steam as a plain link when none is linked", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+    render(await MemberPage(memberProps()));
+
+    expect(screen.getByRole("link", { name: /綁定 Steam/ })).toHaveAttribute("href", "/steam/login?intent=link");
+    expect(screen.getByText(/參加內戰需要綁定 Steam 帳號/)).toBeInTheDocument();
+  });
+
+  it("shows the linked Steam account, and that changing it is up to an admin", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue({
+      ...profile,
+      steam: {
+        steamId: "76561198000000001",
+        steamName: "Ace",
+        avatarUrl: null,
+        profileUrl: "https://steamcommunity.com/profiles/76561198000000001",
+        linkedAt: "2026-10-25T00:00:00.000Z",
+      },
+    });
+    render(await MemberPage(memberQuery({ steam: "linked" })));
+
+    expect(screen.getByText("Ace")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Steam 個人頁/ })).toHaveAttribute(
+      "href",
+      "https://steamcommunity.com/profiles/76561198000000001",
+    );
+    expect(screen.getByText("如需更換請聯絡管理員。")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("已綁定 Steam 帳號。");
+    expect(screen.queryByRole("link", { name: /綁定 Steam/ })).not.toBeInTheDocument();
+  });
+
+  it("explains a refused Steam link", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+    render(await MemberPage(memberQuery({ steam: "link-refused" })));
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/已被其他會員使用/);
   });
 
   it("falls back to the joined parties for an unknown tab", async () => {
@@ -205,13 +248,32 @@ describe("/member", () => {
 });
 
 describe("/member/login", () => {
-  it("warns about the three-attempt lock and offers a reset request", () => {
-    render(<MemberLoginPage />);
+  const loginProps = (steam?: string) =>
+    ({ searchParams: Promise.resolve(steam ? { steam } : {}), params: Promise.resolve({}) }) as unknown as PageProps<"/member/login">;
+
+  it("warns about the three-attempt lock and offers a reset request", async () => {
+    render(await MemberLoginPage(loginProps()));
 
     expect(screen.getByRole("note")).toHaveTextContent("密碼連續輸入錯誤三次，帳號會被鎖定，需聯絡管理員解鎖");
     expect(screen.getByRole("button", { name: "登入" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "申請重設密碼" })).toBeInTheDocument();
     expect(screen.getByText(/每個帳號一天只能申請一次/)).toBeInTheDocument();
+  });
+
+  it("offers guests a Steam sign-in as a plain link to /steam/login", async () => {
+    render(await MemberLoginPage(loginProps()));
+
+    expect(screen.getByRole("heading", { name: "訪客以 Steam 登入" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "以 Steam 登入" })).toHaveAttribute("href", "/steam/login?intent=guest");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("explains why a Steam sign-in did not finish, and ignores unknown codes", async () => {
+    render(await MemberLoginPage(loginProps("disabled")));
+    expect(screen.getByRole("alert")).toHaveTextContent("這個訪客帳號已被停用，請聯絡管理員。");
+
+    render(await MemberLoginPage(loginProps("<script>")));
+    expect(screen.getAllByRole("alert")).toHaveLength(1);
   });
 });
 

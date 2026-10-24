@@ -3,6 +3,16 @@ import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isExternalHref, TextLink } from "./text-link";
 
+/** The solid CTA-red block; shared with links that must not use client navigation (SteamLoginLink). */
+export function ctaPrimaryClasses(size: "default" | "large" = "default", className?: string): string {
+  return cn(
+    "cta-primary group inline-flex items-center gap-3 rounded-sm bg-cta font-medium text-cta-ink",
+    "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+    size === "large" ? "px-7 py-4 text-lead" : "px-5 py-3 text-body",
+    className,
+  );
+}
+
 type CtaLinkProps = {
   href: string;
   label: string;
@@ -25,12 +35,7 @@ export function CtaLink({ href, label, variant = "primary", size = "default", cl
     );
   }
 
-  const classes = cn(
-    "cta-primary group inline-flex items-center gap-3 rounded-sm bg-cta font-medium text-cta-ink",
-    "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-    size === "large" ? "px-7 py-4 text-lead" : "px-5 py-3 text-body",
-    className,
-  );
+  const classes = ctaPrimaryClasses(size, className);
   const content = (
     <>
       {label}

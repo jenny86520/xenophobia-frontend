@@ -62,6 +62,8 @@ npm run dev                  # http://localhost:3000
 | `/member/login` | 會員登入、申請重設密碼 |
 | `/member/register` | 會員註冊（需勾選同意使用條款與隱私權政策；註冊後需由管理員開通） |
 | `/member/password` | 透過信件中的一次性連結設定密碼 |
+| `/player` | 訪客玩家頁（以 Steam 登入、沒有會員帳號）：第一次登入先設定暱稱，之後顯示暱稱、Steam 帳號與登出；未登入時提供「以 Steam 登入」 |
+| `/steam/login`、`/steam/callback` | Steam 登入的 Route Handler（只接受 GET），見[Steam 登入](#steam-登入) |
 | `/member/videos/upload` | 上傳影片檔的 Route Handler（只接受 POST），見[會員投稿影片](#會員投稿影片) |
 
 隱私權政策與使用條款沒有獨立頁面，是每頁都有的彈出視窗，見[法律條款](#法律條款)。
@@ -103,6 +105,14 @@ public/brand/             # 網站 logo
 - 表單都用 `<form action>` 搭配 `useActionState`，**不開 JavaScript 也能運作**。
 - 後端回 401 時會清掉 cookie，並導回 `/member/login`。
 - 後端因請求太頻繁回 429 時，表單直接顯示後端的訊息（例如「請求太頻繁，請在 15 分鐘後再試」）；頁面讀取時遇到 429 則交給 `error.tsx`。
+
+## Steam 登入
+
+- 參加內戰需要經 Steam 驗證的 SteamID。會員在會員頁「綁定 Steam」；沒有帳號的朋友在 `/member/login` 或 `/player` 按「以 Steam 登入」成為**訪客玩家**。
+- 流程（`src/lib/steam-login.ts`）：連結指向 `GET /steam/login?intent=guest|link`，它產生隨機 state、寫進 10 分鐘的 httpOnly cookie `xpa_steam_state`，再導向 Steam；Steam 導回 `GET /steam/callback`，state 必須和 cookie 相同才把 `openid.*` 參數轉給後端（`/api/player-auth/steam` 或會員的 `/api/member/steam`），**由後端向 Steam 驗證**。前台不判斷是誰，也不接受任何直接傳來的 SteamID。
+- 網址：送給 Steam 的回傳網址以 `X-Forwarded-Proto`／`X-Forwarded-Host`（nginx 會帶）組成，沒有時用請求本身的網址；它必須等於後端的 `MEMBER_PORTAL_URL`，否則後端拒絕。
+- 連結用一般 `<a>`（`SteamLoginLink`），不能用 `next/link`：用戶端導覽無法跟著導向到其他網站。全部是連結、導向與表單，不開 JavaScript 也能完成。
+- 訪客的權杖存在另一個 httpOnly cookie `xpa_player`（`src/lib/player-session.ts`），和會員的 `xpa_member` 分開；訪客只能用玩家功能。失敗時導回原頁並帶 `?steam=<代碼>`，頁面依代碼顯示說明（`STEAM_ERROR_TEXT`），不會顯示網址帶來的任意文字。
 
 ## 會員投稿影片
 
