@@ -5,10 +5,11 @@ import { PageHeader } from "@/components/brand/page-header";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { NicknameForm } from "@/components/member/member-forms";
+import { MemberMatchesPanel } from "@/components/match/member-matches-panel";
 import { MemberTabPanel, MemberTabs } from "@/components/member/member-tabs";
 import { MemberVideosPanel } from "@/components/member/member-videos-panel";
 import { MemberSteam } from "@/components/player/member-steam";
-import { fetchMemberProfile, fetchMemberVideoSubmissions } from "@/lib/member-session";
+import { fetchMemberMatches, fetchMemberProfile, fetchMemberVideoSubmissions } from "@/lib/member-session";
 import { fetchAboutContent } from "@/lib/public-content-client";
 import type { MemberProfile } from "@/types/member";
 import { parseMemberTab, type MemberTab } from "@/utils/member-tabs";
@@ -16,7 +17,7 @@ import { logoutAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Member",
-  description: "XenoPhobiA 會員頁：個人資料、參加的活動與投稿影片。",
+  description: "XenoPhobiA 會員頁：個人資料、參加的活動、內戰場次與投稿影片。",
 };
 
 /**
@@ -104,8 +105,18 @@ async function tabContent(tab: MemberTab, profile: MemberProfile) {
     );
   }
 
+  if (tab === "matches") {
+    const matches = (await fetchMemberMatches()) ?? { steamLinked: false, rating: null, items: [] };
+    return <MemberMatchesPanel matches={matches} />;
+  }
+
   if (tab === "videos") {
-    const submissions = (await fetchMemberVideoSubmissions()) ?? { items: [], paused: false, canSubmit: false, uploadsLeftToday: 0 };
+    const submissions = (await fetchMemberVideoSubmissions()) ?? {
+      items: [],
+      paused: false,
+      canSubmit: false,
+      uploadsLeftToday: 0,
+    };
     const games = submissions.canSubmit ? ((await fetchAboutContent())?.games ?? []) : [];
     return (
       <MemberVideosPanel submissions={submissions} games={games.map((game) => ({ id: game.id, name: game.name }))} />

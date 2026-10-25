@@ -11,13 +11,16 @@ export type GuestPlayer = {
   status: "active" | "disabled";
   createdAt: string;
   lastLoginAt: string | null;
+  rating: number;
 };
 
 /** A member's linked Steam account. */
 export type SteamAccount = {
+  playerId: string;
   steamId: string;
   steamName: string | null;
   avatarUrl: string | null;
   profileUrl: string;
   linkedAt: string | null;
+  rating: number;
 };

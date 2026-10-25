@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { MemberActionState } from "@/types/member";
 
@@ -75,6 +75,9 @@ type SelectFieldProps = {
   options: { value: string; label: string }[];
   required?: boolean;
   defaultValue?: string;
+  /** Controlled use (the options depend on other fields); otherwise leave both out. */
+  value?: string;
+  onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
   /** The empty first option, e.g. 「請選擇遊戲」. */
   placeholder: string;
   error?: string;

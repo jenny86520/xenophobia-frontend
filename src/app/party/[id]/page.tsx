@@ -6,11 +6,12 @@ import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
+import { MatchRow } from "@/components/match/match-row";
 import { PartyRegistration } from "@/components/party/party-registration";
 import { PartyStatusBadges } from "@/components/party/party-status-badges";
 import { SubPartyList } from "@/components/party/sub-party-list";
 import { fetchMemberRegistration } from "@/lib/member-session";
-import { fetchPartyDetail } from "@/lib/public-content-client";
+import { fetchMatches, fetchPartyDetail } from "@/lib/public-content-client";
 import { mediaUrl } from "@/utils/media";
 import { resolvePartyLifecycleStatus } from "@/utils/party-lifecycle";
 
@@ -32,7 +33,10 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
   const party = await fetchPartyDetail(id);
   if (!party) notFound();
   // Signed-in members also get the participant list; visitors only the public count.
-  const memberRegistration = party.registration ? await fetchMemberRegistration(party.id) : null;
+  const [memberRegistration, matches] = await Promise.all([
+    party.registration ? fetchMemberRegistration(party.id) : null,
+    fetchMatches(party.id),
+  ]);
 
   const lifecycle = resolvePartyLifecycleStatus(party.status);
   const subParties = party.subParties ?? [];
@@ -93,6 +97,24 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
 
       {party.registration && (
         <PartyRegistration partyId={party.id} summary={party.registration} member={memberRegistration} />
+      )}
+
+      {matches.items.length > 0 && (
+        <Section labelledBy="matches-title" ruled>
+          <EditorialGrid className="gap-y-8">
+            <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-4">
+              <Eyebrow>{`Matches / ${formatCount(matches.items.length)}`}</Eyebrow>
+              <Heading level={2} id="matches-title">
+                內戰場次
+              </Heading>
+            </div>
+            <ul className="col-span-4 border-b border-line md:col-span-8 lg:col-span-8 lg:col-start-5">
+              {matches.items.map((match) => (
+                <MatchRow key={match.id} match={match} />
+              ))}
+            </ul>
+          </EditorialGrid>
+        </Section>
       )}
 
       {subParties.length > 0 && (

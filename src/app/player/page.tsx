@@ -34,6 +34,7 @@ export default async function PlayerPage() {
               <>
                 <SteamLoginLink intent="guest" label="以 Steam 登入" />
                 <TextLink href="/member/login">會員登入</TextLink>
+                <TextLink href="/matches">內戰場次</TextLink>
               </>
             }
           />
@@ -64,6 +65,7 @@ export default async function PlayerPage() {
     { label: "暱稱", value: player.nickname },
     { label: "Steam 名稱", value: player.steamName ?? "—" },
     { label: "SteamID", value: player.steamId },
+    { label: "評分", value: String(player.rating) },
   ];
 
   return (
@@ -90,8 +92,9 @@ export default async function PlayerPage() {
             </div>
           ))}
         </dl>
-        <p className="mt-6 text-body text-ink-secondary">
+        <p className="mt-6 flex flex-wrap gap-6 text-body text-ink-secondary">
           <TextLink href={player.profileUrl}>Steam 個人頁</TextLink>
+          <TextLink href="/matches">內戰場次</TextLink>
         </p>
       </Section>
 

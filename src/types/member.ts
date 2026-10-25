@@ -24,6 +24,8 @@ export type MemberProfile = {
   parties: MemberPartySummary[];
   /** The linked Steam account, or null. */
   steam: SteamAccount | null;
+  /** The role may create scrim matches and the permission is not paused (decided by the backend). */
+  canCreateMatch: boolean;
 };
 
 export type RegistrationStatus = "open" | "not-open" | "closed";

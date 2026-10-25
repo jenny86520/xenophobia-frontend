@@ -1,6 +1,7 @@
 /** The member page's tabs, in display order; the first is the default. */
 export const MEMBER_TABS = [
   { value: "parties", label: "參加的活動" },
+  { value: "matches", label: "內戰場次" },
   { value: "nickname", label: "修改暱稱" },
   { value: "videos", label: "投稿影片" },
 ] as const;

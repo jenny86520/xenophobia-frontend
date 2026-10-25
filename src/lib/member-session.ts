@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { forwardedForHeader } from "@/lib/forwarded-for";
 import { backendBaseUrl } from "@/lib/public-content-client";
+import type { MemberMatches } from "@/types/match";
 import type { MemberProfile, MemberRegistrationView, MemberVideoSubmissions } from "@/types/member";
 
 /**
@@ -66,6 +67,17 @@ export async function fetchMemberVideoSubmissions(): Promise<MemberVideoSubmissi
   if (response.status === 401) return null;
   if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
   return (await response.json()) as MemberVideoSubmissions;
+}
+
+/** The member's own scrims and rating, or null when not signed in. */
+export async function fetchMemberMatches(): Promise<MemberMatches | null> {
+  const token = await memberToken();
+  if (!token) return null;
+  const path = "/api/member/matches";
+  const response = await memberFetch(path, {}, token);
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
+  return (await response.json()) as MemberMatches;
 }
 
 /** The member's view of a party's registration, or null when not signed in. */

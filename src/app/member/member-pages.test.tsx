@@ -1,5 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
-import { fetchMemberProfile, fetchMemberVideoSubmissions } from "@/lib/member-session";
+import { fetchMemberMatches, fetchMemberProfile, fetchMemberVideoSubmissions } from "@/lib/member-session";
 import { fetchAboutContent } from "@/lib/public-content-client";
 import type { MemberProfile, MemberVideoSubmissions } from "@/types/member";
 import MemberPage from "./page";
@@ -7,7 +7,11 @@ import MemberLoginPage from "./login/page";
 import MemberRegisterPage from "./register/page";
 import MemberPasswordPage from "./password/page";
 
-jest.mock("@/lib/member-session", () => ({ fetchMemberProfile: jest.fn(), fetchMemberVideoSubmissions: jest.fn() }));
+jest.mock("@/lib/member-session", () => ({
+  fetchMemberProfile: jest.fn(),
+  fetchMemberVideoSubmissions: jest.fn(),
+  fetchMemberMatches: jest.fn(),
+}));
 jest.mock("@/lib/public-content-client", () => ({ fetchAboutContent: jest.fn() }));
 jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }));
 // The forms call Server Actions; the pages only need them to exist.
@@ -24,7 +28,10 @@ jest.mock("./actions", () => ({
 
 /** Page props for /member with an optional ?tab=. */
 const memberProps = (tab?: string) =>
-  ({ searchParams: Promise.resolve(tab ? { tab } : {}), params: Promise.resolve({}) }) as unknown as PageProps<"/member">;
+  ({
+    searchParams: Promise.resolve(tab ? { tab } : {}),
+    params: Promise.resolve({}),
+  }) as unknown as PageProps<"/member">;
 
 const submissions = (overrides: Partial<MemberVideoSubmissions> = {}): MemberVideoSubmissions => ({
   paused: false,
@@ -80,6 +87,7 @@ const profile: MemberProfile = {
     { id: "p1", title: "十一月賽車", startDate: "2026-11-01", startTime: "19:00", status: "active", registeredAt: "" },
   ],
   steam: null,
+  canCreateMatch: false,
 };
 
 /** Page props for /member with any query (e.g. ?steam= from /steam/callback). */
@@ -107,8 +115,13 @@ describe("/member", () => {
       expect(screen.getAllByText(value).length).toBeGreaterThan(0);
     }
     const tabs = screen.getByRole("navigation", { name: "會員專區" });
-    expect(within(tabs).getAllByRole("link").map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
+    expect(
+      within(tabs)
+        .getAllByRole("link")
+        .map((link) => [link.textContent, link.getAttribute("href")]),
+    ).toEqual([
       ["參加的活動", "/member"],
+      ["內戰場次", "/member?tab=matches"],
       ["修改暱稱", "/member?tab=nickname"],
       ["投稿影片", "/member?tab=videos"],
     ]);
@@ -133,11 +146,13 @@ describe("/member", () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue({
       ...profile,
       steam: {
+        playerId: "p1",
         steamId: "76561198000000001",
         steamName: "Ace",
         avatarUrl: null,
         profileUrl: "https://steamcommunity.com/profiles/76561198000000001",
         linkedAt: "2026-10-25T00:00:00.000Z",
+        rating: 1000,
       },
     });
     render(await MemberPage(memberQuery({ steam: "linked" })));
@@ -171,6 +186,46 @@ describe("/member", () => {
     render(await MemberPage(memberProps()));
 
     expect(screen.getByText(/還沒有報名任何活動/)).toBeInTheDocument();
+  });
+
+  it("lists the member's scrims with their rating and team, and links to every match", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+    (fetchMemberMatches as jest.Mock).mockResolvedValue({
+      steamLinked: true,
+      rating: 1234,
+      items: [
+        {
+          id: "m1",
+          title: "週五晚場",
+          status: "teams_confirmed",
+          game: { id: "cs2", name: "Counter-Strike 2" },
+          party: null,
+          playerCount: 10,
+          capacity: 10,
+          createdAt: "2026-10-25T00:00:00.000Z",
+          team: "A",
+          isCaptain: true,
+        },
+      ],
+    });
+    render(await MemberPage(memberProps("matches")));
+
+    const panel = screen.getByRole("region", { name: "內戰場次" });
+    expect(within(panel).getByText("1234")).toBeInTheDocument();
+    const row = within(panel).getByRole("link", { name: /週五晚場/ });
+    expect(row).toHaveAttribute("href", "/matches/m1");
+    expect(within(row).getByText("A 隊・隊長")).toBeInTheDocument();
+    expect(within(panel).getByRole("link", { name: "查看所有內戰場次" })).toHaveAttribute("href", "/matches");
+  });
+
+  it("asks a member without Steam to link it before scrims", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+    (fetchMemberMatches as jest.Mock).mockResolvedValue({ steamLinked: false, rating: null, items: [] });
+    render(await MemberPage(memberProps("matches")));
+
+    const panel = screen.getByRole("region", { name: "內戰場次" });
+    expect(panel).toHaveTextContent("參加內戰與評分需要先綁定 Steam 帳號");
+    expect(within(panel).getByRole("link", { name: "查看所有內戰場次" })).toBeInTheDocument();
   });
 
   it("shows the nickname form on its tab", async () => {
@@ -249,7 +304,10 @@ describe("/member", () => {
 
 describe("/member/login", () => {
   const loginProps = (steam?: string) =>
-    ({ searchParams: Promise.resolve(steam ? { steam } : {}), params: Promise.resolve({}) }) as unknown as PageProps<"/member/login">;
+    ({
+      searchParams: Promise.resolve(steam ? { steam } : {}),
+      params: Promise.resolve({}),
+    }) as unknown as PageProps<"/member/login">;
 
   it("warns about the three-attempt lock and offers a reset request", async () => {
     render(await MemberLoginPage(loginProps()));
@@ -301,7 +359,10 @@ describe("/member/register", () => {
 
 describe("/member/password", () => {
   const props = (token?: string) =>
-    ({ searchParams: Promise.resolve(token ? { token } : {}), params: Promise.resolve({}) }) as unknown as PageProps<"/member/password">;
+    ({
+      searchParams: Promise.resolve(token ? { token } : {}),
+      params: Promise.resolve({}),
+    }) as unknown as PageProps<"/member/password">;
 
   it("says the link is invalid without a token", async () => {
     render(await MemberPasswordPage(props()));

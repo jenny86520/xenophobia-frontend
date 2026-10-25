@@ -29,6 +29,7 @@ const guest: GuestPlayer = {
   status: "active",
   createdAt: "2026-10-25T00:00:00.000Z",
   lastLoginAt: null,
+  rating: 1000,
 };
 
 const form = (nickname: string) => {

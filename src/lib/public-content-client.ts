@@ -8,6 +8,7 @@ import type {
 } from "@/types/party";
 import type { AboutContent } from "@/types/about";
 import type { LegalDocument, LegalKey } from "@/types/legal";
+import type { MatchDetail, MatchList } from "@/types/match";
 
 export type {
   NextParty,
@@ -78,6 +79,17 @@ export const fetchPartyDetail = cache(
 
 export const fetchAboutContent = cache(
   (): Promise<AboutContent> => getRequiredJson<AboutContent>("/api/about"),
+);
+
+/** Scrim matches, open ones first; only a party's when partyId is given. */
+export const fetchMatches = cache(
+  (partyId?: string): Promise<MatchList> =>
+    getRequiredJson<MatchList>(`/api/matches?pageSize=50${partyId ? `&partyId=${encodeURIComponent(partyId)}` : ""}`),
+);
+
+/** The public view of a match (no ratings, no invite codes); `null` when it does not exist. */
+export const fetchMatchDetail = cache(
+  (id: string): Promise<MatchDetail | null> => getJson<MatchDetail>(`/api/matches/${encodeURIComponent(id)}`),
 );
 
 /** A legal document for the footer dialogs; `null` when the backend does not know it (404). */

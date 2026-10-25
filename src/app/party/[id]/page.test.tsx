@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import PartyDetailPage from "./page";
 import PartyNotFound from "./not-found";
 import PartyDetailError from "./error";
-import { fetchPartyDetail } from "@/lib/public-content-client";
+import { fetchMatches, fetchPartyDetail } from "@/lib/public-content-client";
 import { fetchMemberRegistration } from "@/lib/member-session";
 import type { MemberRegistrationView } from "@/types/member";
 
@@ -15,6 +15,7 @@ jest.mock("next/navigation", () => ({
 
 jest.mock("@/lib/public-content-client", () => ({
   fetchPartyDetail: jest.fn(),
+  fetchMatches: jest.fn(() => Promise.resolve({ items: [], total: 0, page: 1, pageSize: 50 })),
 }));
 
 jest.mock("@/lib/member-session", () => ({ fetchMemberRegistration: jest.fn() }));
@@ -73,7 +74,12 @@ describe("PartyDetailPage", () => {
       ...party,
       subParties: [
         subParty({}),
-        subParty({ id: "s2", title: "Game rounds", description: "Sessions", startDateTime: "2026-09-30T19:00:00+08:00" }),
+        subParty({
+          id: "s2",
+          title: "Game rounds",
+          description: "Sessions",
+          startDateTime: "2026-09-30T19:00:00+08:00",
+        }),
       ],
     });
 
@@ -170,7 +176,9 @@ describe("party registration block", () => {
     await renderPage();
 
     expect(within(block()).getByRole("button", { name: "參加" })).toBeEnabled();
-    const names = within(block()).getAllByRole("listitem").map((li) => li.textContent);
+    const names = within(block())
+      .getAllByRole("listitem")
+      .map((li) => li.textContent);
     expect(names).toEqual(["小明ming#1", "小華hua#1", "朋友A非會員—"]);
   });
 
@@ -234,5 +242,38 @@ describe("party detail fallbacks", () => {
     const back = screen.getByRole("link", { name: "Back to Party" });
     expect(back).toHaveAttribute("href", "/party");
     expect(back).toHaveAttribute("lang", "en");
+  });
+});
+
+describe("party matches block", () => {
+  it("lists the party's scrim matches only when there are some", async () => {
+    mockedFetchPartyDetail.mockResolvedValue(party);
+    (fetchMemberRegistration as jest.Mock).mockResolvedValue(null);
+    await renderPage();
+    expect(screen.queryByRole("heading", { name: "內戰場次" })).not.toBeInTheDocument();
+
+    (fetchMatches as jest.Mock).mockResolvedValueOnce({
+      items: [
+        {
+          id: "m1",
+          title: "第一場",
+          status: "lobby",
+          game: { id: "cs2", name: "CS2" },
+          party: { id: "1", title: party.title },
+          playerCount: 7,
+          capacity: 10,
+          createdAt: "2026-10-25T00:00:00.000Z",
+        },
+      ],
+      total: 1,
+      page: 1,
+      pageSize: 50,
+    });
+    await renderPage();
+    expect(fetchMatches).toHaveBeenLastCalledWith("1");
+    expect(screen.getByRole("heading", { name: "內戰場次" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /第一場/ })).toHaveAttribute("href", "/matches/m1");
+    expect(screen.getByText("7 / 10")).toBeInTheDocument();
+    expect(screen.getByText("報名中")).toBeInTheDocument();
   });
 });
