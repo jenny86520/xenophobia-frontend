@@ -3,6 +3,11 @@
 import { useActionState, useState } from "react";
 import {
   cancelMatchAction,
+  captainBanAction,
+  managerBanAction,
+  vetoResetAction,
+  vetoStartAction,
+  vetoUndoAction,
   confirmTeamsAction,
   createMatchAction,
   generateTeamsAction,
@@ -186,7 +191,7 @@ export function CancelMatchForm({ matchId }: { matchId: string }) {
       id="cancel"
       action={cancelMatchAction.bind(null, matchId)}
       label="取消場次"
-      confirmText="確認取消這場，取消後不能再報名或分隊"
+      confirmText="確認取消這場，取消後不能再報名、分隊或 Ban 圖"
     />
   );
 }
@@ -342,5 +347,146 @@ export function TeamConfirmForm({
       </SubmitButton>
       <FormMessage state={state} />
     </form>
+  );
+}
+
+// ---- The map veto ----
+
+/** The captain whose turn it is bans one map (one small form per map). */
+export function CaptainBanButton({
+  matchId,
+  step,
+  mapKey,
+  mapName,
+}: {
+  matchId: string;
+  step: number;
+  mapKey: string;
+  mapName: string;
+}) {
+  const [state, action, pending] = useActionState<MatchActionState>(
+    captainBanAction.bind(null, matchId, step, mapKey),
+    {},
+  );
+  return (
+    <form action={action} className="flex flex-col items-end gap-2">
+      <button
+        type="submit"
+        disabled={pending}
+        aria-label={`Ban ${mapName}`}
+        className={cn(secondaryButton, "px-4 py-1.5")}
+      >
+        {pending ? "處理中…" : "Ban"}
+      </button>
+      <FormMessage state={state} />
+    </form>
+  );
+}
+
+const VETO_RULE_OPTIONS = [
+  { value: "random", label: "隨機（預設）" },
+  { value: "stronger_first", label: "總分高的隊伍先手" },
+  { value: "weaker_first", label: "總分低的隊伍先手" },
+] as const;
+
+/** Starts the veto: the first-ban rule and the time for each step. */
+export function VetoStartForm({ matchId }: { matchId: string }) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(vetoStartAction.bind(null, matchId), {});
+  const rule = state.values?.rule ?? "random";
+  return (
+    <form action={action} className="flex flex-col gap-6">
+      <div className="grid gap-6 md:grid-cols-2">
+        <fieldset className="flex min-w-0 flex-col gap-2">
+          <legend className="mb-2 text-body text-ink">先手規則</legend>
+          <div className="grid grid-cols-3 overflow-hidden rounded-sm border border-line-strong">
+            {VETO_RULE_OPTIONS.map((option, i) => (
+              // A real radio (works without JavaScript) shown as one part of a segmented switch.
+              <label key={option.value} className={cn("flex cursor-pointer", i > 0 && "border-l border-line-strong")}>
+                <input
+                  type="radio"
+                  name="rule"
+                  value={option.value}
+                  defaultChecked={rule === option.value}
+                  className="peer sr-only"
+                />
+                <span
+                  className={cn(
+                    "flex w-full items-center justify-center px-3 py-2 text-center text-caption text-ink-secondary transition-colors",
+                    "hover:text-ink peer-checked:bg-cta peer-checked:font-medium peer-checked:text-cta-ink",
+                    "peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50 peer-focus-visible:ring-inset",
+                  )}
+                >
+                  {option.label}
+                </span>
+              </label>
+            ))}
+          </div>
+          <p className="text-caption text-ink-muted">依總分決定時以確認分隊時的評分比較；兩隊同分改為抽籤。</p>
+        </fieldset>
+        <FormField
+          id="veto-step-seconds"
+          name="stepSeconds"
+          label="每步期限（秒）"
+          defaultValue={state.values?.stepSeconds ?? "30"}
+          hint="10 到 300 秒。期限到不會自動 Ban，管理者可以代為 Ban 或隨機 Ban。"
+          error={state.fields?.stepSeconds}
+        />
+      </div>
+      <SubmitButton pending={pending} className="self-start">
+        開始 Ban 圖
+      </SubmitButton>
+      <FormMessage state={state} />
+    </form>
+  );
+}
+
+/** A manager bans for the team whose turn it is: the chosen map, or one at random. */
+export function ManagerBanForm({ matchId, step, maps }: { matchId: string; step: number; maps: Option[] }) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(
+    managerBanAction.bind(null, matchId, step),
+    {},
+  );
+  return (
+    <form action={action} className="flex max-w-sm flex-col gap-4">
+      <SelectField
+        id="manager-ban-map"
+        name="mapKey"
+        label="代為 Ban 的地圖"
+        placeholder="請選擇地圖"
+        options={maps}
+        error={state.fields?.mapKey}
+      />
+      <div className="flex flex-wrap gap-3">
+        <button type="submit" name="intent" value="map" disabled={pending} className={secondaryButton}>
+          代為 Ban
+        </button>
+        <button type="submit" name="intent" value="random" disabled={pending} className={secondaryButton}>
+          隨機 Ban
+        </button>
+      </div>
+      <FormMessage state={state} />
+    </form>
+  );
+}
+
+export function VetoUndoForm({ matchId }: { matchId: string }) {
+  return (
+    <ConfirmedActionForm
+      id="veto-undo"
+      action={vetoUndoAction.bind(null, matchId)}
+      label="撤銷最近一步"
+      confirmText="確認撤銷最近一步，那張地圖回到可選"
+    />
+  );
+}
+
+export function VetoResetForm({ matchId }: { matchId: string }) {
+  return (
+    <ConfirmedActionForm
+      id="veto-reset"
+      action={vetoResetAction.bind(null, matchId)}
+      label="重設 Ban 圖"
+      confirmText="確認重設，清除所有 Ban 與先手，回到隊伍已確認"
+    />
   );
 }

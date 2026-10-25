@@ -10,6 +10,7 @@ import { JoinGroupForm, LeaveButton, SignUpButtons } from "@/components/match/ma
 import { MatchManage } from "@/components/match/match-manage";
 import { MatchRoster } from "@/components/match/match-roster";
 import { MatchStatusLabel } from "@/components/match/match-status";
+import { VetoPanel } from "@/components/match/veto-panel";
 import { SteamLoginLink } from "@/components/player/steam-login-link";
 import { fetchManagedMatch, fetchViewerMatch } from "@/lib/player-actor";
 import { fetchMatchDetail } from "@/lib/public-content-client";
@@ -136,6 +137,26 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
           </div>
         </EditorialGrid>
       </Section>
+
+      {match.veto && (
+        <Section spacing="tight" labelledBy="veto-title" ruled>
+          <EditorialGrid className="gap-y-6">
+            <div className="col-span-4 md:col-span-8 lg:col-span-4">
+              <Heading level={2} id="veto-title">
+                Ban 圖
+              </Heading>
+            </div>
+            <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
+              <VetoPanel
+                matchId={match.id}
+                status={match.status}
+                veto={match.veto}
+                canBan={viewerMatch?.viewer.canBan ?? false}
+              />
+            </div>
+          </EditorialGrid>
+        </Section>
+      )}
 
       {managed && (
         <Section spacing="tight" labelledBy="manage-title" ruled>

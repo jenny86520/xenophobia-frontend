@@ -11,6 +11,10 @@ import {
   TeamConfirmForm,
   type TeamPlayer,
   UnlockForm,
+  ManagerBanForm,
+  VetoResetForm,
+  VetoStartForm,
+  VetoUndoForm,
 } from "./match-forms";
 
 /** "?candidate=2" → index 1; anything else picks the best (first) candidate. */
@@ -93,6 +97,12 @@ export function MatchManage({ match, candidate }: { match: ManagedMatch; candida
   const groups = match.entries.filter((entry) => entry.isGroup);
   const unlockable = match.status === "roster_locked" || match.status === "team_draft";
   const removable = match.status === "lobby" && options.length > 0;
+  const vetoing = match.status === "veto_active" || match.status === "veto_complete";
+  const veto = match.veto;
+  const banOptions = (veto?.maps ?? [])
+    .filter((map) => !map.bannedBy)
+    .map((map) => ({ value: map.key, label: map.name }));
+  const leftColumn = removable || unlockable || vetoing;
 
   return (
     <div className="flex flex-col gap-10">
@@ -126,6 +136,23 @@ export function MatchManage({ match, candidate }: { match: ManagedMatch; candida
         <TeamDraft match={match} candidates={match.candidates} candidate={candidate} />
       )}
 
+      {match.status === "teams_confirmed" && (
+        <div className="flex flex-col gap-4">
+          <Heading level={3}>開始 Ban 圖</Heading>
+          <VetoStartForm matchId={match.id} />
+        </div>
+      )}
+
+      {match.status === "veto_active" && veto?.step && (
+        <div className="flex flex-col gap-4">
+          <Heading level={3}>{`代 ${veto.turn} 隊 Ban`}</Heading>
+          <p className="text-body text-ink-secondary">
+            輪到的隊伍逾時或需要協助時，可以替他們 Ban 指定的地圖，或隨機 Ban 一張。
+          </p>
+          <ManagerBanForm matchId={match.id} step={veto.step} maps={banOptions} />
+        </div>
+      )}
+
       {/* The steps that undo something, side by side below a rule: removing a player (while signing
           up is open) or unlocking (once locked) on the left, cancelling on the right. */}
       {match.status !== "cancelled" && (
@@ -142,7 +169,21 @@ export function MatchManage({ match, candidate }: { match: ManagedMatch; candida
               <UnlockForm matchId={match.id} />
             </div>
           )}
-          <div className={cn("flex flex-col gap-3", (removable || unlockable) && "md:border-l md:border-line md:pl-8")}>
+          {vetoing && (
+            <div className="flex flex-col gap-6">
+              {veto && veto.bans.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  <Heading level={3}>撤銷</Heading>
+                  <VetoUndoForm matchId={match.id} />
+                </div>
+              )}
+              <div className="flex flex-col gap-3">
+                <Heading level={3}>重設 Ban 圖</Heading>
+                <VetoResetForm matchId={match.id} />
+              </div>
+            </div>
+          )}
+          <div className={cn("flex flex-col gap-3", leftColumn && "md:border-l md:border-line md:pl-8")}>
             <Heading level={3}>取消場次</Heading>
             <CancelMatchForm matchId={match.id} />
           </div>

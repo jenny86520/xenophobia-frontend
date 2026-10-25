@@ -176,6 +176,58 @@ export async function removePlayerAction(
   return asManager(matchId, `/players/${encodeURIComponent(playerId)}`, { method: "DELETE" }, () => "已移出名單。");
 }
 
+// ---- The map veto ----
+
+/** The captain whose turn it is bans a map; `step` is the step their page showed. */
+export async function captainBanAction(matchId: string, step: number, mapKey: string): Promise<MatchActionState> {
+  return asPlayer(matchId, "/veto/bans", { method: "POST", body: JSON.stringify({ step, mapKey }) }, "已 Ban。");
+}
+
+export async function vetoStartAction(matchId: string, _: MatchActionState, form: FormData): Promise<MatchActionState> {
+  const seconds = String(form.get("stepSeconds") ?? "").trim();
+  const result = await asManager(
+    matchId,
+    "/veto/start",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        rule: String(form.get("rule") ?? "random"),
+        ...(seconds ? { stepSeconds: Number(seconds) } : {}),
+      }),
+    },
+    () => "Ban 圖已開始。",
+  );
+  return keepValues(result, form);
+}
+
+/** A manager bans for the team whose turn it is: the chosen map, or (the 隨機 Ban button) a random one. */
+export async function managerBanAction(
+  matchId: string,
+  step: number,
+  _: MatchActionState,
+  form: FormData,
+): Promise<MatchActionState> {
+  const random = form.get("intent") === "random";
+  const mapKey = String(form.get("mapKey") ?? "");
+  if (!random && !mapKey) return { ok: false, message: "請選擇要 Ban 的地圖", fields: { mapKey: "請選擇地圖" } };
+  return asManager(
+    matchId,
+    "/veto/bans",
+    { method: "POST", body: JSON.stringify(random ? { step, random: true } : { step, mapKey }) },
+    () => (random ? "已隨機 Ban 一張。" : "已代為 Ban。"),
+  );
+}
+
+export async function vetoUndoAction(matchId: string, _: MatchActionState, form: FormData): Promise<MatchActionState> {
+  if (!confirmed(form)) return NOT_CONFIRMED;
+  return asManager(matchId, "/veto/undo", { method: "POST" }, () => "已撤銷最近一步。");
+}
+
+export async function vetoResetAction(matchId: string, _: MatchActionState, form: FormData): Promise<MatchActionState> {
+  if (!confirmed(form)) return NOT_CONFIRMED;
+  return asManager(matchId, "/veto/reset", { method: "POST" }, () => "Ban 圖已重設。");
+}
+
 /** Each roster player posts `team-<playerId>` = A or B; the backend checks sizes, captains and groups. */
 export async function confirmTeamsAction(
   matchId: string,

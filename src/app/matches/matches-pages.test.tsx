@@ -5,13 +5,14 @@ import NewMatchPage from "./new/page";
 import { fetchManagedMatch, fetchViewerMatch } from "@/lib/player-actor";
 import { fetchMatchDetail, fetchMatches, fetchPartyList } from "@/lib/public-content-client";
 import { fetchMemberProfile } from "@/lib/member-session";
-import type { ManagedMatch, MatchDetail, ViewerMatch } from "@/types/match";
+import type { ManagedMatch, MatchDetail, MatchVeto, ViewerMatch } from "@/types/match";
 
 const NOT_FOUND = new Error("NEXT_NOT_FOUND");
 jest.mock("next/navigation", () => ({
   notFound: () => {
     throw NOT_FOUND;
   },
+  useRouter: () => ({ refresh: jest.fn() }),
 }));
 jest.mock("@/lib/player-actor", () => ({ fetchViewerMatch: jest.fn(), fetchManagedMatch: jest.fn() }));
 jest.mock("@/lib/public-content-client", () => ({
@@ -35,6 +36,11 @@ jest.mock("@/app/matches/actions", () =>
       "removePlayerAction",
       "signUpAction",
       "unlockAction",
+      "captainBanAction",
+      "managerBanAction",
+      "vetoStartAction",
+      "vetoUndoAction",
+      "vetoResetAction",
     ].map((name) => [name, jest.fn()]),
   ),
 );
@@ -66,6 +72,7 @@ const base: MatchDetail = {
   lockedAt: null,
   confirmedAt: null,
   cancelledAt: null,
+  veto: null,
 };
 
 const withRatings = (match: MatchDetail): MatchDetail => ({
@@ -78,7 +85,7 @@ const withRatings = (match: MatchDetail): MatchDetail => ({
 
 const viewer = (overrides: Partial<ViewerMatch["viewer"]> = {}, match: MatchDetail = base): ViewerMatch => ({
   ...withRatings(match),
-  viewer: { playerId: "z", entryId: null, inviteCode: null, canManage: false, ...overrides },
+  viewer: { playerId: "z", entryId: null, inviteCode: null, canManage: false, canBan: false, ...overrides },
 });
 
 const renderMatch = async (search: Record<string, string> = {}) =>
@@ -277,5 +284,148 @@ describe("/matches/new", () => {
     expect(screen.queryByRole("combobox", { name: "遊戲" })).not.toBeInTheDocument();
     expect(screen.getByRole("option", { name: "2026-11-01 週末對戰夜" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "建立場次" })).toBeInTheDocument();
+  });
+});
+
+describe("/matches/[id] map veto", () => {
+  const maps = [
+    ["de_ancient", "Ancient"],
+    ["de_mirage", "Mirage"],
+    ["de_nuke", "Nuke"],
+  ] as const;
+  const veto = (overrides: Partial<MatchVeto> = {}): MatchVeto => ({
+    rule: "weaker_first",
+    firstTeam: "B",
+    firstReason: "b-lower",
+    stepSeconds: 30,
+    startedAt: "2026-10-26T10:00:00.000Z",
+    maps: maps.map(([key, name], i) => ({
+      key,
+      name,
+      imageUrl: key === "de_nuke" ? null : `/media/images/${key}.jpg`,
+      bannedBy: i === 0 ? "B" : null,
+      step: i === 0 ? 1 : null,
+    })),
+    bans: [
+      {
+        step: 1,
+        team: "B",
+        mapKey: "de_ancient",
+        mapName: "Ancient",
+        byManager: true,
+        random: true,
+        actorLabel: "阿凱",
+        at: "2026-10-26T10:00:40.000Z",
+      },
+    ],
+    turn: "A",
+    step: 2,
+    stepDeadline: "2026-10-26T10:01:10.000Z",
+    overdue: true,
+    finalMap: null,
+    ...overrides,
+  });
+  const vetoMatch = (v = veto()): MatchDetail => ({ ...base, status: "veto_active", veto: v });
+
+  it("shows everyone the first team and why, the turn, each map's state and the history", async () => {
+    (fetchMatchDetail as jest.Mock).mockResolvedValue(vetoMatch());
+    await renderMatch();
+
+    const panel = screen.getByRole("region", { name: "Ban 圖" });
+    expect(panel).toHaveTextContent("先手：B 隊（B 隊總分較低，規則為總分低的隊伍先手）");
+    expect(within(panel).getByRole("status")).toHaveTextContent("輪到 A 隊・第 2 步");
+    expect(within(panel).getByRole("status")).toHaveTextContent("已逾時");
+    const mapList = within(panel).getByRole("list", { name: "地圖" });
+    expect(within(mapList).getByText("B 隊 Ban（第 1 步）")).toBeInTheDocument();
+    expect(within(mapList).getAllByText("可選")).toHaveLength(2);
+    expect(within(panel).queryByRole("button", { name: /^Ban / })).not.toBeInTheDocument();
+    expect(panel).toHaveTextContent("第 1 步・B 隊 Ban Ancient");
+    expect(panel).toHaveTextContent("阿凱（管理者隨機 Ban）");
+  });
+
+  it("shows each map as a card with its name over a decorative image, or a brand-colour face without one", async () => {
+    (fetchMatchDetail as jest.Mock).mockResolvedValue(vetoMatch());
+    const { container } = await renderMatch();
+
+    const mapList = screen.getByRole("list", { name: "地圖" });
+    expect(within(mapList).queryByRole("img")).not.toBeInTheDocument();
+    const card = (key: string) => container.querySelector(`[data-map="${key}"]`) as HTMLElement;
+    const image = (key: string) => card(key).querySelector("img");
+    expect(image("de_mirage")).toHaveAttribute("src", "http://localhost:3001/media/images/de_mirage.jpg");
+    expect(image("de_mirage")).toHaveAttribute("alt", "");
+    expect(card("de_mirage")).toHaveTextContent("Mirage可選");
+    // Banned: the image turns grey and the card says who banned it.
+    expect(image("de_ancient")).toHaveClass("grayscale");
+    expect(card("de_ancient")).toHaveTextContent("B 隊 Ban（第 1 步）");
+    expect(image("de_nuke")).toBeNull();
+    expect(card("de_nuke").querySelector("[data-map-fallback]")).not.toBeNull();
+  });
+
+  it("gives the captain whose turn it is a Ban button on each map left", async () => {
+    (fetchViewerMatch as jest.Mock).mockResolvedValue({
+      ...vetoMatch(),
+      viewer: { playerId: "a", entryId: "e1", inviteCode: null, canManage: false, canBan: true },
+    });
+    await renderMatch();
+
+    const panel = screen.getByRole("region", { name: "Ban 圖" });
+    expect(panel).toHaveTextContent("輪到你的隊伍，請選一張地圖 Ban。");
+    expect(within(panel).getByRole("button", { name: "Ban Mirage" })).toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "Ban Nuke" })).toBeInTheDocument();
+    expect(within(panel).queryByRole("button", { name: "Ban Ancient" })).not.toBeInTheDocument();
+  });
+
+  it("shows the map played once the veto is over", async () => {
+    (fetchMatchDetail as jest.Mock).mockResolvedValue({
+      ...vetoMatch(
+        veto({
+          turn: null,
+          step: null,
+          stepDeadline: null,
+          overdue: false,
+          finalMap: { key: "de_nuke", name: "Nuke", imageUrl: null },
+        }),
+      ),
+      status: "veto_complete",
+    });
+    await renderMatch();
+    const panel = screen.getByRole("region", { name: "Ban 圖" });
+    expect(panel).toHaveTextContent("比賽地圖：Nuke");
+    expect(within(panel).queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("gives the creator the veto tools for the status: start, ban for a team, undo and reset", async () => {
+    const managed = (match: MatchDetail): ManagedMatch => ({
+      ...withRatings(match),
+      createdBy: "阿凱",
+      createdByMemberId: "host1",
+      candidates: null,
+    });
+    (fetchViewerMatch as jest.Mock).mockResolvedValue(
+      viewer({ canManage: true }, { ...base, status: "teams_confirmed" }),
+    );
+    (fetchManagedMatch as jest.Mock).mockResolvedValue(managed({ ...base, status: "teams_confirmed" }));
+    const { unmount } = await renderMatch();
+    let manage = screen.getByRole("region", { name: "管理" });
+    expect(within(manage).getByRole("radio", { name: "隨機（預設）" })).toBeChecked();
+    expect(within(manage).getByRole("textbox", { name: "每步期限（秒）" })).toHaveValue("30");
+    expect(within(manage).getByRole("button", { name: "開始 Ban 圖" })).toBeInTheDocument();
+    unmount();
+
+    (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer({ canManage: true }, vetoMatch()));
+    (fetchManagedMatch as jest.Mock).mockResolvedValue(managed(vetoMatch()));
+    await renderMatch();
+    manage = screen.getByRole("region", { name: "管理" });
+    expect(within(manage).getByRole("heading", { name: "代 A 隊 Ban" })).toBeInTheDocument();
+    const select = within(manage).getByRole("combobox", { name: "代為 Ban 的地圖" });
+    expect(
+      within(select)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual(["請選擇地圖", "Mirage", "Nuke"]);
+    expect(within(manage).getByRole("button", { name: "隨機 Ban" })).toBeInTheDocument();
+    expect(within(manage).getByRole("checkbox", { name: /確認撤銷最近一步/ })).toBeRequired();
+    expect(within(manage).getByRole("checkbox", { name: /確認重設/ })).toBeRequired();
+    expect(within(manage).getByRole("heading", { name: "取消場次" })).toBeInTheDocument();
   });
 });

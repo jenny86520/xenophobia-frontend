@@ -18,6 +18,11 @@ jest.mock("next/cache", () => ({ revalidatePath: (path: string) => mockRevalidat
 
 import {
   cancelMatchAction,
+  captainBanAction,
+  managerBanAction,
+  vetoResetAction,
+  vetoStartAction,
+  vetoUndoAction,
   confirmTeamsAction,
   createMatchAction,
   importPartyAction,
@@ -174,5 +179,48 @@ describe("managing", () => {
       fields: { allowSplit: "這樣分隊會拆開同一小隊，請確認允許拆開小隊" },
       values: { "team-p1": "B", "team-p2": "A", captainA: "p2", captainB: "p1" },
     });
+  });
+});
+
+describe("the map veto", () => {
+  it("sends a captain's ban with the step their page showed", async () => {
+    cookies.xpa_player = "guest-jwt";
+    respond(200);
+    await expect(captainBanAction("m1", 3, "de_mirage")).resolves.toMatchObject({ ok: true });
+    expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/veto/bans");
+    expect(sentBody()).toEqual({ step: 3, mapKey: "de_mirage" });
+    expect(sentToken()).toBe("Bearer guest-jwt");
+  });
+
+  it("starts the veto with the rule and step time, and bans for a team by map or at random", async () => {
+    cookies.xpa_member = "member-jwt";
+    respond(200);
+    await vetoStartAction("m1", {}, form({ rule: "weaker_first", stepSeconds: "45" }));
+    expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/manage/veto/start");
+    expect(sentBody()).toEqual({ rule: "weaker_first", stepSeconds: 45 });
+
+    respond(200);
+    await managerBanAction("m1", 2, {}, form({ intent: "random", mapKey: "" }));
+    expect(sentBody()).toEqual({ step: 2, random: true });
+
+    respond(200);
+    await managerBanAction("m1", 2, {}, form({ intent: "map", mapKey: "de_nuke" }));
+    expect(sentBody()).toEqual({ step: 2, mapKey: "de_nuke" });
+
+    respond(200);
+    await expect(managerBanAction("m1", 2, {}, form({ intent: "map", mapKey: "" }))).resolves.toMatchObject({
+      fields: { mapKey: "請選擇地圖" },
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("needs the box ticked before undoing or resetting", async () => {
+    cookies.xpa_member = "member-jwt";
+    respond(200);
+    expect((await vetoUndoAction("m1", {}, form({}))).fields).toHaveProperty("confirm");
+    expect((await vetoResetAction("m1", {}, form({}))).fields).toHaveProperty("confirm");
+    expect(global.fetch).not.toHaveBeenCalled();
+    await vetoResetAction("m1", {}, form({ confirm: "on" }));
+    expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/manage/veto/reset");
   });
 });

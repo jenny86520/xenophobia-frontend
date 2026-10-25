@@ -1127,6 +1127,29 @@
 }
 
 /*
+ * Veto map cards: the map name sits on the bottom 40% of the image, where this scrim is at
+ * least 70% background, so ink text stays AA even over a pure white image. The top keeps more
+ * of the image showing.
+ */
+.map-card-scrim {
+  background: linear-gradient(
+    0deg,
+    color-mix(in oklab, var(--background) 92%, transparent) 0%,
+    color-mix(in oklab, var(--background) 70%, transparent) 40%,
+    color-mix(in oklab, var(--background) 10%, transparent) 100%
+  );
+}
+
+/* A map without an image: a diagonal brand-red wash on the elevated surface. */
+.map-card-fallback {
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--xpa-signal) 35%, var(--xpa-surface-elevated)) 0%,
+    var(--xpa-surface-elevated) 70%
+  );
+}
+
+/*
  * Home header: hidden over the hero, then fixed at the top and fading in as the hero
  * scrolls out (a view timeline on #hero, shared through timeline-scope). Only opacity
  * and pointer-events animate: a transform would make the header the containing block
