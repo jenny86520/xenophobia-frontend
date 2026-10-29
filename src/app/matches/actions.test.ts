@@ -29,6 +29,7 @@ import {
   joinGroupAction,
   removePlayerAction,
   signUpAction,
+  unconfirmTeamsAction,
   unlockAction,
 } from "./actions";
 
@@ -125,10 +126,11 @@ describe("managing", () => {
     expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/manage/import-party");
   });
 
-  it("needs the box ticked before unlocking, cancelling or removing", async () => {
+  it("needs the box ticked before unlocking, taking teams back, cancelling or removing", async () => {
     respond(200);
     for (const result of [
       await unlockAction("m1", {}, form({})),
+      await unconfirmTeamsAction("m1", {}, form({})),
       await cancelMatchAction("m1", {}, form({})),
       await removePlayerAction("m1", {}, form({ playerId: "p1" })),
     ]) {
@@ -139,6 +141,11 @@ describe("managing", () => {
     await removePlayerAction("m1", {}, form({ playerId: "p1", confirm: "on" }));
     expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/manage/players/p1");
     expect(call()[1].method).toBe("DELETE");
+
+    const back = await unconfirmTeamsAction("m1", {}, form({ confirm: "on" }));
+    expect(call(1)[0]).toBe("http://localhost:3001/api/matches/m1/manage/teams/unconfirm");
+    expect(call(1)[1].method).toBe("POST");
+    expect(back.message).toBe("已退回分隊，請重新選擇候選並確認。");
   });
 
   it("sends the chosen teams, captains and the split permission", async () => {

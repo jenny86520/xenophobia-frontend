@@ -42,7 +42,7 @@ describe("VetoAutoRefresh", () => {
 });
 
 describe("StepCountdown", () => {
-  it("counts down to the deadline, then says 已逾時", () => {
+  it("counts down to the deadline, then says time is up and a random ban is coming", () => {
     jest.setSystemTime(new Date("2026-10-26T10:00:00.000Z"));
     render(<StepCountdown deadline="2026-10-26T10:00:05.000Z" overdue={false} />);
     act(() => jest.advanceTimersByTime(0));
@@ -51,6 +51,6 @@ describe("StepCountdown", () => {
     act(() => jest.advanceTimersByTime(3000));
     expect(screen.getByText("剩 2 秒")).toBeInTheDocument();
     act(() => jest.advanceTimersByTime(3000));
-    expect(screen.getByText("已逾時")).toBeInTheDocument();
+    expect(screen.getByText("時間到，即將隨機 Ban")).toBeInTheDocument();
   });
 });

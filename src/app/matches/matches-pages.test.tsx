@@ -35,6 +35,7 @@ jest.mock("@/app/matches/actions", () =>
       "lockAction",
       "removePlayerAction",
       "signUpAction",
+      "unconfirmTeamsAction",
       "unlockAction",
       "captainBanAction",
       "managerBanAction",
@@ -334,13 +335,26 @@ describe("/matches/[id] map veto", () => {
     const panel = screen.getByRole("region", { name: "Ban 圖" });
     expect(panel).toHaveTextContent("先手：B 隊（B 隊總分較低，規則為總分低的隊伍先手）");
     expect(within(panel).getByRole("status")).toHaveTextContent("輪到 A 隊・第 2 步");
-    expect(within(panel).getByRole("status")).toHaveTextContent("已逾時");
+    expect(within(panel).getByRole("status")).toHaveTextContent("時間到，即將隨機 Ban");
     const mapList = within(panel).getByRole("list", { name: "地圖" });
     expect(within(mapList).getByText("B 隊 Ban（第 1 步）")).toBeInTheDocument();
     expect(within(mapList).getAllByText("可選")).toHaveLength(2);
     expect(within(panel).queryByRole("button", { name: /^Ban / })).not.toBeInTheDocument();
     expect(panel).toHaveTextContent("第 1 步・B 隊 Ban Ancient");
     expect(panel).toHaveTextContent("阿凱（管理者隨機 Ban）");
+  });
+
+  it("marks a step the system banned when time ran out", async () => {
+    const [ban] = veto().bans;
+    (fetchMatchDetail as jest.Mock).mockResolvedValue(
+      vetoMatch(veto({ bans: [{ ...ban, byManager: false, random: true, actorLabel: "系統" }] })),
+    );
+    await renderMatch();
+
+    const panel = screen.getByRole("region", { name: "Ban 圖" });
+    expect(panel).toHaveTextContent("第 1 步・B 隊 Ban Ancient");
+    expect(panel).toHaveTextContent("時間到，系統隨機 Ban");
+    expect(panel).not.toHaveTextContent("系統（");
   });
 
   it("shows each map as a card with its name over a decorative image, or a brand-colour face without one", async () => {
@@ -410,6 +424,9 @@ describe("/matches/[id] map veto", () => {
     expect(within(manage).getByRole("radio", { name: "隨機（預設）" })).toBeChecked();
     expect(within(manage).getByRole("textbox", { name: "每步期限（秒）" })).toHaveValue("30");
     expect(within(manage).getByRole("button", { name: "開始 Ban 圖" })).toBeInTheDocument();
+    expect(manage).toHaveTextContent("時間到會自動隨機 Ban，管理者也可以隨時代為 Ban。");
+    expect(within(manage).getByRole("checkbox", { name: /確認退回分隊/ })).toBeRequired();
+    expect(within(manage).getByRole("button", { name: "退回分隊" })).toBeInTheDocument();
     unmount();
 
     (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer({ canManage: true }, vetoMatch()));
@@ -426,6 +443,7 @@ describe("/matches/[id] map veto", () => {
     expect(within(manage).getByRole("button", { name: "隨機 Ban" })).toBeInTheDocument();
     expect(within(manage).getByRole("checkbox", { name: /確認撤銷最近一步/ })).toBeRequired();
     expect(within(manage).getByRole("checkbox", { name: /確認重設/ })).toBeRequired();
+    expect(within(manage).queryByRole("button", { name: "退回分隊" })).not.toBeInTheDocument();
     expect(within(manage).getByRole("heading", { name: "取消場次" })).toBeInTheDocument();
   });
 });

@@ -156,6 +156,15 @@ export async function unlockAction(matchId: string, _: MatchActionState, form: F
   return asManager(matchId, "/unlock", { method: "POST" }, () => "已解除鎖定，回到報名中。");
 }
 
+export async function unconfirmTeamsAction(
+  matchId: string,
+  _: MatchActionState,
+  form: FormData,
+): Promise<MatchActionState> {
+  if (!confirmed(form)) return NOT_CONFIRMED;
+  return asManager(matchId, "/teams/unconfirm", { method: "POST" }, () => "已退回分隊，請重新選擇候選並確認。");
+}
+
 export async function cancelMatchAction(
   matchId: string,
   _: MatchActionState,

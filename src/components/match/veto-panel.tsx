@@ -136,8 +136,15 @@ export function VetoPanel({
                   第 {ban.step} 步・{ban.team} 隊 Ban {ban.mapName}
                 </span>
                 <span className="text-caption text-ink-secondary">
-                  {ban.actorLabel}
-                  {ban.byManager && (ban.random ? "（管理者隨機 Ban）" : "（管理者代為 Ban）")}
+                  {/* Captains never ban at random, so a random ban not by a manager is the system's. */}
+                  {!ban.byManager && ban.random ? (
+                    "時間到，系統隨機 Ban"
+                  ) : (
+                    <>
+                      {ban.actorLabel}
+                      {ban.byManager && (ban.random ? "（管理者隨機 Ban）" : "（管理者代為 Ban）")}
+                    </>
+                  )}
                 </span>
               </li>
             ))}

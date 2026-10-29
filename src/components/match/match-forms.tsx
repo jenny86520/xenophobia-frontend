@@ -17,6 +17,7 @@ import {
   lockAction,
   removePlayerAction,
   signUpAction,
+  unconfirmTeamsAction,
   unlockAction,
 } from "@/app/matches/actions";
 import { CheckboxField, FormField, FormMessage, SelectField, SubmitButton } from "@/components/member/form-controls";
@@ -181,6 +182,17 @@ export function UnlockForm({ matchId }: { matchId: string }) {
       action={unlockAction.bind(null, matchId)}
       label="解除鎖定"
       confirmText="確認解除鎖定，名單回到報名中"
+    />
+  );
+}
+
+export function UnconfirmTeamsForm({ matchId }: { matchId: string }) {
+  return (
+    <ConfirmedActionForm
+      id="unconfirm"
+      action={unconfirmTeamsAction.bind(null, matchId)}
+      label="退回分隊"
+      confirmText="確認退回分隊，清除兩隊、隊長與評分快照，候選依目前評分重新產生"
     />
   );
 }
@@ -428,7 +440,7 @@ export function VetoStartForm({ matchId }: { matchId: string }) {
           name="stepSeconds"
           label="每步期限（秒）"
           defaultValue={state.values?.stepSeconds ?? "30"}
-          hint="10 到 300 秒。期限到不會自動 Ban，管理者可以代為 Ban 或隨機 Ban。"
+          hint="10 到 300 秒。時間到會自動隨機 Ban，管理者也可以隨時代為 Ban。"
           error={state.fields?.stepSeconds}
         />
       </div>

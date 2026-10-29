@@ -34,9 +34,12 @@ function clock(iso: string): string {
 }
 
 /**
- * The time left for the current step. The server's view (the deadline, or 已逾時) is rendered
- * first, so it reads right without JavaScript; after hydration it counts down every second.
+ * The time left for the current step. The server's view (the deadline, or that time is up) is
+ * rendered first, so it reads right without JavaScript; after hydration it counts down every second.
  */
+/** Time is up: the backend bans at random for that team within a few seconds. */
+export const TIME_UP_TEXT = "時間到，即將隨機 Ban";
+
 export function StepCountdown({ deadline, overdue }: { deadline: string; overdue: boolean }) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
@@ -50,8 +53,8 @@ export function StepCountdown({ deadline, overdue }: { deadline: string; overdue
   }, []);
 
   if (now === null) {
-    return <span>{overdue ? "已逾時" : `期限 ${clock(deadline)}（台灣時間）`}</span>;
+    return <span>{overdue ? TIME_UP_TEXT : `期限 ${clock(deadline)}（台灣時間）`}</span>;
   }
   const left = Math.ceil((new Date(deadline).getTime() - now) / 1000);
-  return <span>{left > 0 ? `剩 ${left} 秒` : "已逾時"}</span>;
+  return <span>{left > 0 ? `剩 ${left} 秒` : TIME_UP_TEXT}</span>;
 }

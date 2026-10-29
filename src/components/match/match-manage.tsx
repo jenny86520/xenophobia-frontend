@@ -9,6 +9,7 @@ import {
   LockButton,
   RemovePlayerForm,
   TeamConfirmForm,
+  UnconfirmTeamsForm,
   type TeamPlayer,
   UnlockForm,
   ManagerBanForm,
@@ -98,11 +99,12 @@ export function MatchManage({ match, candidate }: { match: ManagedMatch; candida
   const unlockable = match.status === "roster_locked" || match.status === "team_draft";
   const removable = match.status === "lobby" && options.length > 0;
   const vetoing = match.status === "veto_active" || match.status === "veto_complete";
+  const unconfirmable = match.status === "teams_confirmed";
   const veto = match.veto;
   const banOptions = (veto?.maps ?? [])
     .filter((map) => !map.bannedBy)
     .map((map) => ({ value: map.key, label: map.name }));
-  const leftColumn = removable || unlockable || vetoing;
+  const leftColumn = removable || unlockable || vetoing || unconfirmable;
 
   return (
     <div className="flex flex-col gap-10">
@@ -147,14 +149,15 @@ export function MatchManage({ match, candidate }: { match: ManagedMatch; candida
         <div className="flex flex-col gap-4">
           <Heading level={3}>{`代 ${veto.turn} 隊 Ban`}</Heading>
           <p className="text-body text-ink-secondary">
-            輪到的隊伍逾時或需要協助時，可以替他們 Ban 指定的地圖，或隨機 Ban 一張。
+            輪到的隊伍需要協助時，可以替他們 Ban 指定的地圖，或隨機 Ban 一張；時間到系統也會自動隨機 Ban。
           </p>
           <ManagerBanForm matchId={match.id} step={veto.step} maps={banOptions} />
         </div>
       )}
 
       {/* The steps that undo something, side by side below a rule: removing a player (while signing
-          up is open) or unlocking (once locked) on the left, cancelling on the right. */}
+          up is open), unlocking (once locked), taking confirmed teams back, or undo and reset (during the
+          veto) on the left, cancelling on the right. */}
       {match.status !== "cancelled" && (
         <div className="grid grid-cols-1 gap-8 border-t border-line pt-6 md:grid-cols-2">
           {removable && (
@@ -167,6 +170,12 @@ export function MatchManage({ match, candidate }: { match: ManagedMatch; candida
             <div className="flex flex-col gap-3">
               <Heading level={3}>解除鎖定</Heading>
               <UnlockForm matchId={match.id} />
+            </div>
+          )}
+          {unconfirmable && (
+            <div className="flex flex-col gap-3">
+              <Heading level={3}>退回分隊</Heading>
+              <UnconfirmTeamsForm matchId={match.id} />
             </div>
           )}
           {vetoing && (
