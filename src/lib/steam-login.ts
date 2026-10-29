@@ -4,11 +4,11 @@
  */
 export const STEAM_OPENID_ENDPOINT = "https://steamcommunity.com/openid/login";
 
-/** Guest sign-in, or a signed-in member linking their account. */
-export type SteamIntent = "guest" | "link";
+/** Guest sign-in, a member signing in with their linked account, or a signed-in member linking one. */
+export type SteamIntent = "guest" | "member" | "link";
 
 export function isSteamIntent(value: string | null): value is SteamIntent {
-  return value === "guest" || value === "link";
+  return value === "guest" || value === "member" || value === "link";
 }
 
 /** Short-lived cookie tying Steam's redirect back to the browser that started it (CSRF). */
@@ -16,13 +16,26 @@ export const STEAM_STATE_COOKIE = "xpa_steam_state";
 export const STEAM_STATE_MAX_AGE_SECONDS = 10 * 60;
 
 /** Why a Steam sign-in did not finish; the pages turn these codes into text. */
-export type SteamError = "failed" | "disabled" | "member-account" | "link-refused" | "too-many" | "unavailable";
+export type SteamError =
+  | "failed"
+  | "disabled"
+  | "member-account"
+  | "link-refused"
+  | "not-linked"
+  | "member-refused"
+  | "locked"
+  | "too-many"
+  | "unavailable";
 
 export const STEAM_ERROR_TEXT: Record<SteamError, string> = {
   failed: "Steam 登入沒有完成或驗證失敗，請再試一次。",
   disabled: "這個訪客帳號已被停用，請聯絡管理員。",
-  "member-account": "這個 Steam 帳號已綁定會員，請改用會員帳號登入。",
+  "member-account": "這個 Steam 帳號已綁定會員，請改用「以 Steam 登入會員」或帳號密碼登入。",
   "link-refused": "無法綁定：你已經綁定過 Steam，或這個 Steam 帳號已被其他會員使用。如需更換請聯絡管理員。",
+  "not-linked": "這個 Steam 帳號還沒綁定會員。請先用帳號密碼登入，再到會員頁綁定 Steam。",
+  // The same words as a refused password login (a pending or disabled member).
+  "member-refused": "帳號或密碼錯誤",
+  locked: "帳號已鎖定，請聯絡管理員解鎖",
   "too-many": "嘗試次數太多，請稍後再試。",
   unavailable: "目前無法完成 Steam 登入，請稍後再試。",
 };

@@ -16,11 +16,13 @@ jest.mock("next/headers", () => ({ cookies: () => Promise.resolve(cookieStore) }
 const memberFetch = jest.fn();
 const memberToken = jest.fn();
 const clearMemberToken = jest.fn();
+const setMemberToken = jest.fn();
 const setPlayerToken = jest.fn();
 jest.mock("@/lib/member-session", () => ({
   memberFetch: (...args: unknown[]) => memberFetch(...args),
   memberToken: () => memberToken(),
   clearMemberToken: () => clearMemberToken(),
+  setMemberToken: (...args: unknown[]) => setMemberToken(...args),
 }));
 jest.mock("@/lib/player-session", () => ({
   setPlayerToken: (...args: unknown[]) => setPlayerToken(...args),
@@ -128,6 +130,40 @@ describe("GET /steam/callback", () => {
 
     expect(response.headers.get("location")).toBe(`${SITE}/member/login?steam=${code}`);
     expect(setPlayerToken).not.toHaveBeenCalled();
+  });
+
+  it("signs a member in with their linked Steam account, without needing a session first", async () => {
+    const started = await login(new Request(`${SITE}/steam/login?intent=member`));
+    const state = new URL(
+      new URL(started.headers.get("location") as string).searchParams.get("openid.return_to") as string,
+    ).searchParams.get("state") as string;
+    memberFetch.mockReturnValue(json(200, { accessToken: "member-jwt", expiresIn: 604800 }));
+
+    const response = await callback(steamRedirect("member", state));
+
+    expect(response.headers.get("location")).toBe(`${SITE}/member`);
+    const [path, , token] = memberFetch.mock.calls[0] as [string, RequestInit, null];
+    expect(path).toBe("/api/member/auth/steam");
+    expect(token).toBeNull();
+    expect(setMemberToken).toHaveBeenCalledWith("member-jwt", 604800);
+    expect(setPlayerToken).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [401, "failed"],
+    [403, "member-refused"],
+    [404, "not-linked"],
+    [423, "locked"],
+    [429, "too-many"],
+    [500, "unavailable"],
+  ])("sends a member back to the member login area when the backend answers %i", async (status, code) => {
+    cookieValues.set("xpa_steam_state", "member.s9");
+    memberFetch.mockReturnValue(json(status, { message: "x" }));
+
+    const response = await callback(steamRedirect("member", "s9"));
+
+    expect(response.headers.get("location")).toBe(`${SITE}/member/login?steam=${code}&via=member`);
+    expect(setMemberToken).not.toHaveBeenCalled();
   });
 
   it("links a signed-in member's account and returns to the member page", async () => {

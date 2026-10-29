@@ -1,14 +1,16 @@
 import { cookies } from "next/headers";
-import { clearMemberToken, memberFetch, memberToken } from "@/lib/member-session";
+import { clearMemberToken, memberFetch, memberToken, setMemberToken } from "@/lib/member-session";
 import { setPlayerToken } from "@/lib/player-session";
 import { STEAM_STATE_COOKIE, type SteamError, isSteamIntent, siteOrigin } from "@/lib/steam-login";
 
 type GuestLogin = { accessToken: string; expiresIn: number; needsNickname: boolean };
+type MemberLogin = { accessToken: string; expiresIn: number };
 
 /**
  * GET /steam/callback: Steam's redirect back. The state must match the cookie /steam/login set;
  * then the openid.* parameters go to the backend, which verifies them with Steam. A guest gets the
- * `xpa_player` cookie and the player page; a member's link ends on the member page. Failures go
+ * `xpa_player` cookie and the player page; a member signing in gets `xpa_member` and the member page;
+ * a member's link ends on the member page. Failures go
  * back with an error code the page turns into text.
  */
 export async function GET(request: Request): Promise<Response> {
@@ -21,8 +23,14 @@ export async function GET(request: Request): Promise<Response> {
   const expected = store.get(STEAM_STATE_COOKIE)?.value;
   store.delete({ name: STEAM_STATE_COOKIE, path: "/steam" });
 
+  // A member sign-in's error is shown in the member login area (via=member), a guest's in the guest one.
   const back = (error: SteamError) =>
-    Response.redirect(`${origin}${intent === "link" ? "/member" : "/member/login"}?steam=${error}`, 303);
+    Response.redirect(
+      intent === "link"
+        ? `${origin}/member?steam=${error}`
+        : `${origin}/member/login?steam=${error}${intent === "member" ? "&via=member" : ""}`,
+      303,
+    );
   if (!isSteamIntent(intent) || !state || expected !== `${intent}.${state}`) return back("failed");
 
   const params = Object.fromEntries([...url.searchParams].filter(([name]) => name.startsWith("openid.")));
@@ -30,9 +38,9 @@ export async function GET(request: Request): Promise<Response> {
 
   let response: Response;
   try {
-    if (intent === "guest") {
+    if (intent === "guest" || intent === "member") {
       response = await memberFetch(
-        "/api/player-auth/steam",
+        intent === "guest" ? "/api/player-auth/steam" : "/api/member/auth/steam",
         { method: "POST", body: JSON.stringify({ params }) },
         null,
       );
@@ -42,6 +50,20 @@ export async function GET(request: Request): Promise<Response> {
       response = await memberFetch("/api/member/steam", { method: "POST", body: JSON.stringify({ params }) }, token);
     }
   } catch {
+    return back("unavailable");
+  }
+
+  if (intent === "member") {
+    if (response.ok) {
+      const login = (await response.json()) as MemberLogin;
+      await setMemberToken(login.accessToken, login.expiresIn);
+      return Response.redirect(`${origin}/member`, 303);
+    }
+    if (response.status === 401) return back("failed");
+    if (response.status === 403) return back("member-refused");
+    if (response.status === 404) return back("not-linked");
+    if (response.status === 423) return back("locked");
+    if (response.status === 429) return back("too-many");
     return back("unavailable");
   }
 

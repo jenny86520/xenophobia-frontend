@@ -14,8 +14,11 @@ export const metadata: Metadata = {
 };
 
 export default async function MemberLoginPage({ searchParams }: PageProps<"/member/login">) {
-  const steam = (await searchParams).steam;
+  const { steam, via } = await searchParams;
   const steamError = typeof steam === "string" && isSteamError(steam) ? STEAM_ERROR_TEXT[steam] : null;
+  // A member Steam sign-in (via=member) reports in the member login area, a guest one in the guest area.
+  const memberSteamError = via === "member" ? steamError : null;
+  const guestSteamError = via === "member" ? null : steamError;
   return (
     <main id="main">
       <Section spacing="tight" labelledBy="page-title">
@@ -31,6 +34,17 @@ export default async function MemberLoginPage({ searchParams }: PageProps<"/memb
               密碼連續輸入錯誤三次，帳號會被鎖定，需聯絡管理員解鎖。
             </p>
             <LoginForm />
+            <div className="flex flex-col gap-3 border-t border-line pt-6">
+              <p className="text-body text-ink-secondary">已在會員頁綁定 Steam 的會員，也可以直接用 Steam 登入。</p>
+              {memberSteamError && (
+                <p role="alert" className="border-l-2 border-signal pl-3 text-body text-ink">
+                  {memberSteamError}
+                </p>
+              )}
+              <div>
+                <SteamLoginLink intent="member" label="以 Steam 登入會員" variant="secondary" />
+              </div>
+            </div>
             <p className="text-body text-ink-secondary">
               還不是會員？
               <TextLink href="/member/register">註冊會員</TextLink>
@@ -56,11 +70,12 @@ export default async function MemberLoginPage({ searchParams }: PageProps<"/memb
               訪客以 Steam 登入
             </Heading>
             <p className="text-body text-ink-secondary">
-              參加內戰用：還不是會員也可以用 Steam 帳號登入，不需要註冊。已是會員請登入後在會員頁綁定 Steam。
+              參加內戰用：還不是會員也可以用 Steam 帳號登入，不需要註冊。已綁定 Steam 的會員請用上方的「以 Steam
+              登入會員」。
             </p>
-            {steamError && (
+            {guestSteamError && (
               <p role="alert" className="border-l-2 border-signal pl-3 text-body text-ink">
-                {steamError}
+                {guestSteamError}
               </p>
             )}
             <div>

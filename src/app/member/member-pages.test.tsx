@@ -303,9 +303,9 @@ describe("/member", () => {
 });
 
 describe("/member/login", () => {
-  const loginProps = (steam?: string) =>
+  const loginProps = (steam?: string, via?: string) =>
     ({
-      searchParams: Promise.resolve(steam ? { steam } : {}),
+      searchParams: Promise.resolve({ ...(steam ? { steam } : {}), ...(via ? { via } : {}) }),
       params: Promise.resolve({}),
     }) as unknown as PageProps<"/member/login">;
 
@@ -332,6 +332,25 @@ describe("/member/login", () => {
 
     render(await MemberLoginPage(loginProps("<script>")));
     expect(screen.getAllByRole("alert")).toHaveLength(1);
+  });
+
+  it("offers members whose Steam is linked a Steam sign-in in the login area", async () => {
+    render(await MemberLoginPage(loginProps()));
+
+    const loginArea = screen.getByRole("region", { name: "登入" });
+    expect(within(loginArea).getByRole("link", { name: "以 Steam 登入會員" })).toHaveAttribute(
+      "href",
+      "/steam/login?intent=member",
+    );
+    expect(screen.getByRole("region", { name: "訪客以 Steam 登入" })).toHaveTextContent("以 Steam 登入會員");
+  });
+
+  it("shows a member Steam sign-in error in the login area, not the guest one", async () => {
+    render(await MemberLoginPage(loginProps("not-linked", "member")));
+
+    const alert = within(screen.getByRole("region", { name: "登入" })).getByRole("alert");
+    expect(alert).toHaveTextContent("這個 Steam 帳號還沒綁定會員。請先用帳號密碼登入，再到會員頁綁定 Steam。");
+    expect(within(screen.getByRole("region", { name: "訪客以 Steam 登入" })).queryByRole("alert")).toBeNull();
   });
 });
 

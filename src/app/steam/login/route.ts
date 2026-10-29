@@ -10,9 +10,10 @@ import {
 } from "@/lib/steam-login";
 
 /**
- * GET /steam/login?intent=guest|link: sends the visitor to Steam's login page. A random state goes
- * both into Steam's return address and into a short-lived cookie; /steam/callback accepts only a
- * redirect carrying the state this browser was given. Linking needs a signed-in member.
+ * GET /steam/login?intent=guest|member|link: sends the visitor to Steam's login page. A random state
+ * goes both into Steam's return address and into a short-lived cookie; /steam/callback accepts only
+ * a redirect carrying the state this browser was given. Linking needs a signed-in member; signing in
+ * as a member (intent=member) does not.
  */
 export async function GET(request: Request): Promise<Response> {
   const origin = siteOrigin(request);

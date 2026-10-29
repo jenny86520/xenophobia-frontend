@@ -111,8 +111,8 @@ public/brand/             # 網站 logo
 
 ## Steam 登入
 
-- 參加內戰需要經 Steam 驗證的 SteamID。會員在會員頁「綁定 Steam」；沒有帳號的朋友在 `/member/login` 或 `/player` 按「以 Steam 登入」成為**訪客玩家**。
-- 流程（`src/lib/steam-login.ts`）：連結指向 `GET /steam/login?intent=guest|link`，它產生隨機 state、寫進 10 分鐘的 httpOnly cookie `xpa_steam_state`，再導向 Steam；Steam 導回 `GET /steam/callback`，state 必須和 cookie 相同才把 `openid.*` 參數轉給後端（`/api/player-auth/steam` 或會員的 `/api/member/steam`），**由後端向 Steam 驗證**。前台不判斷是誰，也不接受任何直接傳來的 SteamID。
+- 參加內戰需要經 Steam 驗證的 SteamID。會員在會員頁「綁定 Steam」；沒有帳號的朋友在 `/member/login` 或 `/player` 按「以 Steam 登入」成為**訪客玩家**。已綁定 Steam 的會員可以在 `/member/login` 按「以 Steam 登入會員」（`intent=member`）直接登入會員，結果與帳號密碼登入相同（設定 `xpa_member` 並前往 `/member`）；Steam 帳號沒綁定會員、會員未開通或停用、帳號鎖定時，導回 `/member/login?steam=<代碼>&via=member`，錯誤顯示在會員登入區（`not-linked`、`member-refused`、`locked`…）。
+- 流程（`src/lib/steam-login.ts`）：連結指向 `GET /steam/login?intent=guest|member|link`，它產生隨機 state、寫進 10 分鐘的 httpOnly cookie `xpa_steam_state`，再導向 Steam；Steam 導回 `GET /steam/callback`，state 必須和 cookie 相同才把 `openid.*` 參數轉給後端（訪客 `/api/player-auth/steam`、會員登入 `/api/member/auth/steam`、會員綁定 `/api/member/steam`），**由後端向 Steam 驗證**。前台不判斷是誰，也不接受任何直接傳來的 SteamID。
 - 網址：送給 Steam 的回傳網址以 `X-Forwarded-Proto`／`X-Forwarded-Host`（nginx 會帶）組成，沒有時用請求本身的網址；它必須等於後端的 `MEMBER_PORTAL_URL`，否則後端拒絕。
 - 連結用一般 `<a>`（`SteamLoginLink`），不能用 `next/link`：用戶端導覽無法跟著導向到其他網站。全部是連結、導向與表單，不開 JavaScript 也能完成。
 - 訪客的權杖存在另一個 httpOnly cookie `xpa_player`（`src/lib/player-session.ts`），和會員的 `xpa_member` 分開；訪客只能用玩家功能。失敗時導回原頁並帶 `?steam=<代碼>`，頁面依代碼顯示說明（`STEAM_ERROR_TEXT`），不會顯示網址帶來的任意文字。
