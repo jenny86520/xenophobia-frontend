@@ -112,9 +112,11 @@ describe("PartyDetailPage", () => {
 
     await renderPage();
 
-    expect(screen.getByRole("img", { name: "Night of Strategy 封面" }).getAttribute("src")).toMatch(
-      /\/media\/images\/party\.jpg$/,
-    );
+    const cover = screen.getByRole("img", { name: "Night of Strategy 封面" });
+    expect(cover.getAttribute("src")).toMatch(/\/media\/images\/party\.jpg$/);
+    // Unveils on scroll inside a clipping frame (spec 品牌特效).
+    expect(cover).toHaveClass("media-reveal");
+    expect(cover.parentElement).toHaveClass("overflow-clip");
     const [withExtras, plain] = screen.getAllByRole("listitem");
     expect(withExtras).toHaveTextContent("台北市信義區");
     expect(withExtras.querySelector("img")).toHaveAttribute("alt", "Setup and greetings 封面");

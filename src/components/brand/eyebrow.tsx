@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { MetaLabel } from "./meta-label";
+import { ScrambleText } from "./scramble-text";
 
 type EyebrowProps = {
   /** Chapter number, rendered as "01 — ". */
@@ -10,22 +11,25 @@ type EyebrowProps = {
   id?: string;
 };
 
-/** Section opener metadata, e.g. "01 — WHO WE ARE" or "PARTY / INDEX". */
+/**
+ * Section opener metadata, e.g. "01 — WHO WE ARE" or "PARTY / INDEX". Each text part decodes from
+ * random glyphs the first time it scrolls in (ScrambleText); the signal separators stay put.
+ */
 export function Eyebrow({ index, children, className, id }: EyebrowProps) {
   const [first, ...rest] = children.split(" / ");
   return (
     <MetaLabel id={id} className={cn("block", className)}>
       {index !== undefined && (
         <>
-          {String(index).padStart(2, "0")}
+          <ScrambleText text={String(index).padStart(2, "0")} />
           <span className="text-signal"> — </span>
         </>
       )}
-      {first}
+      <ScrambleText text={first} />
       {rest.length > 0 && (
         <>
           <span className="text-signal"> / </span>
-          {rest.join(" / ")}
+          <ScrambleText text={rest.join(" / ")} />
         </>
       )}
     </MetaLabel>

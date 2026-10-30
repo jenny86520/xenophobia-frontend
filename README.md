@@ -165,6 +165,16 @@ public/brand/             # 網站 logo
 - **版面**：用 `Section`、`Container`、`EditorialGrid` 排版，標題用 `Heading`，團隊名稱一律用 `BrandName`。
 - **缺內容**：還沒有內容的地方放 `Placeholder`，不要自己編寫文案，並登記到 `placeholder-registry.ts` 或 `check-content.mjs`。
 - **動態**：只用 CSS，全部包在 `prefers-reduced-motion: no-preference` 裡；保留清楚的焦點框。
+- **品牌特效**（`globals.css` 最後的「Brand effects」一節，效果取自 KittenJam Motion Library，只取效果、不用 GSAP）：
+  - 捲動橫移大字：首頁 Hero 之後的 `BrandMarquee`（`_sections/marquee.tsx`），三行 `BrandName` 大字（中間空心）隨捲動反向橫移，整段 `aria-hidden`。
+  - 捲動逐字點亮：品牌宣言用 `LitText`（`components/brand/lit-text.tsx`），`Intl.Segmenter` 拆字，每個字帶位置 `--p`，跟著 `--lit` 時間軸依序點亮；輔助科技讀不可選取的 `sr-only` 完整句子。
+  - 圖片遮罩揭示：`.media-reveal`（派對詳情封面、Ban 圖地圖卡片），由下往上揭開並從 1.1 倍縮回。
+  - 清單列滑入填滿：`.list-row::before` 的底色從左刷入、離開往右收；有封面的派對列，底色在封面之下。
+  - 游標聚光邊框：客戶端元件 `Spotlight` 只在精確指標時把游標位置寫到 `[data-spotlight]` 卡片的 `--spot-x/--spot-y`（首頁下一場派對、地圖卡片、分隊候選）。
+  - 光澤掃過按鈕：`.cta-primary::after` 滑過或聚焦時掃過一次。
+  - 亂碼解讀標籤：`Eyebrow` 的各段文字用 `ScrambleText`，第一次進入畫面時 600ms 內解碼一次；正確文字一直是唯一的文字節點，解碼時只是變透明、上面疊一層 `aria-hidden` 亂碼。
+  - 底片顆粒：Hero 的 `.hero-grain`（內嵌 SVG 雜訊，靜態）。
+  - 偏好減少動態效果、不支援捲動驅動動畫或沒有 JavaScript 時，全部退回靜態的最終樣子。
 - **遊戲輪播的影片**（`GameCarousel`）：展開的遊戲依後端回傳的順序播放 `videos`（後台挑選的最多 5 部），播完自動切到下一部、最後一部之後回到第一部；只有一部時播完就停。播放器下方的「上一部／下一部」與編號按鈕可手動切換（只有手動切換會朗讀）。偏好減少動態效果時不自動播放。YouTube 用自己的 `youtube-nocookie.com` iframe，透過 YouTube IFrame Player API（`lib/youtube-iframe-api.ts`，只在畫面上有 YouTube 影片時載入 `https://www.youtube.com/iframe_api`）偵測播放結束；API 被擋時影片照常播放，只是不會自動切換。日後若加上 CSP，`script-src` 需要允許 `https://www.youtube.com`。
 - **里程碑時間軸**（`ArchiveTimeline`）：照後端回傳的順序顯示（依日期，方向由後台設定），相鄰相同日期的里程碑合併成同一列，日期只顯示一次。滑過一列的任何位置都會整列反白、日期變紅（`.archive-row`），捲動時逐列淡入（`.archive-row-reveal`）；列沒有可操作的元素，所以不讓它取得焦點。
 - **狀態標示**：狀態、形式、分類不能只靠顏色區分，一定要有文字標籤與圖示。

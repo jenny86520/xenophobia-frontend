@@ -872,13 +872,35 @@
     @apply shadow-glow;
   }
 
-  /* List rows (EditorialList, PartyRow): surface fill, signal index, stronger rule. */
+  /*
+   * List rows (EditorialList, PartyRow, MatchRow): the surface fill brushes in from the left on
+   * hover or focus and retracts to the right when it ends (spec 品牌特效); signal index, stronger
+   * rule. The fill sits below a party's cover backdrop (-z-10), so a cover row keeps its picture,
+   * as before. Reduced motion makes the fill appear at once (global rule).
+   */
   .list-row {
-    transition: background-color 200ms ease-out, border-color 200ms ease-out;
+    position: relative;
+    isolation: isolate;
+    transition: border-color 200ms ease-out;
+  }
+  .list-row::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -20;
+    pointer-events: none;
+    background-color: var(--xpa-surface);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 260ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  .list-row:hover::before,
+  .list-row:focus-within::before {
+    transform: scaleX(1);
+    transform-origin: left;
   }
   .list-row:hover,
   .list-row:focus-within {
-    background-color: var(--xpa-surface);
     border-top-color: var(--xpa-line-strong);
   }
   .list-row-index {
@@ -1261,6 +1283,163 @@
       opacity: 0;
       translate: 0 12px;
     }
+  }
+}
+
+/*
+ * Brand effects (spec 品牌特效). Every moving part sits behind @supports and
+ * prefers-reduced-motion: no-preference, so without support, with reduced motion or before
+ * JavaScript runs, the page shows the final, static look.
+ *
+ * Anything that clips a .marquee-row or .media-reveal must use overflow: clip (overflow-clip),
+ * never hidden: overflow: hidden makes the box a scroll container, and view() then follows that
+ * box (which never scrolls) instead of the page, so the effect freezes.
+ */
+
+/* Scrolling wordmark (BrandMarquee): the middle row is outlined; its XPA letters keep the signal colour. */
+.marquee-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--xpa-line-strong);
+}
+.marquee-outline .text-signal {
+  color: transparent;
+  -webkit-text-stroke-color: var(--xpa-signal);
+}
+
+/* Lit statement (LitText): each character is a span carrying its position --p (0..1). */
+.lit-text {
+  view-timeline-name: --lit;
+}
+
+/*
+ * Hero film grain (HeroGrain): static SVG fractal noise, never animated. Measured at 1280x900
+ * (screenshots with and without it): it raises the background's relative luminance by 0.0006 on
+ * average and by at most 0.0013 for 99.9% of background pixels, so the faintest Hero text over the
+ * band goes from 5.24:1 to about 5.13:1 at worst, still AA. Re-measure before raising the opacity.
+ */
+.hero-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+}
+
+/*
+ * Cursor spotlight (Spotlight sets --spot-x/--spot-y and data-spot-on on fine pointers only): a
+ * signal-red light on the card's border (::after, masked to a 1px ring) and a fainter one inside
+ * (::before). Without JavaScript or on touch nothing is drawn.
+ */
+[data-spotlight] {
+  position: relative;
+  isolation: isolate;
+}
+[data-spotlight]::before,
+[data-spotlight]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  background: radial-gradient(
+    260px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in oklab, var(--xpa-signal) 60%, transparent),
+    transparent 70%
+  );
+}
+/* The inner light stays under the card's content (and above a cover backdrop at -z-10). */
+[data-spotlight]::before {
+  z-index: -1;
+  background: radial-gradient(
+    260px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    color-mix(in oklab, var(--xpa-signal) 10%, transparent),
+    transparent 70%
+  );
+}
+[data-spotlight]::after {
+  padding: 1px;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+[data-spot-on] [data-spotlight]::before,
+[data-spot-on] [data-spotlight]::after {
+  opacity: 1;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Rows slide across up to 15vw each way while the band crosses the viewport (spec: ≤ one viewport width). */
+    .marquee-row {
+      animation: xpa-marquee linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+    .marquee-row-reverse {
+      animation-direction: reverse;
+    }
+    /* Characters light up in order; the last one is lit by 45% of the cover range (spec: before the middle). */
+    .lit-char {
+      animation: xpa-lit linear both;
+      animation-timeline: --lit;
+      animation-range: cover calc(10% + var(--p) * 30%) cover calc(15% + var(--p) * 30%);
+    }
+    /* Images unveil bottom-up and settle from 1.1x (spec 品牌特效: ≤ 1.1). */
+    .media-reveal {
+      animation: xpa-media-reveal cubic-bezier(0.2, 0, 0, 1) both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 35%;
+    }
+  }
+}
+
+/* Primary CTA sheen: one diagonal sweep per hover or focus (a transition, so it never repeats). */
+@media (prefers-reduced-motion: no-preference) {
+  .cta-primary {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .cta-primary::after {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    z-index: -1;
+    width: 60%;
+    pointer-events: none;
+    background: linear-gradient(105deg, transparent, oklch(1 0 0 / 22%), transparent);
+    translate: -120% 0;
+  }
+  .cta-primary:hover::after,
+  .cta-primary:focus-visible::after {
+    translate: 220% 0;
+    transition: translate 600ms ease-out;
+  }
+}
+
+@keyframes xpa-marquee {
+  from {
+    translate: -15vw 0;
+  }
+  to {
+    translate: 15vw 0;
+  }
+}
+
+@keyframes xpa-lit {
+  from {
+    color: var(--xpa-ink-muted);
+  }
+}
+
+@keyframes xpa-media-reveal {
+  from {
+    clip-path: inset(100% 0 0 0);
+    scale: 1.1;
+  }
+  to {
+    clip-path: inset(0);
+    scale: 1;
   }
 }
 

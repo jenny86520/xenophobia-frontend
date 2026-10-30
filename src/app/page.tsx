@@ -5,11 +5,12 @@ import { Events } from "./_sections/events";
 import { Gallery } from "./_sections/gallery";
 import { Games } from "./_sections/games";
 import { Hero } from "./_sections/hero";
+import { BrandMarquee } from "./_sections/marquee";
 import { Statement } from "./_sections/statement";
 
 /**
- * Brand home (design §1): Hero, Statement, What we play, Events, Archive, Gallery,
- * Closing. Rendered on the server per request; Countdown is the only client island.
+ * Brand home (design §1): Hero, the scrolling wordmark, Statement, What we play, Events,
+ * Archive, Gallery, Closing. Rendered on the server per request; Countdown is the only client island.
  */
 export default async function HomePage() {
   const [about, upcoming, parties] = await Promise.all([
@@ -22,6 +23,7 @@ export default async function HomePage() {
   return (
     <main id="main">
       <Hero profile={teamProfile} nextParty={upcoming.nextParty} />
+      <BrandMarquee name={teamProfile.name} />
       <Statement
         profile={teamProfile}
         stats={{ parties: parties.length, games: games.length, milestones: milestones.length }}

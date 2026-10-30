@@ -56,13 +56,16 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
           <span aria-hidden="true">←</span> Back to Party
         </TextLink>
         {party.coverUrl && (
-          // eslint-disable-next-line @next/next/no-img-element -- original upload on the backend origin
-          <img
-            src={mediaUrl(party.coverUrl)}
-            alt={`${party.title} 封面`}
-            fetchPriority="high"
-            className="mt-8 aspect-video w-full rounded-sm border border-line object-cover"
-          />
+          // The frame clips the cover while it unveils and settles from 1.1x (.media-reveal).
+          <div className="mt-8 overflow-clip rounded-sm border border-line">
+            {/* eslint-disable-next-line @next/next/no-img-element -- original upload on the backend origin */}
+            <img
+              src={mediaUrl(party.coverUrl)}
+              alt={`${party.title} 封面`}
+              fetchPriority="high"
+              className="media-reveal aspect-video w-full object-cover"
+            />
+          </div>
         )}
         <EditorialGrid className="mt-10 gap-y-8">
           <div className="col-span-4 flex flex-col gap-2 md:col-span-3 lg:col-span-4">

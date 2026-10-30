@@ -35,6 +35,11 @@ function HeroBand() {
   return <div aria-hidden="true" data-hero-band className="hero-band pointer-events-none absolute inset-0" />;
 }
 
+/** Static film grain over the band and below the text (.hero-grain; spec 品牌特效: never animated). */
+function HeroGrain() {
+  return <div aria-hidden="true" data-hero-grain className="hero-grain pointer-events-none absolute inset-0" />;
+}
+
 /** 1 · Hero: who is this? Oversized wordmark, tagline, CTAs, the next party. At least one viewport tall. */
 export function Hero({ profile, nextParty }: HeroProps) {
   const mmdd = nextParty ? nextParty.startDate.slice(5).replace("-", "/") : null;
@@ -42,6 +47,7 @@ export function Hero({ profile, nextParty }: HeroProps) {
   return (
     <section aria-labelledby="hero-title" id="hero" className="relative flex min-h-svh flex-col justify-center overflow-clip py-section-loose">
       <HeroBand />
+      <HeroGrain />
       <ColumnGuides />
       <Container className="relative">
         <div className="flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-4">

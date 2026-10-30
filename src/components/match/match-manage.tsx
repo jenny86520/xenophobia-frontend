@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Spotlight } from "@/components/brand/spotlight";
 import { Heading } from "@/components/brand/typography";
 import { cn } from "@/lib/utils";
 import type { ManagedMatch, TeamCandidate } from "@/types/match";
@@ -41,6 +42,7 @@ function CandidateCard({
 }) {
   return (
     <li
+      data-spotlight
       className={cn(
         "relative flex flex-col gap-4 rounded-sm border p-4 transition-colors",
         "has-[a:focus-visible]:ring-3 has-[a:focus-visible]:ring-ring/50",
@@ -239,11 +241,13 @@ function TeamDraft({
           分隊候選
         </Heading>
         <p className="text-body text-ink-secondary">依每位玩家目前的評分計算，不會拆開小隊；總分差越小越平均。</p>
-        <ol className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {candidates.map((c, i) => (
-            <CandidateCard key={i} candidate={c} index={i} selected={i === selected} matchId={match.id} />
-          ))}
-        </ol>
+        <Spotlight>
+          <ol className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            {candidates.map((c, i) => (
+              <CandidateCard key={i} candidate={c} index={i} selected={i === selected} matchId={match.id} />
+            ))}
+          </ol>
+        </Spotlight>
       </div>
       <div className="flex flex-col gap-4">
         <Heading level={3} id="confirm-teams-title">

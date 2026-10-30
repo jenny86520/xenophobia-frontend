@@ -1,6 +1,7 @@
 import { CtaLink } from "@/components/brand/cta-link";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { LitText } from "@/components/brand/lit-text";
 import { formatCount } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
 import { Section } from "@/components/brand/section";
@@ -26,7 +27,7 @@ export function Statement({ profile, stats }: StatementProps) {
         <div className="col-span-4 md:col-span-8 lg:col-span-9 lg:col-start-3">
           {profile.brandStatement ? (
             <h2 id="statement-title" className="font-heading text-h1 text-balance text-ink">
-              {profile.brandStatement}
+              <LitText text={profile.brandStatement} />
             </h2>
           ) : (
             <>

@@ -367,6 +367,10 @@ describe("/matches/[id] map veto", () => {
     const image = (key: string) => card(key).querySelector("img");
     expect(image("de_mirage")).toHaveAttribute("src", "http://localhost:3001/media/images/de_mirage.jpg");
     expect(image("de_mirage")).toHaveAttribute("alt", "");
+    // The image unveils on scroll; the name sits on a separate layer, outside the revealing image.
+    expect(image("de_mirage")).toHaveClass("media-reveal");
+    expect(card("de_mirage")).toHaveAttribute("data-spotlight");
+    expect(card("de_mirage").querySelector(".media-reveal")).not.toHaveTextContent("Mirage");
     expect(card("de_mirage")).toHaveTextContent("Mirage可選");
     // Banned: the image turns grey and the card says who banned it.
     expect(image("de_ancient")).toHaveClass("grayscale");

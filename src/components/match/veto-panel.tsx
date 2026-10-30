@@ -3,6 +3,7 @@ import { Heading } from "@/components/brand/typography";
 import { cn } from "@/lib/utils";
 import type { FirstBanReason, MatchStatus, MatchVeto, VetoRule } from "@/types/match";
 import { mediaUrl } from "@/utils/media";
+import { Spotlight } from "@/components/brand/spotlight";
 import { CaptainBanButton } from "./match-forms";
 import { StepCountdown, VetoAutoRefresh } from "./veto-live";
 
@@ -67,64 +68,67 @@ export function VetoPanel({
       )}
       {active && canBan && <p className="text-body text-ink">輪到你的隊伍，請選一張地圖 Ban。</p>}
 
-      <ul aria-label="地圖" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {veto.maps.map((map) => {
-          const isFinal = veto.finalMap?.key === map.key;
-          return (
-            <li
-              key={map.key}
-              data-map={map.key}
-              className={cn(
-                "flex flex-col overflow-hidden rounded-sm border bg-surface",
-                isFinal ? "border-signal" : "border-line",
-              )}
-            >
-              <div className="relative isolate aspect-video">
-                <div aria-hidden="true" className="absolute inset-0 -z-10">
-                  {map.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- upload on the backend origin, as party covers
-                    <img
-                      src={mediaUrl(map.imageUrl)}
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                      className={cn("size-full object-cover", map.bannedBy && "opacity-60 grayscale")}
-                    />
-                  ) : (
-                    <div data-map-fallback className="map-card-fallback size-full" />
-                  )}
-                  <div className="map-card-scrim absolute inset-0" />
-                </div>
-                <span
-                  className={cn(
-                    "absolute inset-x-3 bottom-2 font-heading text-h3 text-ink",
-                    map.bannedBy && "text-ink-secondary",
-                  )}
-                >
-                  {map.name}
-                </span>
-              </div>
-              <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 px-3 py-2">
-                {map.bannedBy ? (
-                  <span className="inline-flex items-center gap-2 text-caption text-ink-secondary">
-                    <Ban aria-hidden="true" className="size-4 text-signal" />
-                    {map.bannedBy} 隊 Ban（第 {map.step} 步）
-                  </span>
-                ) : isFinal ? (
-                  <span className="inline-flex items-center gap-2 text-caption text-ink">
-                    <MapPinned aria-hidden="true" className="size-4 text-signal" />
-                    比賽地圖
-                  </span>
-                ) : active && canBan && veto.step ? (
-                  <CaptainBanButton matchId={matchId} step={veto.step} mapKey={map.key} mapName={map.name} />
-                ) : (
-                  <span className="text-caption text-ink-secondary">可選</span>
+      <Spotlight>
+        <ul aria-label="地圖" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {veto.maps.map((map) => {
+            const isFinal = veto.finalMap?.key === map.key;
+            return (
+              <li
+                key={map.key}
+                data-map={map.key}
+                data-spotlight
+                className={cn(
+                  "flex flex-col overflow-clip rounded-sm border bg-surface",
+                  isFinal ? "border-signal" : "border-line",
                 )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+              >
+                <div className="relative isolate aspect-video">
+                  <div aria-hidden="true" className="absolute inset-0 -z-10">
+                    {map.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- upload on the backend origin, as party covers
+                      <img
+                        src={mediaUrl(map.imageUrl)}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className={cn("media-reveal size-full object-cover", map.bannedBy && "opacity-60 grayscale")}
+                      />
+                    ) : (
+                      <div data-map-fallback className="map-card-fallback size-full" />
+                    )}
+                    <div className="map-card-scrim absolute inset-0" />
+                  </div>
+                  <span
+                    className={cn(
+                      "absolute inset-x-3 bottom-2 font-heading text-h3 text-ink",
+                      map.bannedBy && "text-ink-secondary",
+                    )}
+                  >
+                    {map.name}
+                  </span>
+                </div>
+                <div className="flex min-h-12 flex-wrap items-center justify-between gap-2 px-3 py-2">
+                  {map.bannedBy ? (
+                    <span className="inline-flex items-center gap-2 text-caption text-ink-secondary">
+                      <Ban aria-hidden="true" className="size-4 text-signal" />
+                      {map.bannedBy} 隊 Ban（第 {map.step} 步）
+                    </span>
+                  ) : isFinal ? (
+                    <span className="inline-flex items-center gap-2 text-caption text-ink">
+                      <MapPinned aria-hidden="true" className="size-4 text-signal" />
+                      比賽地圖
+                    </span>
+                  ) : active && canBan && veto.step ? (
+                    <CaptainBanButton matchId={matchId} step={veto.step} mapKey={map.key} mapName={map.name} />
+                  ) : (
+                    <span className="text-caption text-ink-secondary">可選</span>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </Spotlight>
 
       {veto.bans.length > 0 && (
         <div className="flex flex-col gap-3">

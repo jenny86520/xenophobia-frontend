@@ -113,6 +113,23 @@ describe("HomePage", () => {
     expect(bands[0]).toHaveAttribute("aria-hidden", "true");
   });
 
+  it("lays static film grain over the hero only, hidden from assistive technology", async () => {
+    const { container } = await renderHome();
+
+    const grain = container.querySelectorAll("[data-hero-grain]");
+    expect(grain).toHaveLength(1);
+    expect(grain[0].closest("#hero")).not.toBeNull();
+    expect(grain[0]).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("puts the scrolling wordmark between the hero and the statement", async () => {
+    const { container } = await renderHome();
+
+    const marquee = container.querySelector("[data-brand-marquee]") as HTMLElement;
+    expect(marquee.previousElementSibling).toHaveAttribute("id", "hero");
+    expect(marquee.nextElementSibling).toHaveAttribute("id", "statement");
+  });
+
   it("renders the sections in the specified order", async () => {
     const { container } = await renderHome();
 
