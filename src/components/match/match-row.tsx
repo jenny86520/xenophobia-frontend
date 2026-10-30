@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Users } from "lucide-react";
 import { MetaLabel } from "@/components/brand/meta-label";
 import type { MatchSummary } from "@/types/match";
 import { MatchStatusLabel } from "./match-status";
@@ -27,7 +27,8 @@ export function MatchRow({
         </div>
         <div className="col-span-4 flex flex-wrap items-center gap-x-6 gap-y-2 md:col-span-3 lg:col-span-5">
           <MatchStatusLabel status={match.status} />
-          <span className="font-mono text-label text-ink-secondary tabular-nums">
+          <span className="inline-flex items-center gap-1.5 font-mono text-label text-ink-secondary tabular-nums">
+            <Users aria-hidden="true" className="size-3.5 shrink-0" />
             {match.playerCount} / {match.capacity}
           </span>
           {note && <span className="text-body text-ink">{note}</span>}

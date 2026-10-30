@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { BrandName } from "@/components/brand/brand-name";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
-import { formatCount } from "@/components/brand/meta-label";
 import { PageHeader } from "@/components/brand/page-header";
 import { Placeholder } from "@/components/brand/placeholder";
 import { Section } from "@/components/brand/section";
 import { Heading } from "@/components/brand/typography";
+import { HighlightList } from "@/components/about/highlight-list";
 import { RoadmapList } from "@/components/about/roadmap-list";
 import { ContactList } from "@/components/contact/contact-list";
 import { fetchAboutContent } from "@/lib/public-content-client";
@@ -89,19 +89,7 @@ export default async function AboutPage() {
           </div>
           <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-1 lg:row-start-1">
             {highlights.length > 0 ? (
-              <ol className="border-b border-line">
-                {highlights.map((item, index) => (
-                  <li key={item.id} className="flex gap-6 border-t border-line py-5">
-                    <span className="font-mono text-meta text-signal">{formatCount(index + 1)}</span>
-                    <div className="flex min-w-0 flex-col gap-2">
-                      {item.title && <h3 className="font-heading text-h3 text-ink">{item.title}</h3>}
-                      {item.content && (
-                        <p className="max-w-[65ch] text-body whitespace-pre-line text-ink-secondary">{item.content}</p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ol>
+              <HighlightList highlights={highlights} />
             ) : (
               <Placeholder name="highlights" label="網站特色" className="min-h-24" />
             )}

@@ -1,3 +1,4 @@
+import { CalendarDays, Clock, History, MapPin, Tag, UserPen } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
@@ -41,12 +42,12 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
   const lifecycle = resolvePartyLifecycleStatus(party.status);
   const subParties = party.subParties ?? [];
   const details = [
-    { label: "Location", value: party.location },
-    { label: "Date", value: party.startDate },
-    { label: "Time", value: party.startTime },
-    { label: "Type", value: party.category },
-    { label: "Created_by", value: party.createdBy },
-    { label: "Updated_by", value: party.updatedBy ?? "—" },
+    { label: "Location", icon: MapPin, value: party.location },
+    { label: "Date", icon: CalendarDays, value: party.startDate },
+    { label: "Time", icon: Clock, value: party.startTime },
+    { label: "Type", icon: Tag, value: party.category },
+    { label: "Created_by", icon: UserPen, value: party.createdBy },
+    { label: "Updated_by", icon: History, value: party.updatedBy ?? "—" },
   ];
 
   return (
@@ -90,7 +91,10 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
           {details.map((item) => (
             <div key={item.label} className="flex flex-col gap-1 border-b border-line py-4 md:pr-6">
               <dt>
-                <MetaLabel>{item.label}</MetaLabel>
+                <MetaLabel className="inline-flex items-center gap-1.5">
+                  <item.icon aria-hidden="true" className="size-3.5 shrink-0" />
+                  {item.label}
+                </MetaLabel>
               </dt>
               <dd className="text-lead text-ink">{item.value}</dd>
             </div>

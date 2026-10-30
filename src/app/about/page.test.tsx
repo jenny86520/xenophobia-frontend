@@ -22,7 +22,7 @@ const base: AboutContent = {
   },
   milestones: [],
   contactInfo: [{ id: "c1", label: "Email", type: "email", value: "team@x.team" }],
-  highlights: [{ id: "h1", title: "社群互動", content: "與志同道合的玩家交流" }],
+  highlights: [{ id: "h1", icon: "users", title: "社群互動", content: "與志同道合的玩家交流" }],
   roadmap: [],
   socialLinks: [],
   games: [
@@ -48,6 +48,15 @@ describe("AboutPage", () => {
     const section = screen.getByRole("region", { name: "網站特色" });
     expect(within(section).getByRole("heading", { level: 3, name: "社群互動" })).toBeInTheDocument();
     expect(within(section).getByText("與志同道合的玩家交流")).toBeInTheDocument();
+    // Icon-led row (spec 前台關於頁呈現): the icon is decorative, the text names the highlight.
+    expect(section.querySelector('svg[data-highlight-icon="users"]')).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("keeps the placeholder when there are no highlights", async () => {
+    await renderAbout({ ...base, highlights: [] });
+
+    const section = screen.getByRole("region", { name: "網站特色" });
+    expect(section.querySelector("[data-placeholder]")).toHaveTextContent("待提供：網站特色");
   });
 
   it("lists the roadmap after the highlights, with English status badges and hidden icons", async () => {

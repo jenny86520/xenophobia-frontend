@@ -1,3 +1,4 @@
+import { Clock, MapPin } from "lucide-react";
 import { MetaLabel } from "@/components/brand/meta-label";
 import type { SubParty } from "@/types/party";
 import { formatSubPartyTime } from "@/utils/datetime";
@@ -20,18 +21,24 @@ export function SubPartyList({ subParties }: SubPartyListProps) {
           key={sub.id}
           className="grid grid-cols-1 gap-y-3 border-t border-line py-6 first:border-t-0 md:grid-cols-[minmax(0,3fr)_minmax(0,5fr)] md:gap-x-8"
         >
-          <time
-            dateTime={sub.startDateTime}
-            className="font-mono text-h2 leading-none tracking-tight text-ink tabular-nums"
-          >
-            {formatSubPartyTime(sub.startDateTime)}
-          </time>
+          <p className="flex items-center gap-3">
+            <Clock aria-hidden="true" className="size-5 shrink-0 text-ink-muted" />
+            <time
+              dateTime={sub.startDateTime}
+              className="font-mono text-h2 leading-none tracking-tight text-ink tabular-nums"
+            >
+              {formatSubPartyTime(sub.startDateTime)}
+            </time>
+          </p>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 flex-col gap-2">
               <h3 className="font-heading text-h3 text-ink">{sub.title}</h3>
               {sub.location && (
                 <p className="flex flex-wrap items-baseline gap-x-3 text-body text-ink">
-                  <MetaLabel>Where</MetaLabel>
+                  <MetaLabel className="inline-flex items-center gap-1.5 self-center">
+                    <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
+                    Where
+                  </MetaLabel>
                   <span>{sub.location}</span>
                 </p>
               )}

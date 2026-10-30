@@ -24,7 +24,8 @@ export type GameVideo =
 /** `videos`: the featured videos in play order; empty when the game has none. */
 export type Game = { id: string; name: string; summary: string; videos: GameVideo[] };
 
-export type Highlight = { id: string; title: string; content: string };
+/** icon is a backend code (see components/about/highlight-icon.tsx). */
+export type Highlight = { id: string; icon: string; title: string; content: string };
 
 export type RoadmapStatus = "planned" | "in_progress" | "launched";
 

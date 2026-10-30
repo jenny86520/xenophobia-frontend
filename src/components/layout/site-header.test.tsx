@@ -30,6 +30,21 @@ describe("SiteHeader", () => {
     links.forEach((a) => expect(a).toHaveAttribute("lang", "en"));
   });
 
+  it("puts a decorative icon before each nav label, underlining only the text", () => {
+    mockPathname.mockReturnValue("/party");
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
+
+    const nav = screen.getByRole("navigation", { name: "主要導覽" });
+    for (const link of within(nav).getAllByRole("link")) {
+      const icon = link.querySelector("svg");
+      expect(icon).toHaveAttribute("aria-hidden", "true");
+      expect(link.firstElementChild).toBe(icon);
+      expect(link.querySelector(".link-underline")).toHaveTextContent(link.textContent ?? "");
+      expect(link).not.toHaveClass("link-underline");
+    }
+    expect(within(nav).getByRole("link", { name: "Party" })).toHaveAttribute("aria-current", "page");
+  });
+
   it("shows the brand name with its uppercase letters in red", () => {
     render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
 

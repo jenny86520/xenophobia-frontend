@@ -25,13 +25,14 @@ export function MemberTabs({ current }: { current: MemberTab }) {
                 scroll={false}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "-mb-px inline-block border-b-2 py-3 text-body whitespace-nowrap",
+                  "-mb-px inline-flex items-center gap-2 border-b-2 py-3 text-body whitespace-nowrap",
                   "focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
                   active
                     ? "border-signal font-medium text-ink"
                     : "border-transparent text-ink-secondary hover:border-line-strong hover:text-ink",
                 )}
               >
+                <tab.icon aria-hidden="true" className="size-4 shrink-0" />
                 {tab.label}
               </Link>
             </li>

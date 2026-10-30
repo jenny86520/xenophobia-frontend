@@ -127,6 +127,9 @@ describe("/member", () => {
     ]);
     expect(within(tabs).getByRole("link", { name: "參加的活動" })).toHaveAttribute("aria-current", "page");
     expect(within(tabs).getByRole("link", { name: "投稿影片" })).not.toHaveAttribute("aria-current");
+    for (const link of within(tabs).getAllByRole("link")) {
+      expect(link.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    }
     const joined = screen.getByRole("region", { name: "參加的活動" });
     expect(within(joined).getByRole("link", { name: "十一月賽車" })).toHaveAttribute("href", "/party/p1");
     expect(screen.queryByLabelText("暱稱")).not.toBeInTheDocument();
@@ -313,7 +316,7 @@ describe("/member/login", () => {
     render(await MemberLoginPage(loginProps()));
 
     expect(screen.getByRole("note")).toHaveTextContent("密碼連續輸入錯誤三次，帳號會被鎖定，需聯絡管理員解鎖");
-    expect(screen.getByRole("button", { name: "登入" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "登入" }).querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByRole("button", { name: "申請重設密碼" })).toBeInTheDocument();
     expect(screen.getByText(/每個帳號一天只能申請一次/)).toBeInTheDocument();
   });
@@ -323,6 +326,10 @@ describe("/member/login", () => {
 
     expect(screen.getByRole("heading", { name: "訪客以 Steam 登入" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "以 Steam 登入" })).toHaveAttribute("href", "/steam/login?intent=guest");
+    expect(screen.getByRole("link", { name: "以 Steam 登入" }).querySelector("svg[data-icon=steam]")).toHaveAttribute(
+      "aria-hidden",
+      "true",
+    );
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 

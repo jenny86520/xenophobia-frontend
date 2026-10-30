@@ -1,5 +1,6 @@
 "use client";
 
+import { KeyRound } from "lucide-react";
 import { useActionState } from "react";
 import {
   loginAction,
@@ -69,6 +70,7 @@ export function LoginForm() {
       <FormField id="login-password" name="password" label="密碼" type="password" autoComplete="current-password" required />
       <FormMessage state={state} />
       <SubmitButton pending={pending} className="self-start">
+        <KeyRound aria-hidden="true" className="size-4" />
         登入
       </SubmitButton>
     </form>

@@ -25,6 +25,7 @@ export function NavLinks({ className, linkClassName }: NavLinksProps) {
           <TextLink
             href={item.href}
             lang={item.lang}
+            icon={item.icon}
             current={isCurrentPath(pathname, item.href)}
             className={linkClassName}
           >

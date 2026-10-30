@@ -817,7 +817,11 @@
   }
   .link-underline:hover,
   .link-underline:focus-visible,
-  .link-underline[aria-current="page"] {
+  .link-underline[aria-current="page"],
+  /* A link with an icon (TextLink icon) underlines only its text, driven by the whole link. */
+  .link-with-icon:hover > .link-underline,
+  .link-with-icon:focus-visible > .link-underline,
+  .link-with-icon[aria-current="page"] > .link-underline {
     background-size: 100% 1px;
   }
 

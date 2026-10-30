@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -15,14 +16,26 @@ type TextLinkProps = {
   current?: boolean;
   /** Language of the link text when it differs from the page (e.g. "en" for English nav labels). */
   lang?: string;
+  /** Decorative icon before the text; the underline then stays under the text only. */
+  icon?: LucideIcon;
 };
 
 /**
  * Inline link with the animated underline (design §7). External links open in a
  * new tab, get rel="noopener noreferrer" and an announced "opens in a new window" hint.
  */
-export function TextLink({ href, children, className, current, lang }: TextLinkProps) {
-  const classes = cn("link-underline", className);
+export function TextLink({ href, children, className, current, lang, icon: Icon }: TextLinkProps) {
+  const classes = Icon
+    ? cn("link-with-icon inline-flex items-center gap-2", className)
+    : cn("link-underline", className);
+  const content = Icon ? (
+    <>
+      <Icon aria-hidden="true" className="size-[0.9em] shrink-0" />
+      <span className="link-underline">{children}</span>
+    </>
+  ) : (
+    children
+  );
   if (isExternalHref(href)) {
     const opensTab = /^https?:/i.test(href);
     return (
@@ -32,7 +45,7 @@ export function TextLink({ href, children, className, current, lang }: TextLinkP
         lang={lang}
         {...(opensTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       >
-        {children}
+        {content}
         {opensTab && (
           <>
             <span aria-hidden="true"> ↗</span>
@@ -44,7 +57,7 @@ export function TextLink({ href, children, className, current, lang }: TextLinkP
   }
   return (
     <Link href={href} className={classes} lang={lang} aria-current={current ? "page" : undefined}>
-      {children}
+      {content}
     </Link>
   );
 }

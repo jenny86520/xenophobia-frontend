@@ -100,6 +100,29 @@ describe("PartyDetailPage", () => {
     ]);
   });
 
+  it("puts a decorative icon before every metadata label and each sub-party time and address", async () => {
+    mockedFetchPartyDetail.mockResolvedValue({
+      ...party,
+      subParties: [subParty({ location: "台北市信義區" })],
+    });
+
+    const { container } = await renderPage();
+
+    const terms = Array.from(container.querySelectorAll("dt"));
+    expect(terms.map((dt) => dt.textContent)).toEqual([
+      "Location",
+      "Date",
+      "Time",
+      "Type",
+      "Created_by",
+      "Updated_by",
+    ]);
+    for (const dt of terms) expect(dt.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+    const [sub] = screen.getAllByRole("listitem");
+    expect(sub.querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(2);
+    expect(sub).toHaveTextContent("Where台北市信義區");
+  });
+
   it("shows the party cover with its alt text, and a sub-party's address and cover only when set", async () => {
     mockedFetchPartyDetail.mockResolvedValue({
       ...party,
@@ -275,7 +298,7 @@ describe("party matches block", () => {
     expect(fetchMatches).toHaveBeenLastCalledWith("1");
     expect(screen.getByRole("heading", { name: "內戰場次" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /第一場/ })).toHaveAttribute("href", "/matches/m1");
-    expect(screen.getByText("7 / 10")).toBeInTheDocument();
+    expect(screen.getByText("7 / 10").querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByText("報名中")).toBeInTheDocument();
   });
 });

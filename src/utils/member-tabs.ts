@@ -1,9 +1,11 @@
-/** The member page's tabs, in display order; the first is the default. */
+import { CalendarCheck, Clapperboard, PenLine, Swords } from "lucide-react";
+
+/** The member page's tabs, in display order; the first is the default. The icon is decorative. */
 export const MEMBER_TABS = [
-  { value: "parties", label: "參加的活動" },
-  { value: "matches", label: "內戰場次" },
-  { value: "nickname", label: "修改暱稱" },
-  { value: "videos", label: "投稿影片" },
+  { value: "parties", label: "參加的活動", icon: CalendarCheck },
+  { value: "matches", label: "內戰場次", icon: Swords },
+  { value: "nickname", label: "修改暱稱", icon: PenLine },
+  { value: "videos", label: "投稿影片", icon: Clapperboard },
 ] as const;
 
 export type MemberTab = (typeof MEMBER_TABS)[number]["value"];

@@ -178,6 +178,19 @@ public/brand/             # 網站 logo
 - **遊戲輪播的影片**（`GameCarousel`）：展開的遊戲依後端回傳的順序播放 `videos`（後台挑選的最多 5 部），播完自動切到下一部、最後一部之後回到第一部；只有一部時播完就停。播放器下方的「上一部／下一部」與編號按鈕可手動切換（只有手動切換會朗讀）。偏好減少動態效果時不自動播放。YouTube 用自己的 `youtube-nocookie.com` iframe，透過 YouTube IFrame Player API（`lib/youtube-iframe-api.ts`，只在畫面上有 YouTube 影片時載入 `https://www.youtube.com/iframe_api`）偵測播放結束；API 被擋時影片照常播放，只是不會自動切換。日後若加上 CSP，`script-src` 需要允許 `https://www.youtube.com`。
 - **里程碑時間軸**（`ArchiveTimeline`）：照後端回傳的順序顯示（依日期，方向由後台設定），相鄰相同日期的里程碑合併成同一列，日期只顯示一次。滑過一列的任何位置都會整列反白、日期變紅（`.archive-row`），捲動時逐列淡入（`.archive-row-reveal`）；列沒有可操作的元素，所以不讓它取得焦點。
 - **狀態標示**：狀態、形式、分類不能只靠顏色區分，一定要有文字標籤與圖示。
+- **圖示**：一律使用 lucide 的細線條圖示，品牌標誌例外（社群連結、Steam，取自 Simple Icons）。
+  - 圖示跟著文字的顏色，搭配文字時加上 `aria-hidden`，名稱以文字為準。
+  - 有圖示的地方：
+    - Header 與手機選單：`NAV_ITEMS.icon`，經由 `TextLink` 的 `icon`，這時底線只畫在文字下方，靠 `.link-with-icon`。
+    - 會員分頁：`MEMBER_TABS.icon`。
+    - 密碼登入按鈕與所有 Steam 登入連結（`SteamIcon`）。
+    - 派對詳情資訊表與子活動的時間、地點。
+    - 聯絡資訊依類型。
+    - 內戰場次列的人數。
+  - 新增位置時沿用同樣做法。
+- **網站特色**（`HighlightList`）：每列以後台挑選的圖示為主體，放在 64px 的細線方格裡，標題與內容是較小的輔助文字。
+  - 圖示代碼對應在 `components/about/highlight-icon.tsx`，要和後端的 `HIGHLIGHT_ICONS`、後台的對照表一致。
+  - 不認得的代碼顯示 `sparkles`。
 
 ## 部署注意
 
