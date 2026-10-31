@@ -186,6 +186,12 @@ describe("GET /steam/callback", () => {
       `${SITE}/member?steam=link-refused`,
     );
 
+    cookieValues.set("xpa_steam_state", "link.s6");
+    memberFetch.mockReturnValue(json(428, { message: "x" }));
+    expect((await callback(steamRedirect("link", "s6"))).headers.get("location")).toBe(
+      `${SITE}/member?steam=consent-required`,
+    );
+
     cookieValues.set("xpa_steam_state", "link.s4");
     memberFetch.mockReturnValue(json(401, { message: "x" }));
     expect((await callback(steamRedirect("link", "s4"))).headers.get("location")).toBe(`${SITE}/member/login`);

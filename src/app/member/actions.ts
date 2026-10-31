@@ -15,6 +15,8 @@ import { submissionGame } from "@/utils/video-upload";
 type BackendError = { message?: string | string[]; fields?: Record<string, string> };
 
 async function errorState(response: Response, fallback: string): Promise<MemberActionState> {
+  // The member must first agree to renewed terms, which the member page asks for.
+  if (response.status === 428) redirect("/member");
   const body = (await response.json().catch(() => ({}))) as BackendError;
   const message = Array.isArray(body.message) ? body.message.join("；") : body.message;
   return { ok: false, message: message || fallback, fields: body.fields };
@@ -104,6 +106,27 @@ export async function updateNicknameAction(_: MemberActionState, form: FormData)
   if (!response.ok) return errorState(response, "儲存失敗，請稍後再試");
   revalidatePath("/member");
   return { ok: true, message: "暱稱已更新。" };
+}
+
+/** Agrees to the documents at the versions the member was shown; the backend refuses stale ones. */
+export async function acceptLegalAction(_: MemberActionState, form: FormData): Promise<MemberActionState> {
+  let response: Response;
+  try {
+    response = await memberFetch("/api/member/legal-consent", {
+      method: "POST",
+      body: JSON.stringify({
+        termsVersion: Number(text(form, "termsVersion")),
+        privacyVersion: Number(text(form, "privacyVersion")),
+      }),
+    });
+  } catch {
+    return UNREACHABLE;
+  }
+  if (response.status === 401) return signInAgain();
+  // Also after a refusal: a newer version was published, so the page and dialogs show it.
+  revalidatePath("/", "layout");
+  if (!response.ok) return errorState(response, "送出失敗，請重新整理後再試");
+  redirect("/member");
 }
 
 /** Submits a YouTube link for review; an empty date is left out, so the backend uses today. */

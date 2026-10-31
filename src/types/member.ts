@@ -1,3 +1,4 @@
+import type { LegalKey } from "./legal";
 import type { SteamAccount } from "./player";
 
 /** Shapes returned by the backend member API (declared locally, as with the other public types). */
@@ -26,6 +27,22 @@ export type MemberProfile = {
   steam: SteamAccount | null;
   /** The role may create scrim matches and the permission is not paused (decided by the backend). */
   canCreateMatch: boolean;
+  /** Whether the member must agree to renewed terms before any member action (decided by the backend). */
+  legalConsent: LegalConsent;
+};
+
+export type LegalConsentDocument = {
+  key: LegalKey;
+  title: string;
+  /** The current version, which agreeing records. */
+  version: number;
+  agreedVersion: number | null;
+  required: boolean;
+};
+
+export type LegalConsent = {
+  required: boolean;
+  documents: LegalConsentDocument[];
 };
 
 export type RegistrationStatus = "open" | "not-open" | "closed";

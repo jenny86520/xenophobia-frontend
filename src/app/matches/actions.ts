@@ -16,6 +16,8 @@ import type { MatchActionState } from "@/types/match";
 type BackendError = { message?: string | string[]; fields?: Record<string, string> };
 
 async function errorState(response: Response, fallback: string): Promise<MatchActionState> {
+  // The member must first agree to renewed terms, which the member page asks for.
+  if (response.status === 428) redirect("/member");
   const body = (await response.json().catch(() => ({}))) as BackendError;
   const message = Array.isArray(body.message) ? body.message.join("；") : body.message;
   return { ok: false, message: message || fallback, fields: body.fields };

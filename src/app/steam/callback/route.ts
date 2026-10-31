@@ -83,6 +83,7 @@ export async function GET(request: Request): Promise<Response> {
   if (response.status === 401) return back("failed");
   if (response.status === 403) return back("disabled");
   if (response.status === 409) return back(intent === "guest" ? "member-account" : "link-refused");
+  if (response.status === 428) return back("consent-required");
   if (response.status === 429) return back("too-many");
   return back("unavailable");
 }

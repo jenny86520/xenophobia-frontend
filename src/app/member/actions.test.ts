@@ -13,6 +13,7 @@ jest.mock("next/navigation", () => ({ redirect: (path: string) => mockRedirect(p
 jest.mock("next/cache", () => ({ revalidatePath: (path: string) => mockRevalidate(path) }));
 
 import {
+  acceptLegalAction,
   acceptMatchInviteAction,
   answerFriendRequestAction,
   dismissMatchInviteAction,
@@ -162,6 +163,42 @@ describe("member actions with a session", () => {
     respond(401, {});
     await expect(registrationAction("p1", "leave")).rejects.toThrow("REDIRECT /member/login");
     expect(cookieStore.delete).toHaveBeenCalledWith("xpa_member");
+  });
+
+  it("takes a member who must agree to renewed terms to the member page", async () => {
+    respond(428, { statusCode: 428, message: "條款已更新，請先到會員專區閱讀並同意新版條款" });
+    await expect(updateNicknameAction({}, form({ nickname: "阿明" }))).rejects.toThrow("REDIRECT /member");
+    await expect(registrationAction("p1", "join")).rejects.toThrow("REDIRECT /member");
+    expect(cookieStore.delete).not.toHaveBeenCalled();
+  });
+});
+
+describe("acceptLegalAction", () => {
+  it("sends the versions shown, then refreshes the site and opens the member page", async () => {
+    respond(201, { required: false, documents: [] });
+    await expect(
+      acceptLegalAction({}, form({ termsVersion: "3", privacyVersion: "1", acceptRenewedTerms: "on" })),
+    ).rejects.toThrow("REDIRECT /member");
+    const [url] = (global.fetch as jest.Mock).mock.calls[0] as [string];
+    expect(url).toMatch(/\/api\/member\/legal-consent$/);
+    expect(sentBody()).toEqual({ termsVersion: 3, privacyVersion: 1 });
+    expect(mockRevalidate).toHaveBeenCalledWith("/");
+  });
+
+  it("shows the backend's message and the newer version when the terms changed meanwhile", async () => {
+    respond(409, { statusCode: 409, message: "條款剛更新，請重新閱讀後再同意" });
+    await expect(acceptLegalAction({}, form({ termsVersion: "3", privacyVersion: "1" }))).resolves.toMatchObject({
+      ok: false,
+      message: "條款剛更新，請重新閱讀後再同意",
+    });
+    expect(mockRevalidate).toHaveBeenCalledWith("/");
+  });
+
+  it("signs in again when the session is gone", async () => {
+    respond(401, {});
+    await expect(acceptLegalAction({}, form({ termsVersion: "3", privacyVersion: "1" }))).rejects.toThrow(
+      "REDIRECT /member/login",
+    );
   });
 });
 

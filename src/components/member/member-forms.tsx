@@ -1,15 +1,16 @@
 "use client";
 
 import { KeyRound } from "lucide-react";
-import { useActionState } from "react";
+import { Fragment, useActionState } from "react";
 import {
+  acceptLegalAction,
   loginAction,
   registerAction,
   requestResetAction,
   setPasswordAction,
   updateNicknameAction,
 } from "@/app/member/actions";
-import type { MemberActionState } from "@/types/member";
+import type { LegalConsentDocument, MemberActionState } from "@/types/member";
 import { LegalDialogButton } from "@/components/legal/legal-dialog-button";
 import { CheckboxField, FormField, FormMessage, SubmitButton } from "./form-controls";
 
@@ -133,6 +134,35 @@ export function NicknameForm({ nickname }: { nickname: string }) {
       <FormMessage state={state} />
       <SubmitButton pending={pending} className="self-start">
         儲存暱稱
+      </SubmitButton>
+    </form>
+  );
+}
+
+/**
+ * Agrees to the renewed documents. The versions shown are sent along, so a version published in the
+ * meantime is refused by the backend instead of being agreed to unread.
+ */
+export function LegalConsentForm({ documents }: { documents: LegalConsentDocument[] }) {
+  const [state, action, pending] = useActionState(acceptLegalAction, EMPTY);
+  const version = (key: string) => documents.find((document) => document.key === key)?.version ?? 0;
+  const required = documents.filter((document) => document.required);
+  return (
+    <form action={action} className="flex max-w-xl flex-col gap-6">
+      <input type="hidden" name="termsVersion" value={version("terms")} />
+      <input type="hidden" name="privacyVersion" value={version("privacy")} />
+      <CheckboxField id="acceptRenewedTerms" name="acceptRenewedTerms" required>
+        我已閱讀並同意更新後的
+        {required.map((document, index) => (
+          <Fragment key={document.key}>
+            {index > 0 && "與"}
+            <LegalDialogButton kind={document.key}>{document.title}</LegalDialogButton>
+          </Fragment>
+        ))}
+      </CheckboxField>
+      <FormMessage state={state} />
+      <SubmitButton pending={pending} className="self-start">
+        同意並繼續
       </SubmitButton>
     </form>
   );

@@ -31,6 +31,7 @@ jest.mock("./actions", () => ({
   requestResetAction: jest.fn(),
   setPasswordAction: jest.fn(),
   updateNicknameAction: jest.fn(),
+  acceptLegalAction: jest.fn(),
   registrationAction: jest.fn(),
   submitYoutubeVideoAction: jest.fn(),
   sendFriendRequestAction: jest.fn(),
@@ -103,6 +104,22 @@ const profile: MemberProfile = {
   ],
   steam: null,
   canCreateMatch: false,
+  legalConsent: {
+    required: false,
+    documents: [
+      { key: "privacy", title: "隱私權政策", version: 1, agreedVersion: 1, required: false },
+      { key: "terms", title: "使用條款", version: 2, agreedVersion: 2, required: false },
+    ],
+  },
+};
+
+/** The member agreed to terms version 2; version 3 asks for renewed consent. */
+const renewedTerms: MemberProfile["legalConsent"] = {
+  required: true,
+  documents: [
+    { key: "privacy", title: "隱私權政策", version: 1, agreedVersion: 1, required: false },
+    { key: "terms", title: "使用條款", version: 3, agreedVersion: 2, required: true },
+  ],
 };
 
 /** Page props for /member with any query (e.g. ?steam= from /steam/callback). */
@@ -110,6 +127,50 @@ const memberQuery = (query: Record<string, string>) =>
   ({ searchParams: Promise.resolve(query), params: Promise.resolve({}) }) as unknown as PageProps<"/member">;
 
 describe("/member", () => {
+  it("asks for renewed consent instead of showing the tabs, whatever the tab", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue({ ...profile, legalConsent: renewedTerms });
+    render(await MemberPage(memberProps("friends")));
+
+    // The header stays: nickname, sign-out and Steam row.
+    expect(screen.getByRole("heading", { level: 1, name: "小明" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "登出" })).toBeInTheDocument();
+
+    const panel = screen.getByRole("region", { name: "條款已更新" });
+    // Only the document that needs consent is listed, with its version; it opens its dialog.
+    const items = within(panel).getAllByRole("listitem");
+    expect(items).toHaveLength(1);
+    expect(items[0]).toHaveTextContent("使用條款");
+    expect(items[0]).toHaveTextContent("第 3 版");
+    expect(within(items[0]).getByRole("button", { name: "使用條款" })).toHaveAttribute("popovertarget", "legal-terms");
+
+    const consent = within(panel).getByRole("checkbox", { name: /我已閱讀並同意更新後的\s*使用條款/ });
+    expect(consent).toBeRequired();
+    expect(within(panel).queryByText(/隱私權政策/)).not.toBeInTheDocument();
+    const form = consent.closest("form") as HTMLFormElement;
+    expect(Object.fromEntries(new FormData(form))).toMatchObject({ termsVersion: "3", privacyVersion: "1" });
+    expect(within(panel).getByRole("button", { name: "同意並繼續" })).toBeInTheDocument();
+
+    expect(screen.queryByRole("navigation", { name: "會員專區" })).not.toBeInTheDocument();
+    expect(fetchMemberFriends).not.toHaveBeenCalled();
+    expect(fetchMemberFriendSummary).not.toHaveBeenCalled();
+  });
+
+  it("names both documents when both need consent", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue({
+      ...profile,
+      legalConsent: {
+        required: true,
+        documents: renewedTerms.documents.map((document) => ({ ...document, agreedVersion: null, required: true })),
+      },
+    });
+    render(await MemberPage(memberProps()));
+
+    expect(
+      screen.getByRole("checkbox", { name: /我已閱讀並同意更新後的\s*隱私權政策\s*與\s*使用條款/ }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "個人資料" })).not.toBeInTheDocument();
+  });
+
   it("shows only how to become a member when nobody is signed in, whatever the tab", async () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue(null);
     render(await MemberPage(memberProps("videos")));

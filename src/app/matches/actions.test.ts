@@ -74,6 +74,14 @@ describe("signing up", () => {
     expect(sentToken()).toBe("Bearer guest-jwt");
   });
 
+  it("takes a member who must agree to renewed terms to the member page", async () => {
+    cookies.xpa_member = "member-jwt";
+    respond(428, { statusCode: 428, message: "條款已更新，請先到會員專區閱讀並同意新版條款" });
+    await expect(signUpAction("m1", "solo")).rejects.toThrow("REDIRECT /member");
+    expect(cookieStore.delete).not.toHaveBeenCalled();
+    delete cookies.xpa_member;
+  });
+
   it("asks to sign in when nobody is", async () => {
     respond(201);
     await expect(signUpAction("m1", "solo")).resolves.toMatchObject({ ok: false });

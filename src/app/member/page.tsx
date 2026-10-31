@@ -8,6 +8,7 @@ import { NicknameForm } from "@/components/member/member-forms";
 import { MemberMatchesPanel } from "@/components/match/member-matches-panel";
 import { MemberTabPanel, MemberTabs } from "@/components/member/member-tabs";
 import { MemberFriendsPanel } from "@/components/member/member-friends-panel";
+import { LegalConsentPanel } from "@/components/member/legal-consent-panel";
 import { MemberVideosPanel } from "@/components/member/member-videos-panel";
 import { MemberSteam } from "@/components/player/member-steam";
 import {
@@ -30,6 +31,7 @@ export const metadata: Metadata = {
 /**
  * Members-only: the nickname, sign-out and Steam row, then tabs (?tab=) for the profile (details and
  * nickname form, the default), joined parties, scrims, friends and video submissions; everyone else sees how to become a member. Only the open tab's data is fetched.
+ * While the member must agree to renewed terms, the consent panel replaces the tabs.
  */
 export default async function MemberPage({ searchParams }: PageProps<"/member">) {
   const profile = await fetchMemberProfile();
@@ -79,8 +81,14 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
       </Section>
 
       <Section spacing="tight">
-        <MemberTabs current={tab} counts={{ friends: await fetchMemberFriendSummary() }} />
-        {await tabContent(tab, profile)}
+        {profile.legalConsent.required ? (
+          <LegalConsentPanel consent={profile.legalConsent} />
+        ) : (
+          <>
+            <MemberTabs current={tab} counts={{ friends: await fetchMemberFriendSummary() }} />
+            {await tabContent(tab, profile)}
+          </>
+        )}
       </Section>
     </main>
   );

@@ -25,6 +25,7 @@ export type SteamError =
   | "member-refused"
   | "locked"
   | "too-many"
+  | "consent-required"
   | "unavailable";
 
 export const STEAM_ERROR_TEXT: Record<SteamError, string> = {
@@ -37,6 +38,7 @@ export const STEAM_ERROR_TEXT: Record<SteamError, string> = {
   "member-refused": "帳號或密碼錯誤",
   locked: "帳號已鎖定，請聯絡管理員解鎖",
   "too-many": "嘗試次數太多，請稍後再試。",
+  "consent-required": "條款已更新，請先在下方閱讀並同意新版條款，再綁定 Steam。",
   unavailable: "目前無法完成 Steam 登入，請稍後再試。",
 };
 
