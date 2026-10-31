@@ -24,6 +24,7 @@ describe("SiteHeader", () => {
     const links = within(nav).getAllByRole("link");
     expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
       ["Party", "/party"],
+      ["Legends", "/legends"],
       ["About", "/about"],
       ["Member", "/member"],
     ]);

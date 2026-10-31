@@ -669,6 +669,10 @@
   --xpa-success: oklch(0.74 0.11 160);
   --xpa-warning: oklch(0.82 0.11 85);
   --xpa-error: oklch(0.7 0.15 25);
+  /* Legends podium medals (gold, silver, bronze); decorative, the place is always written too */
+  --xpa-gold: oklch(0.84 0.15 85);
+  --xpa-silver: oklch(0.85 0.012 250);
+  --xpa-bronze: oklch(0.7 0.12 55);
 
   /* shadcn semantic tokens, mapped onto the brand palette */
   --background: var(--xpa-background);
@@ -719,6 +723,9 @@
   --color-success: var(--xpa-success);
   --color-warning: var(--xpa-warning);
   --color-error: var(--xpa-error);
+  --color-gold: var(--xpa-gold);
+  --color-silver: var(--xpa-silver);
+  --color-bronze: var(--xpa-bronze);
 
   /* shadcn semantic colors */
   --color-ring: var(--ring);
@@ -844,6 +851,10 @@
   }
   .legal-dialog:popover-open {
     display: flex;
+  }
+  /* InfoDialog (ⓘ explanations) reuses the legal dialog panel, narrower. */
+  .info-dialog {
+    width: min(480px, calc(100vw - 2 * var(--container-gutter)));
   }
   .legal-dialog::backdrop {
     background-color: color-mix(in oklch, var(--xpa-background) 80%, transparent);
@@ -1444,6 +1455,59 @@
   to {
     clip-path: inset(0);
     scale: 1;
+  }
+}
+
+/*
+ * Legends podium (LegendPodium on the home page). Hovering a step lights its trophy in its own
+ * medal colour, lifts and tilts it, and brightens the pedestal. PodiumReveal arms the trophies
+ * (hidden) once JavaScript runs and shows them when the podium scrolls in: they pop up one by one,
+ * place 1 first (--pop-order 0, 1, 2), overshooting to about 1.1x before settling (spec 品牌特效).
+ * Without JavaScript or with reduced motion they are simply there.
+ */
+.podium-trophy {
+  display: inline-block;
+  transform-origin: 50% 100%;
+}
+.podium-trophy-icon {
+  transition:
+    filter 300ms ease-out,
+    translate 300ms ease-out,
+    rotate 300ms ease-out;
+}
+.podium-step:hover .podium-trophy-icon {
+  filter: drop-shadow(0 0 18px color-mix(in oklab, currentColor 55%, transparent));
+}
+.podium-pedestal {
+  transition: background-color 300ms ease-out;
+}
+.podium-step:hover .podium-pedestal {
+  background-color: var(--xpa-surface-elevated);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .podium-step:hover .podium-trophy-icon {
+    translate: 0 -10px;
+    rotate: -6deg;
+  }
+  [data-podium="armed"] .podium-trophy {
+    opacity: 0;
+    scale: 0.3;
+  }
+  [data-podium="shown"] .podium-trophy {
+    animation: xpa-trophy-pop 560ms cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--pop-order, 0) * 220ms) both;
+  }
+}
+
+@keyframes xpa-trophy-pop {
+  from {
+    opacity: 0;
+    scale: 0.3;
+    translate: 0 24px;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
   }
 }
 

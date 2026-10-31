@@ -8,6 +8,7 @@ import type {
 } from "@/types/party";
 import type { AboutContent } from "@/types/about";
 import type { LegalDocument, LegalKey } from "@/types/legal";
+import type { Legends } from "@/types/legends";
 import type { MatchDetail, MatchList } from "@/types/match";
 
 export type {
@@ -91,6 +92,9 @@ export const fetchMatches = cache(
 export const fetchMatchDetail = cache(
   (id: string): Promise<MatchDetail | null> => getJson<MatchDetail>(`/api/matches/${encodeURIComponent(id)}`),
 );
+
+/** The Legends boards and the overall ranking, computed by the backend on each request. */
+export const fetchLegends = cache((): Promise<Legends> => getRequiredJson<Legends>("/api/legends"));
 
 /** A legal document for the footer dialogs; `null` when the backend does not know it (404). */
 export const fetchLegalDocument = cache(

@@ -59,7 +59,7 @@ describe("AboutPage", () => {
     expect(section.querySelector("[data-placeholder]")).toHaveTextContent("待提供：網站特色");
   });
 
-  it("lists the roadmap after the highlights, with English status badges and hidden icons", async () => {
+  it("lists the roadmap last, after the contact list, with English status badges and hidden icons", async () => {
     const { container } = await renderAbout({
       ...base,
       roadmap: [
@@ -84,7 +84,15 @@ describe("AboutPage", () => {
     section.querySelectorAll("[data-status] svg").forEach((icon) => expect(icon).toHaveAttribute("aria-hidden", "true"));
 
     const sections = Array.from(container.querySelectorAll("main > section")).map((s) => s.getAttribute("aria-labelledby"));
-    expect(sections.indexOf("roadmap-title")).toBe(sections.indexOf("highlights-title") + 1);
+    // Mission, milestones, games, highlights, contact, then the roadmap last.
+    expect(sections.slice(1)).toEqual([
+      "mission-title",
+      "archive-title",
+      "games-title",
+      "highlights-title",
+      "contact-title",
+      "roadmap-title",
+    ]);
   });
 
   it("hides the roadmap section, with no placeholder, when there are no items", async () => {

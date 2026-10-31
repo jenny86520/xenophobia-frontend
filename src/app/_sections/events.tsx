@@ -28,7 +28,7 @@ export function Events({ nextParty, recentParties }: EventsProps) {
     <Section labelledBy="events-title" ruled className="reveal" id="events">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-4">
-          <Eyebrow index={3}>Events</Eyebrow>
+          <Eyebrow index={4}>Events</Eyebrow>
           <Heading level={2} id="events-title">
             活動
           </Heading>

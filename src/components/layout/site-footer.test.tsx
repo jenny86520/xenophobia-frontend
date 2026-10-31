@@ -34,6 +34,7 @@ describe("SiteFooter", () => {
     expect(links.map((a) => [a.textContent, a.getAttribute("href"), a.getAttribute("lang")])).toEqual([
       ["Home", "/", "en"],
       ["Party", "/party", "en"],
+      ["Legends", "/legends", "en"],
       ["About", "/about", "en"],
       ["Member", "/member", "en"],
     ]);

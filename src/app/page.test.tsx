@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
-import { fetchAboutContent, fetchAllParties, fetchUpcomingParty } from "@/lib/public-content-client";
+import { fetchAboutContent, fetchAllParties, fetchLegends, fetchUpcomingParty } from "@/lib/public-content-client";
 import type { AboutContent } from "@/types/about";
+import type { Legends } from "@/types/legends";
 import type { UpcomingPartyResponse } from "@/types/party";
 import HomePage from "./page";
 
@@ -8,6 +9,7 @@ jest.mock("@/lib/public-content-client", () => ({
   fetchAboutContent: jest.fn(),
   fetchUpcomingParty: jest.fn(),
   fetchAllParties: jest.fn(),
+  fetchLegends: jest.fn(),
 }));
 
 const about: AboutContent = {
@@ -57,10 +59,25 @@ const upcoming: UpcomingPartyResponse = {
   ],
 };
 
+const legends: Legends = {
+  overall: {
+    title: "傳奇總榜",
+    entries: [
+      { rank: 1, nickname: "阿明", points: 29 },
+      { rank: 2, nickname: "小華", points: 18 },
+      { rank: 2, nickname: "小美", points: 18 },
+      { rank: 4, nickname: "阿強", points: 9 },
+    ],
+  },
+  boards: [],
+};
+
 async function renderHome(
   overrides: Partial<UpcomingPartyResponse> = {},
   aboutOverrides: Partial<AboutContent> = {},
+  legendsData: Legends = legends,
 ) {
+  (fetchLegends as jest.Mock).mockResolvedValue(legendsData);
   (fetchAboutContent as jest.Mock).mockResolvedValue({ ...about, ...aboutOverrides });
   (fetchUpcomingParty as jest.Mock).mockResolvedValue({ ...upcoming, ...overrides });
   (fetchAllParties as jest.Mock).mockResolvedValue([{}, {}, {}]);
@@ -68,6 +85,28 @@ async function renderHome(
 }
 
 describe("HomePage", () => {
+  it("shows the top three places as a podium, ties sharing a step, and links to /legends", async () => {
+    const { container } = await renderHome();
+
+    const section = container.querySelector("#legends") as HTMLElement;
+    expect(within(section).getByRole("heading", { level: 2, name: "傳奇榜" })).toBeInTheDocument();
+    const steps = within(within(section).getByRole("list", { name: "傳奇總榜前三名" })).getAllByRole("listitem");
+    // Place order for assistive tech; tied 2nd places share the silver step.
+    expect(steps.map((step) => step.textContent)).toEqual(["第 1 名阿明29 PTS01", "第 2 名小華、小美18 PTS02"]);
+    const all = within(section).getByRole("link", { name: "All legends" });
+    expect(all).toHaveAttribute("href", "/legends");
+    expect(all).toHaveAttribute("lang", "en");
+    expect(section.querySelector("[data-placeholder]")).toBeNull();
+  });
+
+  it("says nobody is on the boards yet, keeping the link", async () => {
+    const { container } = await renderHome({}, {}, { overall: { title: "傳奇總榜", entries: [] }, boards: [] });
+
+    const section = container.querySelector("#legends") as HTMLElement;
+    expect(section).toHaveTextContent("還沒有會員上榜");
+    expect(within(section).getByRole("link", { name: "All legends" })).toHaveAttribute("href", "/legends");
+  });
+
   it("makes the whole next-party block one link to its detail page", async () => {
     const { container } = await renderHome();
 
@@ -136,7 +175,7 @@ describe("HomePage", () => {
     const order = Array.from(container.querySelectorAll("main > section")).map(
       (section) => section.getAttribute("id") ?? section.getAttribute("data-section"),
     );
-    expect(order).toEqual(["hero", "statement", "games", "events", "archive", "gallery", "closing"]);
+    expect(order).toEqual(["hero", "statement", "games", "legends", "events", "archive", "closing"]);
   });
 
   it("shows the tagline placeholder when the tagline is empty", async () => {
@@ -182,7 +221,11 @@ describe("HomePage", () => {
     const closing = container.querySelector("#closing") as HTMLElement;
 
     expect(within(closing).getByRole("heading", { level: 2, name: "聯絡我們" })).toBeInTheDocument();
-    expect(within(closing).getAllByRole("term").map((dt) => dt.textContent)).toEqual(["Email", "Discord"]);
+    expect(
+      within(closing)
+        .getAllByRole("term")
+        .map((dt) => dt.textContent),
+    ).toEqual(["Email", "Discord"]);
     expect(within(closing).getByRole("link", { name: "team@x.team" })).toHaveAttribute("href", "mailto:team@x.team");
     expect(within(closing).getByRole("img", { name: "XenoPhobiA LOGO" })).toBeInTheDocument();
     expect(container.querySelector('[data-placeholder="brand.closing-statement"]')).toBeNull();

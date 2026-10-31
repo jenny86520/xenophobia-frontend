@@ -6,11 +6,4 @@
  *
  * Keep in sync with the <Placeholder name="..."> usages.
  */
-export const STATIC_PLACEHOLDERS = [
-  { name: "gallery.photo-1", label: "活動照片", pages: ["/"] },
-  { name: "gallery.photo-2", label: "活動照片", pages: ["/"] },
-  { name: "gallery.photo-3", label: "活動照片", pages: ["/"] },
-  { name: "gallery.photo-4", label: "活動照片", pages: ["/"] },
-] as const;
-
-export type StaticPlaceholderName = (typeof STATIC_PLACEHOLDERS)[number]["name"];
+export const STATIC_PLACEHOLDERS: ReadonlyArray<{ name: string; label: string; pages: readonly string[] }> = [];

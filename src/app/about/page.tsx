@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   openGraph: { title: "About | XenoPhobiA", description: "XenoPhobiA 的品牌宣言、使命、遊戲項目與里程碑。" },
 };
 
-/** Brand and team: statement, mission, games, milestone archive, contact, highlights, roadmap. */
+/** Brand and team: statement, mission, milestone archive, games, highlights, contact, roadmap. */
 export default async function AboutPage() {
   const { teamProfile, games, milestones, contactInfo, highlights, roadmap } = await fetchAboutContent();
   const paragraphs = teamProfile.mission.split(/\n\s*\n/).filter(Boolean);
@@ -58,31 +58,13 @@ export default async function AboutPage() {
         </EditorialGrid>
       </Section>
 
-      <Games games={games} index={2} />
-      <Archive milestones={milestones} index={3} layout="stacked" />
-
-      <Section labelledBy="contact-title" ruled className="reveal">
-        <EditorialGrid className="gap-y-12">
-          <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-4">
-            <Eyebrow index={4}>Contact</Eyebrow>
-            <Heading level={2} id="contact-title">
-              聯絡
-            </Heading>
-          </div>
-          <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
-            {contactInfo.length > 0 ? (
-              <ContactList contacts={contactInfo} />
-            ) : (
-              <Placeholder name="contact.any" label="聯絡資訊" className="min-h-24" />
-            )}
-          </div>
-        </EditorialGrid>
-      </Section>
+      <Archive milestones={milestones} index={2} layout="stacked" />
+      <Games games={games} index={3} />
 
       <Section labelledBy="highlights-title" ruled className="reveal">
         <EditorialGrid className="gap-y-12">
           <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-3 lg:col-start-10 lg:row-start-1 lg:items-end lg:text-right">
-            <Eyebrow index={5}>Highlights</Eyebrow>
+            <Eyebrow index={4}>Highlights</Eyebrow>
             <Heading level={2} id="highlights-title">
               網站特色
             </Heading>
@@ -92,6 +74,24 @@ export default async function AboutPage() {
               <HighlightList highlights={highlights} />
             ) : (
               <Placeholder name="highlights" label="網站特色" className="min-h-24" />
+            )}
+          </div>
+        </EditorialGrid>
+      </Section>
+
+      <Section labelledBy="contact-title" ruled className="reveal">
+        <EditorialGrid className="gap-y-12">
+          <div className="col-span-4 flex flex-col gap-4 md:col-span-8 lg:col-span-4">
+            <Eyebrow index={5}>Contact</Eyebrow>
+            <Heading level={2} id="contact-title">
+              聯絡
+            </Heading>
+          </div>
+          <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
+            {contactInfo.length > 0 ? (
+              <ContactList contacts={contactInfo} />
+            ) : (
+              <Placeholder name="contact.any" label="聯絡資訊" className="min-h-24" />
             )}
           </div>
         </EditorialGrid>
