@@ -268,3 +268,25 @@ export async function confirmTeamsAction(
   );
   return keepValues(result, form);
 }
+
+/** Invites a friend into the member's group, or just to sign up (members only). */
+export async function inviteFriendAction(
+  matchId: string,
+  memberId: string,
+  kind: "group" | "signup",
+): Promise<MatchActionState> {
+  let response: Response;
+  try {
+    response = await memberFetch(`${matchPath(matchId)}/invites`, {
+      method: "POST",
+      body: JSON.stringify({ memberId, kind }),
+    });
+  } catch {
+    return UNREACHABLE;
+  }
+  // Only members invite, so a refused token is the member's.
+  if (response.status === 401) return signInAgain(null);
+  if (!response.ok) return errorState(response, "邀請失敗，請稍後再試");
+  refresh(matchId);
+  return { ok: true, message: kind === "group" ? "已邀請進小隊。" : "已邀請報名。" };
+}

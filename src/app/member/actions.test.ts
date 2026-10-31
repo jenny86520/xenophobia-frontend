@@ -13,6 +13,11 @@ jest.mock("next/navigation", () => ({ redirect: (path: string) => mockRedirect(p
 jest.mock("next/cache", () => ({ revalidatePath: (path: string) => mockRevalidate(path) }));
 
 import {
+  acceptMatchInviteAction,
+  answerFriendRequestAction,
+  dismissMatchInviteAction,
+  removeFriendAction,
+  sendFriendRequestAction,
   loginAction,
   registerAction,
   registrationAction,
@@ -225,5 +230,77 @@ describe("submitYoutubeVideoAction", () => {
 
     respond(401, {});
     await expect(submitYoutubeVideoAction({}, form(video))).rejects.toThrow("REDIRECT /member/login");
+  });
+});
+
+describe("friend actions", () => {
+  const calledWith = () => (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+
+  it("sends a request by member number and says who it went to", async () => {
+    respond(201, { status: "pending", member: { nickname: "小華" } });
+
+    const state = await sendFriendRequestAction({}, form({ memberNumber: "XPA-0012" }));
+
+    expect(calledWith()[0]).toMatch(/\/api\/member\/friends\/requests$/);
+    expect(sentBody()).toEqual({ memberNumber: "XPA-0012" });
+    expect(state).toEqual({ ok: true, message: "已送出好友邀請給「小華」。" });
+    expect(mockRevalidate).toHaveBeenCalledWith("/");
+  });
+
+  it("says when asking back made the two friends", async () => {
+    respond(201, { status: "accepted", member: { nickname: "小華" } });
+
+    expect((await sendFriendRequestAction({}, form({ memberNumber: "12" }))).message).toBe(
+      "「小華」也邀請過你，你們已經是好友了。",
+    );
+  });
+
+  it("keeps what was typed and shows the backend's field error", async () => {
+    respond(404, { message: "找不到這個會員編號", fields: { memberNumber: "找不到這個會員編號" } });
+
+    const state = await sendFriendRequestAction({}, form({ memberNumber: "XPA-9999" }));
+
+    expect(state).toMatchObject({
+      ok: false,
+      fields: { memberNumber: "找不到這個會員編號" },
+      values: { memberNumber: "XPA-9999" },
+    });
+  });
+
+  it("accepts with POST …/accept and declines or withdraws with DELETE", async () => {
+    respond(200, {});
+    await answerFriendRequestAction("r1", "accept");
+    expect(calledWith()[0]).toMatch(/\/requests\/r1\/accept$/);
+    expect(calledWith()[1].method).toBe("POST");
+
+    respond(204);
+    expect((await answerFriendRequestAction("r1", "withdraw")).message).toBe("已收回邀請。");
+    expect(calledWith()[0]).toMatch(/\/requests\/r1$/);
+    expect(calledWith()[1].method).toBe("DELETE");
+  });
+
+  it("refuses to unfriend until the box is ticked", async () => {
+    respond(204);
+
+    const state = await removeFriendAction("m2", {}, form({}));
+
+    expect(state.fields).toEqual({ confirm: "請先勾選確認" });
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect((await removeFriendAction("m2", {}, form({ confirm: "on" }))).ok).toBe(true);
+  });
+
+  it("opens the match after joining a group from an invite", async () => {
+    respond(200, { matchId: "x1" });
+
+    await expect(acceptMatchInviteAction("i1")).rejects.toThrow("REDIRECT /matches/x1");
+  });
+
+  it("shows why an invite cannot be accepted, and signs in again on 401", async () => {
+    respond(403, { message: "請先到會員頁綁定 Steam，才能加入小隊" });
+    expect((await acceptMatchInviteAction("i1")).message).toBe("請先到會員頁綁定 Steam，才能加入小隊");
+
+    respond(401);
+    await expect(dismissMatchInviteAction("i1")).rejects.toThrow("REDIRECT /member/login");
+    expect(cookieStore.delete).toHaveBeenCalledWith("xpa_member");
   });
 });

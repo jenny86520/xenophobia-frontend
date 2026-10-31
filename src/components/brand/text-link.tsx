@@ -18,13 +18,15 @@ type TextLinkProps = {
   lang?: string;
   /** Decorative icon before the text; the underline then stays under the text only. */
   icon?: LucideIcon;
+  /** Inside the link after the text, outside its underline (e.g. a PendingCount badge). */
+  after?: ReactNode;
 };
 
 /**
  * Inline link with the animated underline (design §7). External links open in a
  * new tab, get rel="noopener noreferrer" and an announced "opens in a new window" hint.
  */
-export function TextLink({ href, children, className, current, lang, icon: Icon }: TextLinkProps) {
+export function TextLink({ href, children, className, current, lang, icon: Icon, after }: TextLinkProps) {
   const classes = Icon
     ? cn("link-with-icon inline-flex items-center gap-2", className)
     : cn("link-underline", className);
@@ -32,9 +34,13 @@ export function TextLink({ href, children, className, current, lang, icon: Icon 
     <>
       <Icon aria-hidden="true" className="size-[0.9em] shrink-0" />
       <span className="link-underline">{children}</span>
+      {after}
     </>
   ) : (
-    children
+    <>
+      {children}
+      {after}
+    </>
   );
   if (isExternalHref(href)) {
     const opensTab = /^https?:/i.test(href);

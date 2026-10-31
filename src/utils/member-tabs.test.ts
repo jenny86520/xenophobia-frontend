@@ -4,6 +4,7 @@ describe("parseMemberTab", () => {
   it("reads a known tab and falls back to the joined parties", () => {
     expect(parseMemberTab("videos")).toBe("videos");
     expect(parseMemberTab("nickname")).toBe("nickname");
+    expect(parseMemberTab("friends")).toBe("friends");
     expect(parseMemberTab(undefined)).toBe("parties");
     expect(parseMemberTab("abc")).toBe("parties");
     expect(parseMemberTab(["videos", "nickname"])).toBe("parties");

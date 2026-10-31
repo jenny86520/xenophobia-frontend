@@ -1,5 +1,12 @@
 import { render, screen, within } from "@testing-library/react";
-import { fetchMemberMatches, fetchMemberProfile, fetchMemberVideoSubmissions } from "@/lib/member-session";
+import {
+  fetchMemberFriends,
+  fetchMemberFriendSummary,
+  fetchMemberMatches,
+  fetchMemberProfile,
+  fetchMemberVideoSubmissions,
+} from "@/lib/member-session";
+import type { FriendsOverview } from "@/types/friends";
 import { fetchAboutContent } from "@/lib/public-content-client";
 import type { MemberProfile, MemberVideoSubmissions } from "@/types/member";
 import MemberPage from "./page";
@@ -11,6 +18,8 @@ jest.mock("@/lib/member-session", () => ({
   fetchMemberProfile: jest.fn(),
   fetchMemberVideoSubmissions: jest.fn(),
   fetchMemberMatches: jest.fn(),
+  fetchMemberFriends: jest.fn(),
+  fetchMemberFriendSummary: jest.fn(),
 }));
 jest.mock("@/lib/public-content-client", () => ({ fetchAboutContent: jest.fn() }));
 jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }));
@@ -24,6 +33,11 @@ jest.mock("./actions", () => ({
   updateNicknameAction: jest.fn(),
   registrationAction: jest.fn(),
   submitYoutubeVideoAction: jest.fn(),
+  sendFriendRequestAction: jest.fn(),
+  answerFriendRequestAction: jest.fn(),
+  removeFriendAction: jest.fn(),
+  acceptMatchInviteAction: jest.fn(),
+  dismissMatchInviteAction: jest.fn(),
 }));
 
 /** Page props for /member with an optional ?tab=. */
@@ -72,6 +86,7 @@ const submissions = (overrides: Partial<MemberVideoSubmissions> = {}): MemberVid
 beforeEach(() => {
   jest.clearAllMocks();
   (fetchAboutContent as jest.Mock).mockResolvedValue({ games: [{ id: "g1", name: "CS2", summary: "", videos: [] }] });
+  (fetchMemberFriendSummary as jest.Mock).mockResolvedValue(0);
 });
 
 const profile: MemberProfile = {
@@ -122,6 +137,7 @@ describe("/member", () => {
     ).toEqual([
       ["參加的活動", "/member"],
       ["內戰場次", "/member?tab=matches"],
+      ["好友", "/member?tab=friends"],
       ["修改暱稱", "/member?tab=nickname"],
       ["投稿影片", "/member?tab=videos"],
     ]);
@@ -238,6 +254,106 @@ describe("/member", () => {
     expect(screen.getByRole("link", { name: "修改暱稱" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByLabelText("暱稱")).toHaveValue("小明");
     expect(screen.queryByRole("region", { name: "參加的活動" })).not.toBeInTheDocument();
+  });
+
+  describe("好友 tab", () => {
+    const overview: FriendsOverview = {
+      memberCode: "XPA-0001",
+      friends: [
+        { memberId: "m2", nickname: "小華", memberCode: "XPA-0002", hasSteam: true, since: "2026-10-30T10:00:00.000Z" },
+        {
+          memberId: "m3",
+          nickname: "小美",
+          memberCode: "XPA-0003",
+          hasSteam: false,
+          since: "2026-10-30T10:00:00.000Z",
+        },
+      ],
+      incoming: [
+        {
+          id: "r1",
+          member: { memberId: "m4", nickname: "阿強", memberCode: "XPA-0004", hasSteam: true },
+          createdAt: "2026-10-31T10:00:00.000Z",
+        },
+      ],
+      outgoing: [],
+      matchInvites: [
+        {
+          id: "i1",
+          kind: "group",
+          from: { nickname: "小華", memberCode: "XPA-0002" },
+          match: { id: "x1", title: "週五內戰", status: "lobby", playerCount: 7, rosterSize: 10 },
+          createdAt: "2026-10-31T11:00:00.000Z",
+        },
+        {
+          id: "i2",
+          kind: "signup",
+          from: { nickname: "小美", memberCode: "XPA-0003" },
+          match: { id: "x2", title: "週六內戰", status: "lobby", playerCount: 2, rosterSize: 10 },
+          createdAt: "2026-10-31T09:00:00.000Z",
+        },
+      ],
+    };
+
+    it("lists the friends first, then the member's number, the add form, invites and requests beside them", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberFriends as jest.Mock).mockResolvedValue(overview);
+      (fetchMemberFriendSummary as jest.Mock).mockResolvedValue(3);
+      render(await MemberPage(memberProps("friends")));
+
+      const tab = screen.getByRole("link", { name: /好友/ });
+      expect(tab).toHaveAttribute("aria-current", "page");
+      expect(tab).toHaveTextContent("（3 件待處理）");
+
+      const panel = screen.getByRole("region", { name: "好友" });
+      expect(within(panel).getByText("XPA-0001")).toBeInTheDocument();
+      expect(within(panel).getByLabelText(/朋友的會員編號/)).toHaveAttribute("name", "memberNumber");
+      expect(
+        within(panel)
+          .getAllByRole("heading", { level: 3 })
+          .map((h) => h.textContent),
+      // 好友清單 is for screen readers only (no visible title or count).
+      ).toEqual(["好友清單", "內戰場次邀請2", "收到的好友邀請1", "送出的好友邀請"]);
+
+      const invites = screen.getByRole("list", { name: /內戰場次邀請/ });
+      const [group, signup] = within(invites).getAllByRole("listitem");
+      expect(group).toHaveTextContent("「小華」邀你加入小隊");
+      expect(group).toHaveTextContent("報名中・7 / 10 人");
+      expect(within(group).getByRole("button", { name: "加入小隊" })).toBeInTheDocument();
+      expect(within(signup).getByRole("link", { name: "前往報名" })).toHaveAttribute("href", "/matches/x2");
+      expect(within(signup).getByRole("button", { name: "略過" })).toBeInTheDocument();
+
+      const incoming = screen.getByRole("list", { name: /收到的好友邀請/ });
+      expect(within(incoming).getByRole("button", { name: "接受" })).toBeInTheDocument();
+      expect(within(incoming).getByRole("button", { name: "拒絕" })).toBeInTheDocument();
+      expect(screen.getByText("沒有等待回覆的邀請。")).toBeInTheDocument();
+
+      expect(screen.getByRole("heading", { name: "好友清單" })).toHaveClass("sr-only");
+      const friends = screen.getByRole("list", { name: "好友清單" });
+      const [hua, mei] = within(friends).getAllByRole("listitem");
+      expect(hua).not.toHaveTextContent("尚未綁定 Steam");
+      expect(mei).toHaveTextContent("尚未綁定 Steam");
+      expect(within(mei).getByRole("checkbox", { name: /確認刪除好友「小美」/ })).toBeRequired();
+      expect(fetchMemberVideoSubmissions).not.toHaveBeenCalled();
+    });
+
+    it("says in words when there is nothing yet", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberFriends as jest.Mock).mockResolvedValue({
+        memberCode: "XPA-0001",
+        friends: [],
+        incoming: [],
+        outgoing: [],
+        matchInvites: [],
+      });
+      render(await MemberPage(memberProps("friends")));
+
+      expect(screen.getByRole("link", { name: "好友" })).not.toHaveTextContent("待處理");
+      for (const text of ["目前沒有內戰場次邀請。", "沒有收到好友邀請。", "沒有等待回覆的邀請。"]) {
+        expect(screen.getByText(text)).toBeInTheDocument();
+      }
+      expect(screen.getByText(/目前沒有好友/)).toBeInTheDocument();
+    });
   });
 
   describe("投稿影片 tab", () => {

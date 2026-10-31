@@ -92,6 +92,31 @@ describe("SiteHeader", () => {
     await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
 
+  it("shows how many friend requests and invites wait beside Member, in words for screen readers", async () => {
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} memberPending={3} />);
+
+    const nav = screen.getByRole("navigation", { name: "主要導覽" });
+    const member = within(nav).getByRole("link", { name: /^Member/ });
+    expect(member).toHaveTextContent("Member3（3 件待處理）");
+    expect(within(member).getByText("3")).toHaveAttribute("aria-hidden", "true");
+    // The count sits outside the underlined label.
+    expect(member.querySelector(".link-underline")).toHaveTextContent(/^Member$/);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Menu" }));
+    });
+    expect(within(screen.getByRole("dialog")).getByRole("link", { name: /^Member/ })).toHaveTextContent(
+      "（3 件待處理）",
+    );
+  });
+
+  it("shows no count when nothing is waiting", () => {
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} memberPending={0} />);
+
+    const nav = screen.getByRole("navigation", { name: "主要導覽" });
+    expect(within(nav).getByRole("link", { name: "Member" })).toHaveTextContent(/^Member$/);
+  });
+
   it("closes the mobile menu when a link is chosen", async () => {
     render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
 

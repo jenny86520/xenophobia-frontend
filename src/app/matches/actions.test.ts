@@ -26,6 +26,7 @@ import {
   confirmTeamsAction,
   createMatchAction,
   importPartyAction,
+  inviteFriendAction,
   joinGroupAction,
   removePlayerAction,
   signUpAction,
@@ -229,5 +230,30 @@ describe("the map veto", () => {
     expect(global.fetch).not.toHaveBeenCalled();
     await vetoResetAction("m1", {}, form({ confirm: "on" }));
     expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/manage/veto/reset");
+  });
+});
+
+describe("inviting a friend", () => {
+  it("posts the friend and the kind as the member", async () => {
+    cookies.xpa_member = "member-jwt";
+    respond(201, {});
+    await expect(inviteFriendAction("m1", "f1", "group")).resolves.toEqual({ ok: true, message: "已邀請進小隊。" });
+    expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/invites");
+    expect(sentBody()).toEqual({ memberId: "f1", kind: "group" });
+    expect(sentToken()).toBe("Bearer member-jwt");
+    expect(mockRevalidate).toHaveBeenCalledWith("/matches/m1");
+  });
+
+  it("shows the backend's reason, and sends a refused member to sign in again", async () => {
+    cookies.xpa_member = "member-jwt";
+    respond(409, { message: "請先以小隊報名這一場" });
+    await expect(inviteFriendAction("m1", "f1", "group")).resolves.toMatchObject({
+      ok: false,
+      message: "請先以小隊報名這一場",
+    });
+
+    respond(401);
+    await expect(inviteFriendAction("m1", "f1", "signup")).rejects.toThrow("REDIRECT /member/login");
+    expect(cookieStore.delete).toHaveBeenCalledWith("xpa_member");
   });
 });

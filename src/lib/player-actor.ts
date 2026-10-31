@@ -1,5 +1,6 @@
 import { memberFetch, memberToken } from "@/lib/member-session";
 import { playerToken } from "@/lib/player-session";
+import type { MatchFriends } from "@/types/friends";
 import type { ManagedMatch, ViewerMatch } from "@/types/match";
 
 /**
@@ -44,4 +45,18 @@ export async function fetchManagedMatch(id: string): Promise<ManagedMatch | null
   if ([401, 403, 404].includes(response.status)) return null;
   if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
   return (await response.json()) as ManagedMatch;
+}
+
+/**
+ * The signed-in member's friends and what they can send them for this match (the 邀請好友 block),
+ * or null for guests, visitors or a refused token. Only members have friends.
+ */
+export async function fetchMatchFriends(id: string): Promise<MatchFriends | null> {
+  const actor = await playerActor();
+  if (actor?.kind !== "member") return null;
+  const path = `/api/matches/${encodeURIComponent(id)}/friends`;
+  const response = await memberFetch(path, {}, actor.token);
+  if (response.status === 401 || response.status === 404) return null;
+  if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
+  return (await response.json()) as MatchFriends;
 }

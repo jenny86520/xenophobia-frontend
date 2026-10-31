@@ -7,12 +7,13 @@ import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
 import { JoinGroupForm, LeaveButton, SignUpButtons } from "@/components/match/match-forms";
+import { MatchInviteFriends } from "@/components/match/match-invite-friends";
 import { MatchManage } from "@/components/match/match-manage";
 import { MatchRoster } from "@/components/match/match-roster";
 import { MatchStatusLabel } from "@/components/match/match-status";
 import { VetoPanel } from "@/components/match/veto-panel";
 import { SteamLoginLink } from "@/components/player/steam-login-link";
-import { fetchManagedMatch, fetchViewerMatch } from "@/lib/player-actor";
+import { fetchManagedMatch, fetchMatchFriends, fetchViewerMatch } from "@/lib/player-actor";
 import { fetchMatchDetail } from "@/lib/public-content-client";
 import type { ViewerMatch } from "@/types/match";
 
@@ -67,6 +68,8 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
   const match = viewerMatch ?? (await fetchMatchDetail(id));
   if (!match) notFound();
   const managed = viewerMatch?.viewer.canManage ? await fetchManagedMatch(id) : null;
+  // Only signed-in members have friends, and invites only make sense while sign-up is open.
+  const friends = viewerMatch && match.status === "lobby" ? await fetchMatchFriends(id) : null;
   const shown = managed ?? match;
 
   return (
@@ -118,6 +121,21 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
               ) : (
                 <p className="text-body text-ink-secondary">名單已鎖定，不再開放報名。</p>
               )}
+            </div>
+          </EditorialGrid>
+        </Section>
+      )}
+
+      {friends && (
+        <Section spacing="tight" labelledBy="invite-friends-title" ruled>
+          <EditorialGrid className="gap-y-6">
+            <div className="col-span-4 md:col-span-8 lg:col-span-4">
+              <Heading level={2} id="invite-friends-title">
+                邀請好友
+              </Heading>
+            </div>
+            <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
+              <MatchInviteFriends matchId={match.id} friends={friends} />
             </div>
           </EditorialGrid>
         </Section>

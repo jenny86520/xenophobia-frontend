@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
+import { PendingCount } from "@/components/brand/pending-count";
 import { Heading } from "@/components/brand/typography";
 import { cn } from "@/lib/utils";
 import { MEMBER_TABS, memberTabHref, type MemberTab } from "@/utils/member-tabs";
@@ -12,7 +13,14 @@ import { MEMBER_TABS, memberTabHref, type MemberTab } from "@/utils/member-tabs"
  * aria-current, not an ARIA tablist (which needs scripted arrow keys). The current tab is marked
  * by a rule under it and bolder text, not by colour alone.
  */
-export function MemberTabs({ current }: { current: MemberTab }) {
+export function MemberTabs({
+  current,
+  counts = {},
+}: {
+  current: MemberTab;
+  /** Items waiting in a tab (the 好友 tab's requests and invites); 0 or missing shows nothing. */
+  counts?: Partial<Record<MemberTab, number>>;
+}) {
   return (
     <nav aria-label="會員專區" className="mb-section-tight">
       <ul className="flex flex-wrap gap-x-8 border-b border-line">
@@ -34,6 +42,7 @@ export function MemberTabs({ current }: { current: MemberTab }) {
               >
                 <tab.icon aria-hidden="true" className="size-4 shrink-0" />
                 {tab.label}
+                <PendingCount count={counts[tab.value] ?? 0} />
               </Link>
             </li>
           );

@@ -9,6 +9,8 @@ import { NavLinks } from "./nav-links";
 
 type MobileMenuProps = {
   cta: { label: string; href: string } | null;
+  /** Shown beside Member, as in the header. */
+  memberPending?: number;
 };
 
 /**
@@ -16,7 +18,7 @@ type MobileMenuProps = {
  * and returns focus to the trigger; we move initial focus to the first link and
  * close when any link is chosen.
  */
-export function MobileMenu({ cta }: MobileMenuProps) {
+export function MobileMenu({ cta, memberPending = 0 }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
@@ -49,7 +51,11 @@ export function MobileMenu({ cta }: MobileMenuProps) {
           </SheetClose>
         </div>
         <nav ref={navRef} aria-label="主要導覽" onClick={closeOnLink} className="mt-12 flex flex-col gap-10">
-          <NavLinks className="flex-col gap-4" linkClassName="font-heading text-h1 text-ink" />
+          <NavLinks
+            className="flex-col gap-4"
+            linkClassName="font-heading text-h1 text-ink"
+            memberPending={memberPending}
+          />
           {cta && (
             <div>
               <CtaLink href={cta.href} label={cta.label} size="large" />

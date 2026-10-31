@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { forwardedForHeader } from "@/lib/forwarded-for";
 import { backendBaseUrl } from "@/lib/public-content-client";
+import type { FriendsOverview } from "@/types/friends";
 import type { MemberMatches } from "@/types/match";
 import type { MemberProfile, MemberRegistrationView, MemberVideoSubmissions } from "@/types/member";
 
@@ -90,3 +92,31 @@ export async function fetchMemberRegistration(partyId: string): Promise<MemberRe
   if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
   return (await response.json()) as MemberRegistrationView;
 }
+
+/** The member's friends, friend requests and scrim invites (the 好友 tab), or null when not signed in. */
+export async function fetchMemberFriends(): Promise<FriendsOverview | null> {
+  const token = await memberToken();
+  if (!token) return null;
+  const path = "/api/member/friends";
+  const response = await memberFetch(path, {}, token);
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
+  return (await response.json()) as FriendsOverview;
+}
+
+/**
+ * How many friend requests and scrim invites wait for the member (the header badge). Never throws:
+ * no session or a backend failure is 0, so the layout always renders. Cached per request (the layout
+ * and the member page both read it).
+ */
+export const fetchMemberFriendSummary = cache(async (): Promise<number> => {
+  try {
+    const token = await memberToken();
+    if (!token) return 0;
+    const response = await memberFetch("/api/member/friends/summary", {}, token);
+    if (!response.ok) return 0;
+    return ((await response.json()) as { pending: number }).pending;
+  } catch {
+    return 0;
+  }
+});

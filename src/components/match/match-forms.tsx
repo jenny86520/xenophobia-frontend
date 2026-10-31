@@ -12,6 +12,7 @@ import {
   createMatchAction,
   generateTeamsAction,
   importPartyAction,
+  inviteFriendAction,
   joinGroupAction,
   leaveAction,
   lockAction,
@@ -84,6 +85,25 @@ export function JoinGroupForm({ matchId }: { matchId: string }) {
       </button>
       <FormMessage state={state} />
     </form>
+  );
+}
+
+/** 邀進小隊 or 邀請報名 for one friend (members only; the backend checks the friendship and the group). */
+export function InviteFriendButton({
+  matchId,
+  memberId,
+  kind,
+}: {
+  matchId: string;
+  memberId: string;
+  kind: "group" | "signup";
+}) {
+  return (
+    <ActionButton
+      action={inviteFriendAction.bind(null, matchId, memberId, kind)}
+      label={kind === "group" ? "邀進小隊" : "邀請報名"}
+      secondary
+    />
   );
 }
 

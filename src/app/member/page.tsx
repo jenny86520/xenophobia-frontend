@@ -7,9 +7,16 @@ import { TextLink } from "@/components/brand/text-link";
 import { NicknameForm } from "@/components/member/member-forms";
 import { MemberMatchesPanel } from "@/components/match/member-matches-panel";
 import { MemberTabPanel, MemberTabs } from "@/components/member/member-tabs";
+import { MemberFriendsPanel } from "@/components/member/member-friends-panel";
 import { MemberVideosPanel } from "@/components/member/member-videos-panel";
 import { MemberSteam } from "@/components/player/member-steam";
-import { fetchMemberMatches, fetchMemberProfile, fetchMemberVideoSubmissions } from "@/lib/member-session";
+import {
+  fetchMemberFriends,
+  fetchMemberFriendSummary,
+  fetchMemberMatches,
+  fetchMemberProfile,
+  fetchMemberVideoSubmissions,
+} from "@/lib/member-session";
 import { fetchAboutContent } from "@/lib/public-content-client";
 import type { MemberProfile } from "@/types/member";
 import { parseMemberTab, type MemberTab } from "@/utils/member-tabs";
@@ -17,12 +24,12 @@ import { logoutAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Member",
-  description: "XenoPhobiA 會員頁：個人資料、參加的活動、內戰場次與投稿影片。",
+  description: "XenoPhobiA 會員頁：個人資料、參加的活動、內戰場次、好友與投稿影片。",
 };
 
 /**
- * Members-only: the profile, then tabs (?tab=) for joined parties, the nickname and video
- * submissions; everyone else sees how to become a member. Only the open tab's data is fetched.
+ * Members-only: the profile, then tabs (?tab=) for joined parties, scrims, friends, the nickname and
+ * video submissions; everyone else sees how to become a member. Only the open tab's data is fetched.
  */
 export default async function MemberPage({ searchParams }: PageProps<"/member">) {
   const profile = await fetchMemberProfile();
@@ -88,7 +95,7 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
       </Section>
 
       <Section spacing="tight">
-        <MemberTabs current={tab} />
+        <MemberTabs current={tab} counts={{ friends: await fetchMemberFriendSummary() }} />
         {await tabContent(tab, profile)}
       </Section>
     </main>
@@ -103,6 +110,17 @@ async function tabContent(tab: MemberTab, profile: MemberProfile) {
         <NicknameForm nickname={profile.nickname} />
       </MemberTabPanel>
     );
+  }
+
+  if (tab === "friends") {
+    const overview = (await fetchMemberFriends()) ?? {
+      memberCode: profile.memberCode,
+      friends: [],
+      incoming: [],
+      outgoing: [],
+      matchInvites: [],
+    };
+    return <MemberFriendsPanel overview={overview} />;
   }
 
   if (tab === "matches") {

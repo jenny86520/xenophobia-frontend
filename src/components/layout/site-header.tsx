@@ -10,6 +10,8 @@ type SiteHeaderProps = {
   brandName: string;
   /** Primary CTA from the team profile; null hides the button. */
   cta: { label: string; href: string } | null;
+  /** Friend requests and scrim invites waiting for the signed-in member (0 when none or signed out). */
+  memberPending?: number;
 };
 
 /**
@@ -17,7 +19,7 @@ type SiteHeaderProps = {
  * On the home page `.site-header` (globals.css) is hidden over the hero and fades in fixed at
  * the top once the hero scrolls away; without support for that it stays an ordinary header.
  */
-export function SiteHeader({ brandName, cta }: SiteHeaderProps) {
+export function SiteHeader({ brandName, cta, memberPending = 0 }: SiteHeaderProps) {
   return (
     <header className="site-header border-b border-line-subtle">
       <Container className="flex min-h-16 items-center justify-between gap-6 py-3">
@@ -32,11 +34,15 @@ export function SiteHeader({ brandName, cta }: SiteHeaderProps) {
         </Link>
         <div className="hidden items-center gap-10 lg:flex">
           <nav aria-label="主要導覽">
-            <NavLinks className="gap-8" linkClassName="text-body text-ink-secondary hover:text-ink aria-[current=page]:text-ink" />
+            <NavLinks
+              className="gap-8"
+              linkClassName="text-body text-ink-secondary hover:text-ink aria-[current=page]:text-ink"
+              memberPending={memberPending}
+            />
           </nav>
           {cta && <CtaLink href={cta.href} label={cta.label} />}
         </div>
-        <MobileMenu cta={cta} />
+        <MobileMenu cta={cta} memberPending={memberPending} />
       </Container>
     </header>
   );

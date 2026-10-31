@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import MatchesPage from "./page";
 import MatchPage from "./[id]/page";
 import NewMatchPage from "./new/page";
-import { fetchManagedMatch, fetchViewerMatch } from "@/lib/player-actor";
+import { fetchManagedMatch, fetchMatchFriends, fetchViewerMatch } from "@/lib/player-actor";
 import { fetchMatchDetail, fetchMatches, fetchPartyList } from "@/lib/public-content-client";
 import { fetchMemberProfile } from "@/lib/member-session";
 import type { ManagedMatch, MatchDetail, MatchVeto, ViewerMatch } from "@/types/match";
@@ -14,7 +14,11 @@ jest.mock("next/navigation", () => ({
   },
   useRouter: () => ({ refresh: jest.fn() }),
 }));
-jest.mock("@/lib/player-actor", () => ({ fetchViewerMatch: jest.fn(), fetchManagedMatch: jest.fn() }));
+jest.mock("@/lib/player-actor", () => ({
+  fetchViewerMatch: jest.fn(),
+  fetchManagedMatch: jest.fn(),
+  fetchMatchFriends: jest.fn(),
+}));
 jest.mock("@/lib/public-content-client", () => ({
   fetchMatches: jest.fn(),
   fetchMatchDetail: jest.fn(),
@@ -42,6 +46,7 @@ jest.mock("@/app/matches/actions", () =>
       "vetoStartAction",
       "vetoUndoAction",
       "vetoResetAction",
+      "inviteFriendAction",
     ].map((name) => [name, jest.fn()]),
   ),
 );
@@ -159,6 +164,72 @@ describe("/matches/[id]", () => {
     await renderMatch();
     expect(screen.getByText("K7P2QM")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "退出報名" })).toBeInTheDocument();
+  });
+
+  describe("邀請好友", () => {
+    const friend = (memberId: string, nickname: string, extra: object = {}) => ({
+      memberId,
+      nickname,
+      memberCode: null,
+      hasSteam: true,
+      seated: false,
+      invited: { group: false, signup: false },
+      ...extra,
+    });
+
+    it("lists each friend with their state, offering 邀進小隊 only when the member has a group with room", async () => {
+      (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer({ playerId: "a", entryId: "e1", inviteCode: "K7P2QM" }));
+      (fetchMatchFriends as jest.Mock).mockResolvedValue({
+        canInviteToGroup: true,
+        friends: [
+          friend("m1", "小華"),
+          friend("m2", "小美", { hasSteam: false, invited: { group: true, signup: false } }),
+          friend("m3", "阿強", { seated: true }),
+        ],
+      });
+      await renderMatch();
+
+      const block = screen.getByRole("region", { name: "邀請好友" });
+      const [hua, mei, keung] = within(within(block).getByRole("list", { name: "好友" })).getAllByRole("listitem");
+      expect(within(hua).getByRole("button", { name: "邀進小隊" })).toBeInTheDocument();
+      expect(within(hua).getByRole("button", { name: "邀請報名" })).toBeInTheDocument();
+      expect(mei).toHaveTextContent("已邀請進小隊");
+      expect(mei).toHaveTextContent("尚未綁定 Steam");
+      expect(within(mei).queryByRole("button", { name: "邀進小隊" })).not.toBeInTheDocument();
+      expect(keung).toHaveTextContent("已在名單");
+      expect(within(keung).queryByRole("button")).not.toBeInTheDocument();
+    });
+
+    it("offers only 邀請報名 without a group, and points to the 好友 tab without friends", async () => {
+      (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer());
+      (fetchMatchFriends as jest.Mock).mockResolvedValue({ canInviteToGroup: false, friends: [friend("m1", "小華")] });
+      await renderMatch();
+      const block = screen.getByRole("region", { name: "邀請好友" });
+      expect(within(block).queryByRole("button", { name: "邀進小隊" })).not.toBeInTheDocument();
+      expect(within(block).getByRole("button", { name: "邀請報名" })).toBeInTheDocument();
+    });
+
+    it("points a member without friends to the 好友 tab", async () => {
+      (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer());
+      (fetchMatchFriends as jest.Mock).mockResolvedValue({ canInviteToGroup: false, friends: [] });
+      await renderMatch();
+      expect(screen.getByRole("link", { name: /加好友/ })).toHaveAttribute("href", "/member?tab=friends");
+    });
+
+    it("is not shown to visitors, guests or once sign-up has closed", async () => {
+      await renderMatch();
+      expect(fetchMatchFriends).not.toHaveBeenCalled();
+
+      (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer());
+      (fetchMatchFriends as jest.Mock).mockResolvedValue(null);
+      await renderMatch();
+      expect(screen.queryByRole("region", { name: "邀請好友" })).not.toBeInTheDocument();
+
+      jest.clearAllMocks();
+      (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer({}, { ...base, status: "roster_locked" }));
+      await renderMatch();
+      expect(fetchMatchFriends).not.toHaveBeenCalled();
+    });
   });
 
   it("shows the two teams with captains, totals and the difference once confirmed", async () => {

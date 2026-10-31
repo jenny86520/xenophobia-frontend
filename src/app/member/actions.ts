@@ -155,3 +155,109 @@ export async function registrationAction(
   revalidatePath("/member");
   return { ok: true, message: intent === "join" ? "已報名。" : "已取消報名。" };
 }
+
+// ---- Friends ----
+
+/** Friends and invites change the header count too, so the whole layout is refreshed. */
+function refreshFriends(): void {
+  revalidatePath("/", "layout");
+}
+
+/**
+ * Sends one member request for the 好友 tab: the backend's response, or the state to show when
+ * it could not be reached. A refused token signs the member in again.
+ */
+async function friendRequest(
+  path: string,
+  init: RequestInit,
+): Promise<{ response: Response } | { state: MemberActionState }> {
+  let response: Response;
+  try {
+    response = await memberFetch(path, init);
+  } catch {
+    return { state: UNREACHABLE };
+  }
+  if (response.status === 401) return signInAgain();
+  return { response };
+}
+
+export async function sendFriendRequestAction(_: MemberActionState, form: FormData): Promise<MemberActionState> {
+  const values = { memberNumber: text(form, "memberNumber") };
+  const sent = await friendRequest("/api/member/friends/requests", {
+    method: "POST",
+    body: JSON.stringify(values),
+  });
+  if ("state" in sent) return { ...sent.state, values };
+  const { response } = sent;
+  if (!response.ok) return { ...(await errorState(response, "送出失敗，請稍後再試")), values };
+  const result = (await response.json()) as { status: "pending" | "accepted"; member: { nickname: string } };
+  refreshFriends();
+  return {
+    ok: true,
+    message:
+      result.status === "accepted"
+        ? `「${result.member.nickname}」也邀請過你，你們已經是好友了。`
+        : `已送出好友邀請給「${result.member.nickname}」。`,
+  };
+}
+
+/** Accept or decline a request sent to the member, or withdraw one they sent. */
+export async function answerFriendRequestAction(
+  requestId: string,
+  intent: "accept" | "decline" | "withdraw",
+): Promise<MemberActionState> {
+  const path = `/api/member/friends/requests/${encodeURIComponent(requestId)}`;
+  const sent = await friendRequest(intent === "accept" ? `${path}/accept` : path, {
+    method: intent === "accept" ? "POST" : "DELETE",
+  });
+  if ("state" in sent) return sent.state;
+  const { response } = sent;
+  if (!response.ok) return errorState(response, "操作失敗，請重新整理後再試");
+  refreshFriends();
+  const done = { accept: "已成為好友。", decline: "已拒絕邀請。", withdraw: "已收回邀請。" };
+  return { ok: true, message: done[intent] };
+}
+
+/** Unfriends after the box is ticked (no confirmation dialog without JavaScript). */
+export async function removeFriendAction(
+  memberId: string,
+  _: MemberActionState,
+  form: FormData,
+): Promise<MemberActionState> {
+  if (form.get("confirm") !== "on") {
+    return { ok: false, message: "請先勾選確認", fields: { confirm: "請先勾選確認" } };
+  }
+  const sent = await friendRequest(`/api/member/friends/${encodeURIComponent(memberId)}`, {
+    method: "DELETE",
+  });
+  if ("state" in sent) return sent.state;
+  const { response } = sent;
+  if (!response.ok) return errorState(response, "刪除失敗，請重新整理後再試");
+  refreshFriends();
+  return { ok: true, message: "已刪除好友。" };
+}
+
+/** Joins the inviter's group and opens the match. */
+export async function acceptMatchInviteAction(inviteId: string): Promise<MemberActionState> {
+  const sent = await friendRequest(`/api/member/match-invites/${encodeURIComponent(inviteId)}/accept`, {
+    method: "POST",
+  });
+  if ("state" in sent) return sent.state;
+  const { response } = sent;
+  if (!response.ok) return errorState(response, "加入失敗，請重新整理後再試");
+  const { matchId } = (await response.json()) as { matchId: string };
+  refreshFriends();
+  revalidatePath(`/matches/${matchId}`);
+  redirect(`/matches/${matchId}`);
+}
+
+export async function dismissMatchInviteAction(inviteId: string): Promise<MemberActionState> {
+  const sent = await friendRequest(`/api/member/match-invites/${encodeURIComponent(inviteId)}`, {
+    method: "DELETE",
+  });
+  if ("state" in sent) return sent.state;
+  const { response } = sent;
+  if (!response.ok) return errorState(response, "操作失敗，請重新整理後再試");
+  refreshFriends();
+  return { ok: true, message: "已略過這個邀請。" };
+}

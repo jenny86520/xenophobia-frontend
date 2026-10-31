@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { PendingCount } from "@/components/brand/pending-count";
 import { TextLink } from "@/components/brand/text-link";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "./nav-items";
@@ -13,10 +14,12 @@ export function isCurrentPath(pathname: string, href: string): boolean {
 type NavLinksProps = {
   className?: string;
   linkClassName?: string;
+  /** Friend requests and scrim invites waiting for the signed-in member, shown beside Member. */
+  memberPending?: number;
 };
 
 /** Primary navigation links, marking the current section with aria-current="page". */
-export function NavLinks({ className, linkClassName }: NavLinksProps) {
+export function NavLinks({ className, linkClassName, memberPending = 0 }: NavLinksProps) {
   const pathname = usePathname() ?? "/";
   return (
     <ul className={cn("flex", className)}>
@@ -28,6 +31,7 @@ export function NavLinks({ className, linkClassName }: NavLinksProps) {
             icon={item.icon}
             current={isCurrentPath(pathname, item.href)}
             className={linkClassName}
+            after={item.href === "/member" ? <PendingCount count={memberPending} /> : undefined}
           >
             {item.label}
           </TextLink>
