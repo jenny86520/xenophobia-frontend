@@ -93,6 +93,13 @@ describe("fetchPartyList", () => {
     const [url] = (global.fetch as jest.Mock).mock.calls[0] as [string];
     expect(url.endsWith("/api/parties?status=expired&category=games")).toBe(true);
   });
+
+  it("asks the backend for newest first, leaving its default asc out", async () => {
+    mockFetchResponse(200, []);
+    await fetchPartyList("active", "all", "all", "desc");
+    const [url] = (global.fetch as jest.Mock).mock.calls[0] as [string];
+    expect(url.endsWith("/api/parties?status=active&order=desc")).toBe(true);
+  });
 });
 
 describe("fetchLegalDocument", () => {

@@ -45,6 +45,8 @@ export type MatchSummary = {
   playerCount: number;
   capacity: number;
   createdAt: string;
+  /** Who created it: 管理員 for matches made in the admin, else the member's nickname at the time. */
+  createdBy: string;
 };
 
 export type MatchPlayer = {

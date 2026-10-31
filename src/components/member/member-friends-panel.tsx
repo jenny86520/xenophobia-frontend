@@ -1,11 +1,9 @@
 import type { ReactNode } from "react";
 import { acceptMatchInviteAction, answerFriendRequestAction, dismissMatchInviteAction } from "@/app/member/actions";
-import { EditorialGrid } from "@/components/brand/editorial-grid";
-import { Eyebrow } from "@/components/brand/eyebrow";
 import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { TextLink } from "@/components/brand/text-link";
-import { Heading } from "@/components/brand/typography";
 import { MATCH_STATUS_TEXT } from "@/components/match/match-status";
+import { MemberTabColumns } from "@/components/member/member-tabs";
 import type { FriendPerson, FriendsOverview, MatchInvite } from "@/types/friends";
 import { AddFriendForm, FriendActionButton, RemoveFriendForm } from "./friend-forms";
 
@@ -17,15 +15,12 @@ import { AddFriendForm, FriendActionButton, RemoveFriendForm } from "./friend-fo
  */
 export function MemberFriendsPanel({ overview }: { overview: FriendsOverview }) {
   return (
-    <section aria-labelledby="friends-title">
-      <div className="mb-10 flex flex-col gap-4">
-        <Eyebrow>{`Friends / ${formatCount(overview.friends.length)}`}</Eyebrow>
-        <Heading level={2} id="friends-title">
-          好友
-        </Heading>
-      </div>
-      <EditorialGrid className="gap-y-12">
-        <div className="col-span-4 md:col-span-8 lg:col-span-7">
+    <MemberTabColumns
+      id="friends-title"
+      eyebrow={`Friends / ${formatCount(overview.friends.length)}`}
+      title="好友"
+      main={
+        <>
           <FriendsSection
             id="friend-list-title"
             title="好友清單"
@@ -46,9 +41,10 @@ export function MemberFriendsPanel({ overview }: { overview: FriendsOverview }) 
               </PersonRow>
             ))}
           </FriendsSection>
-        </div>
-
-        <div className="col-span-4 flex flex-col gap-10 md:col-span-8 lg:col-span-5 lg:col-start-8 lg:border-l lg:border-line lg:pl-8">
+        </>
+      }
+      side={
+        <>
           <div className="flex flex-col gap-6 border-b border-line pb-8">
             <dl className="flex flex-col gap-1">
               <dt>
@@ -89,9 +85,9 @@ export function MemberFriendsPanel({ overview }: { overview: FriendsOverview }) 
               </PersonRow>
             ))}
           </FriendsSection>
-        </div>
-      </EditorialGrid>
-    </section>
+        </>
+      }
+    />
   );
 }
 

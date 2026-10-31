@@ -70,6 +70,7 @@ const base: MatchDetail = {
   playerCount: 3,
   capacity: 10,
   createdAt: "2026-10-25T00:00:00.000Z",
+  createdBy: "阿強",
   entries: [
     { id: "e1", isGroup: true, ownerPlayerId: "a", players: [player("a", "阿強"), player("b", "小明")] },
     { id: "e2", isGroup: false, ownerPlayerId: "c", players: [player("c", "訪客C")] },
@@ -110,10 +111,12 @@ describe("/matches", () => {
     (fetchMatches as jest.Mock).mockResolvedValue({ items: [base], total: 1, page: 1, pageSize: 50 });
   });
 
-  it("lists matches with status and head count", async () => {
+  it("lists matches with status, head count, creator and creation time", async () => {
     render(await MatchesPage());
     const row = screen.getByRole("link", { name: /週五晚場/ });
     expect(row).toHaveAttribute("href", "/matches/m1");
+    // 00:00 UTC is 08:00 in Taiwan.
+    expect(within(row).getByText("阿強・2026/10/25 08:00")).toBeInTheDocument();
     expect(within(row).getByText("3 / 10")).toBeInTheDocument();
     expect(within(row).getByText("報名中")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /建立場次/ })).not.toBeInTheDocument();
@@ -356,6 +359,7 @@ describe("/matches/new", () => {
     expect(screen.queryByRole("combobox", { name: "遊戲" })).not.toBeInTheDocument();
     expect(screen.getByRole("option", { name: "2026-11-01 週末對戰夜" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "建立場次" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /內戰場次/ })).toHaveAttribute("href", "/matches");
   });
 });
 

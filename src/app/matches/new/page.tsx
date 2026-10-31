@@ -11,7 +11,10 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-/** A member whose role has match.create (and the permission is not paused) creates a match here. */
+/**
+ * A member whose role has match.create (and the permission is not paused) creates a match here; a
+ * link at the top goes back to /matches, as on a match page.
+ */
 export default async function NewMatchPage() {
   const member = await fetchMemberProfile();
 
@@ -46,11 +49,16 @@ export default async function NewMatchPage() {
   return (
     <main id="main">
       <Section spacing="tight" labelledBy="page-title">
-        <PageHeader
-          eyebrow="MATCHES / NEW"
-          title="建立場次"
-          description="建立後你可以在場次頁管理名單、鎖定、分隊與取消。"
-        />
+        <TextLink href="/matches" className="text-body text-ink-secondary hover:text-ink">
+          <span aria-hidden="true">←</span> 內戰場次
+        </TextLink>
+        <div className="mt-10">
+          <PageHeader
+            eyebrow="MATCHES / NEW"
+            title="建立場次"
+            description="建立後你可以在場次頁管理名單、鎖定、分隊與取消。"
+          />
+        </div>
         <div className="mt-section-tight">
           <CreateMatchForm parties={partyOptions} />
         </div>

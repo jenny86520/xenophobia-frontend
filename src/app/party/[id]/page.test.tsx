@@ -288,6 +288,7 @@ describe("party matches block", () => {
           playerCount: 7,
           capacity: 10,
           createdAt: "2026-10-25T00:00:00.000Z",
+          createdBy: "管理員",
         },
       ],
       total: 1,
@@ -298,6 +299,7 @@ describe("party matches block", () => {
     expect(fetchMatches).toHaveBeenLastCalledWith("1");
     expect(screen.getByRole("heading", { name: "內戰場次" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /第一場/ })).toHaveAttribute("href", "/matches/m1");
+    expect(screen.getByText("管理員・2026/10/25 08:00")).toBeInTheDocument();
     expect(screen.getByText("7 / 10").querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByText("報名中")).toBeInTheDocument();
   });

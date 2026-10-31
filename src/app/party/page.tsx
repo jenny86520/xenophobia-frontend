@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 /** Party index: filters live in the URL and results are rendered on the server. */
 export default async function PartyPage({ searchParams }: PageProps<"/party">) {
   const filters = parsePartyFilters(await searchParams);
-  const parties = await fetchPartyList(filters.status, filters.format, filters.category);
+  const parties = await fetchPartyList(filters.status, filters.format, filters.category, filters.order);
 
   return (
     <main id="main">

@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   CATEGORY_OPTIONS,
   FORMAT_OPTIONS,
+  ORDER_OPTIONS,
   partyFiltersHref,
   STATUS_OPTIONS,
   type FilterOption,
@@ -44,7 +45,7 @@ function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
 }
 
 /**
- * Status / Mode / Type filters. The URL is the source of truth: a change replaces the
+ * Status / Mode / Type filters and the Sort order. The URL is the source of truth: a change replaces the
  * URL (defaults omitted) and the server page re-renders with the new results.
  */
 export function PartyFilters({ value }: { value: PartyFilterValues }) {
@@ -60,12 +61,13 @@ export function PartyFilters({ value }: { value: PartyFilterValues }) {
   return (
     <div
       aria-busy={pending || undefined}
-      className="grid grid-cols-1 gap-4 sm:grid-cols-3 md:flex md:flex-row md:gap-6"
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:flex md:flex-row md:gap-6"
       data-pending={pending || undefined}
     >
       <FilterSelect label="Status" value={value.status} options={STATUS_OPTIONS} onChange={update("status")} />
       <FilterSelect label="Mode" value={value.format} options={FORMAT_OPTIONS} onChange={update("format")} />
       <FilterSelect label="Type" value={value.category} options={CATEGORY_OPTIONS} onChange={update("category")} />
+      <FilterSelect label="Sort" value={value.order} options={ORDER_OPTIONS} onChange={update("order")} />
     </div>
   );
 }

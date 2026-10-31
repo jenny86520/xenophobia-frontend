@@ -57,11 +57,13 @@ type MemberTabPanelProps = {
   id: string;
   eyebrow: string;
   title: string;
+  /** Shown in the left column under the heading (e.g. the scrim rating). */
+  aside?: ReactNode;
   children: ReactNode;
 };
 
-/** A tab's content: eyebrow and heading on the left, the content on the right (stacked on phones). */
-export function MemberTabPanel({ id, eyebrow, title, children }: MemberTabPanelProps) {
+/** A tab's content: eyebrow, heading and an optional aside on the left, the content on the right (stacked on phones). */
+export function MemberTabPanel({ id, eyebrow, title, aside, children }: MemberTabPanelProps) {
   return (
     <section aria-labelledby={id}>
       <EditorialGrid className="gap-y-8">
@@ -70,8 +72,43 @@ export function MemberTabPanel({ id, eyebrow, title, children }: MemberTabPanelP
           <Heading level={2} id={id}>
             {title}
           </Heading>
+          {aside}
         </div>
         <div className="col-span-4 flex flex-col gap-8 md:col-span-8 lg:col-span-8 lg:col-start-5">{children}</div>
+      </EditorialGrid>
+    </section>
+  );
+}
+
+type MemberTabColumnsProps = {
+  /** Id of the tab heading. */
+  id: string;
+  eyebrow: string;
+  title: string;
+  /** The main (left) column. */
+  main: ReactNode;
+  /** The right column, divided by a rule from 1024px. */
+  side: ReactNode;
+};
+
+/**
+ * A tab with its heading on top and two columns below from 1024px (main 7, side 5); below that they
+ * stack in that order. Used by the 好友 and 投稿影片 tabs.
+ */
+export function MemberTabColumns({ id, eyebrow, title, main, side }: MemberTabColumnsProps) {
+  return (
+    <section aria-labelledby={id}>
+      <div className="mb-10 flex flex-col gap-4">
+        <Eyebrow>{eyebrow}</Eyebrow>
+        <Heading level={2} id={id}>
+          {title}
+        </Heading>
+      </div>
+      <EditorialGrid className="gap-y-12">
+        <div className="col-span-4 flex flex-col gap-8 md:col-span-8 lg:col-span-7">{main}</div>
+        <div className="col-span-4 flex flex-col gap-10 md:col-span-8 lg:col-span-5 lg:col-start-8 lg:border-l lg:border-line lg:pl-8">
+          {side}
+        </div>
       </EditorialGrid>
     </section>
   );

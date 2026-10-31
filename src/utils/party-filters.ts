@@ -16,14 +16,21 @@ export const CATEGORY_OPTIONS: FilterOption[] = [
   { value: "gathering", label: "Gathering" },
 ];
 
-export type PartyFilterValues = { status: string; format: string; category: string };
+/** By start date: newest first (the default) or oldest first. */
+export const ORDER_OPTIONS: FilterOption[] = [
+  { value: "desc", label: "Newest" },
+  { value: "asc", label: "Oldest" },
+];
 
-export const DEFAULT_FILTERS: PartyFilterValues = { status: "active", format: "all", category: "all" };
+export type PartyFilterValues = { status: string; format: string; category: string; order: string };
+
+export const DEFAULT_FILTERS: PartyFilterValues = { status: "active", format: "all", category: "all", order: "desc" };
 
 const OPTIONS: Record<keyof PartyFilterValues, FilterOption[]> = {
   status: STATUS_OPTIONS,
   format: FORMAT_OPTIONS,
   category: CATEGORY_OPTIONS,
+  order: ORDER_OPTIONS,
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -35,13 +42,13 @@ export function parsePartyFilters(searchParams: SearchParams): PartyFilterValues
     const value = Array.isArray(raw) ? raw[0] : raw;
     return OPTIONS[key].some((option) => option.value === value) ? (value as string) : DEFAULT_FILTERS[key];
   };
-  return { status: pick("status"), format: pick("format"), category: pick("category") };
+  return { status: pick("status"), format: pick("format"), category: pick("category"), order: pick("order") };
 }
 
 /** The /party URL for these filters; default values are left out of the query string. */
 export function partyFiltersHref(filters: PartyFilterValues): string {
   const params = new URLSearchParams();
-  for (const key of ["status", "format", "category"] as const) {
+  for (const key of ["status", "format", "category", "order"] as const) {
     if (filters[key] !== DEFAULT_FILTERS[key]) params.set(key, filters[key]);
   }
   const query = params.toString();

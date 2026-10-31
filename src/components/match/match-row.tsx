@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { ArrowRight, Users } from "lucide-react";
 import { MetaLabel } from "@/components/brand/meta-label";
+import { formatTaipeiDateTime } from "@/utils/datetime";
 import type { MatchSummary } from "@/types/match";
 import { MatchStatusLabel } from "./match-status";
 
-/** One match in a list: title, game and party, status and head count; the whole row links to it. */
+/**
+ * One match in a list: title, game and party, who created it and when (Taiwan time), status and head
+ * count; the whole row links to it.
+ */
 export function MatchRow({
   match,
   titleAs: Title = "h3",
@@ -24,6 +28,9 @@ export function MatchRow({
         <div className="col-span-4 flex flex-col gap-1 md:col-span-5 lg:col-span-6">
           <Title className="font-heading text-h3 text-ink">{match.title}</Title>
           <MetaLabel>{match.party ? `${match.game.name} / ${match.party.title}` : match.game.name}</MetaLabel>
+          <MetaLabel>
+            {match.createdBy}・{formatTaipeiDateTime(match.createdAt)}
+          </MetaLabel>
         </div>
         <div className="col-span-4 flex flex-wrap items-center gap-x-6 gap-y-2 md:col-span-3 lg:col-span-5">
           <MatchStatusLabel status={match.status} />

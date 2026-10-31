@@ -1,7 +1,7 @@
 import { formatCount } from "@/components/brand/meta-label";
 import { Heading } from "@/components/brand/typography";
 import type { MemberVideoSubmissions } from "@/types/member";
-import { MemberTabPanel } from "./member-tabs";
+import { MemberTabColumns } from "./member-tabs";
 import { VideoSubmissionForms } from "./video-submission-forms";
 import { VideoSubmissionList } from "./video-submission-list";
 
@@ -18,47 +18,56 @@ type MemberVideosPanelProps = {
   games: { id: string; name: string }[];
 };
 
-/** The 投稿影片 tab: the notice and forms (when not paused and the role may submit), then the member's history. */
+/**
+ * The 投稿影片 tab in two columns: the notice and forms (when not paused and the role may submit) on
+ * the left, the member's history on the right; stacked in that order below 1024px.
+ */
 export function MemberVideosPanel({ submissions, games }: MemberVideosPanelProps) {
   return (
-    <MemberTabPanel id="videos-title" eyebrow="Submit" title="投稿影片">
-      {submissions.paused ? (
-        <p className="text-body text-ink-secondary">影片投稿目前暫停，恢復後即可投稿。</p>
-      ) : !submissions.canSubmit ? (
-        <p className="text-body text-ink-secondary">目前的角色不能投稿影片，如有需要請聯絡管理員。</p>
-      ) : (
-        <>
-          <p className="text-body text-ink-secondary">
-            為遊戲項目投稿你的 highlight 影片，可以貼 YouTube 連結或上傳影片檔。
-          </p>
-          <ul className="flex max-w-xl flex-col gap-2 border-l-2 border-signal pl-4" aria-label="投稿須知">
-            {NOTICES.map((notice) => (
-              <li key={notice} className="text-body text-ink">
-                {notice}
-              </li>
-            ))}
-          </ul>
-          {games.length === 0 ? (
-            <p className="text-body text-ink-secondary">目前沒有可以投稿的遊戲項目。</p>
-          ) : (
-            <VideoSubmissionForms games={games} uploadsLeftToday={submissions.uploadsLeftToday} />
-          )}
-        </>
-      )}
-
-      <section aria-labelledby="history-title" className="flex flex-col gap-4 border-t border-line pt-8">
-        <div className="flex items-baseline justify-between gap-4">
-          <Heading level={3} id="history-title">
-            投稿紀錄
-          </Heading>
-          <span className="font-mono text-meta text-ink-muted">{formatCount(submissions.items.length)}</span>
-        </div>
-        {submissions.items.length === 0 ? (
-          <p className="text-body text-ink-secondary">還沒有投稿。</p>
+    <MemberTabColumns
+      id="videos-title"
+      eyebrow="Submit"
+      title="投稿影片"
+      main={
+        submissions.paused ? (
+          <p className="text-body text-ink-secondary">影片投稿目前暫停，恢復後即可投稿。</p>
+        ) : !submissions.canSubmit ? (
+          <p className="text-body text-ink-secondary">目前的角色不能投稿影片，如有需要請聯絡管理員。</p>
         ) : (
-          <VideoSubmissionList items={submissions.items} />
-        )}
-      </section>
-    </MemberTabPanel>
+          <>
+            <p className="text-body text-ink-secondary">
+              為遊戲項目投稿你的 highlight 影片，可以貼 YouTube 連結或上傳影片檔。
+            </p>
+            <ul className="flex max-w-xl flex-col gap-2 border-l-2 border-signal pl-4" aria-label="投稿須知">
+              {NOTICES.map((notice) => (
+                <li key={notice} className="text-body text-ink">
+                  {notice}
+                </li>
+              ))}
+            </ul>
+            {games.length === 0 ? (
+              <p className="text-body text-ink-secondary">目前沒有可以投稿的遊戲項目。</p>
+            ) : (
+              <VideoSubmissionForms games={games} uploadsLeftToday={submissions.uploadsLeftToday} />
+            )}
+          </>
+        )
+      }
+      side={
+        <section aria-labelledby="history-title" className="flex flex-col gap-4">
+          <div className="flex items-baseline justify-between gap-4">
+            <Heading level={3} id="history-title">
+              投稿紀錄
+            </Heading>
+            <span className="font-mono text-meta text-ink-muted">{formatCount(submissions.items.length)}</span>
+          </div>
+          {submissions.items.length === 0 ? (
+            <p className="text-body text-ink-secondary">還沒有投稿。</p>
+          ) : (
+            <VideoSubmissionList items={submissions.items} />
+          )}
+        </section>
+      }
+    />
   );
 }

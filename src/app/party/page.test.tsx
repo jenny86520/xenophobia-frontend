@@ -23,12 +23,13 @@ describe("PartyPage", () => {
     mockReplace.mockReset();
   });
 
-  it("loads active parties of every mode and type by default", async () => {
+  it("loads active parties of every mode and type by default, newest first", async () => {
     mockedFetchPartyList.mockResolvedValue([]);
 
     await renderPage();
 
-    expect(mockedFetchPartyList).toHaveBeenCalledWith("active", "all", "all");
+    expect(mockedFetchPartyList).toHaveBeenCalledWith("active", "all", "all", "desc");
+    expect(screen.getByRole("combobox", { name: "Sort" })).toHaveTextContent("Newest");
     expect(screen.getByText("沒有符合目前篩選條件的活動。")).toBeInTheDocument();
   });
 
@@ -37,7 +38,7 @@ describe("PartyPage", () => {
 
     await renderPage({ status: "expired", format: "offline" });
 
-    expect(mockedFetchPartyList).toHaveBeenCalledWith("expired", "offline", "all");
+    expect(mockedFetchPartyList).toHaveBeenCalledWith("expired", "offline", "all", "desc");
     expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent("Expired");
     expect(screen.getByRole("combobox", { name: "Mode" })).toHaveTextContent("Offline");
   });
@@ -45,10 +46,19 @@ describe("PartyPage", () => {
   it("falls back to the default for an invalid URL value", async () => {
     mockedFetchPartyList.mockResolvedValue([]);
 
-    await renderPage({ status: "unknown" });
+    await renderPage({ status: "unknown", order: "newest" });
 
-    expect(mockedFetchPartyList).toHaveBeenCalledWith("active", "all", "all");
+    expect(mockedFetchPartyList).toHaveBeenCalledWith("active", "all", "all", "desc");
     expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent("Active");
+  });
+
+  it("loads oldest first from ?order=asc", async () => {
+    mockedFetchPartyList.mockResolvedValue([]);
+
+    await renderPage({ order: "asc" });
+
+    expect(mockedFetchPartyList).toHaveBeenCalledWith("active", "all", "all", "asc");
+    expect(screen.getByRole("combobox", { name: "Sort" })).toHaveTextContent("Oldest");
   });
 
   it("shows the number of matching parties as RESULTS metadata", async () => {

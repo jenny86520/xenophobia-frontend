@@ -59,11 +59,13 @@ export const fetchUpcomingParty = cache(
 );
 
 export const fetchPartyList = cache(
-  async (status: string, format: string, category: string): Promise<PartyListItem[]> => {
+  async (status: string, format: string, category: string, order = "asc"): Promise<PartyListItem[]> => {
     const params = new URLSearchParams();
     if (status !== "all") params.set("status", status);
     if (format !== "all") params.set("format", format);
     if (category !== "all") params.set("category", category);
+    // The backend sorts; asc (oldest first) is its default.
+    if (order !== "asc") params.set("order", order);
     const query = params.toString();
     return getRequiredJson<PartyListItem[]>(`/api/parties${query ? `?${query}` : ""}`);
   },

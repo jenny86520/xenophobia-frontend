@@ -1,19 +1,20 @@
 import { memberTabHref, parseMemberTab } from "./member-tabs";
 
 describe("parseMemberTab", () => {
-  it("reads a known tab and falls back to the joined parties", () => {
+  it("reads a known tab and falls back to the profile", () => {
     expect(parseMemberTab("videos")).toBe("videos");
-    expect(parseMemberTab("nickname")).toBe("nickname");
+    expect(parseMemberTab("parties")).toBe("parties");
     expect(parseMemberTab("friends")).toBe("friends");
-    expect(parseMemberTab(undefined)).toBe("parties");
-    expect(parseMemberTab("abc")).toBe("parties");
-    expect(parseMemberTab(["videos", "nickname"])).toBe("parties");
+    expect(parseMemberTab(undefined)).toBe("profile");
+    expect(parseMemberTab("abc")).toBe("profile");
+    expect(parseMemberTab(["videos", "parties"])).toBe("profile");
   });
 });
 
 describe("memberTabHref", () => {
   it("keeps the default tab on plain /member", () => {
-    expect(memberTabHref("parties")).toBe("/member");
+    expect(memberTabHref("profile")).toBe("/member");
+    expect(memberTabHref("parties")).toBe("/member?tab=parties");
     expect(memberTabHref("videos")).toBe("/member?tab=videos");
   });
 });

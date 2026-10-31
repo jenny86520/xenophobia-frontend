@@ -28,8 +28,8 @@ export const metadata: Metadata = {
 };
 
 /**
- * Members-only: the profile, then tabs (?tab=) for joined parties, scrims, friends, the nickname and
- * video submissions; everyone else sees how to become a member. Only the open tab's data is fetched.
+ * Members-only: the nickname, sign-out and Steam row, then tabs (?tab=) for the profile (details and
+ * nickname form, the default), joined parties, scrims, friends and video submissions; everyone else sees how to become a member. Only the open tab's data is fetched.
  */
 export default async function MemberPage({ searchParams }: PageProps<"/member">) {
   const profile = await fetchMemberProfile();
@@ -56,16 +56,6 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
 
   const query = await searchParams;
   const tab = parseMemberTab(query.tab);
-  const details = [
-    { label: "會員編號", value: profile.memberCode ?? "—" },
-    { label: "姓名", value: profile.name },
-    { label: "暱稱", value: profile.nickname },
-    { label: "帳號", value: profile.username },
-    { label: "Discord ID", value: profile.discordId },
-    { label: "Email", value: profile.email },
-    { label: "手機", value: profile.phone },
-    { label: "角色", value: profile.role?.name ?? "—" },
-  ];
 
   return (
     <main id="main">
@@ -81,17 +71,11 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
             </form>
           }
         />
-        <dl className="mt-section-tight grid grid-cols-1 border-t border-line md:grid-cols-2 lg:grid-cols-4">
-          {details.map((item) => (
-            <div key={item.label} className="flex flex-col gap-1 border-b border-line py-4 md:pr-6">
-              <dt>
-                <MetaLabel>{item.label}</MetaLabel>
-              </dt>
-              <dd className="text-lead break-all text-ink">{item.value}</dd>
-            </div>
-          ))}
-        </dl>
-        <MemberSteam steam={profile.steam} result={typeof query.steam === "string" ? query.steam : undefined} />
+        <MemberSteam
+          steam={profile.steam}
+          result={typeof query.steam === "string" ? query.steam : undefined}
+          createMatch={profile.canCreateMatch}
+        />
       </Section>
 
       <Section spacing="tight">
@@ -104,9 +88,29 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
 
 /** The open tab's content; only that tab's data is fetched. */
 async function tabContent(tab: MemberTab, profile: MemberProfile) {
-  if (tab === "nickname") {
+  if (tab === "profile") {
+    const details = [
+      { label: "會員編號", value: profile.memberCode ?? "—" },
+      { label: "姓名", value: profile.name },
+      { label: "暱稱", value: profile.nickname },
+      { label: "帳號", value: profile.username },
+      { label: "Discord ID", value: profile.discordId },
+      { label: "Email", value: profile.email },
+      { label: "手機", value: profile.phone },
+      { label: "角色", value: profile.role?.name ?? "—" },
+    ];
     return (
-      <MemberTabPanel id="nickname-title" eyebrow="Profile" title="修改暱稱">
+      <MemberTabPanel id="profile-title" eyebrow="Profile" title="個人資料">
+        <dl className="grid grid-cols-1 border-t border-line md:grid-cols-2">
+          {details.map((item) => (
+            <div key={item.label} className="flex flex-col gap-1 border-b border-line py-4 md:pr-6">
+              <dt>
+                <MetaLabel>{item.label}</MetaLabel>
+              </dt>
+              <dd className="text-lead break-all text-ink">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
         <NicknameForm nickname={profile.nickname} />
       </MemberTabPanel>
     );

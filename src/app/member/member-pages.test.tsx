@@ -122,33 +122,33 @@ describe("/member", () => {
     expect(fetchMemberVideoSubmissions).not.toHaveBeenCalled();
   });
 
-  it("shows the profile, then the tabs with the joined parties open by default", async () => {
+  it("opens the 個人資料 tab by default: the details and the nickname form", async () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
     render(await MemberPage(memberProps()));
 
+    const details = screen.getByRole("region", { name: "個人資料" });
     for (const value of ["XPA-0001", "王小明", "ming", "ming#1234", "ming@example.com", "0912345678", "一般會員"]) {
-      expect(screen.getAllByText(value).length).toBeGreaterThan(0);
+      expect(within(details).getAllByText(value).length).toBeGreaterThan(0);
     }
+    expect(within(details).getByLabelText("暱稱")).toHaveValue("小明");
     const tabs = screen.getByRole("navigation", { name: "會員專區" });
     expect(
       within(tabs)
         .getAllByRole("link")
         .map((link) => [link.textContent, link.getAttribute("href")]),
     ).toEqual([
-      ["參加的活動", "/member"],
+      ["個人資料", "/member"],
+      ["參加的活動", "/member?tab=parties"],
       ["內戰場次", "/member?tab=matches"],
       ["好友", "/member?tab=friends"],
-      ["修改暱稱", "/member?tab=nickname"],
       ["投稿影片", "/member?tab=videos"],
     ]);
-    expect(within(tabs).getByRole("link", { name: "參加的活動" })).toHaveAttribute("aria-current", "page");
+    expect(within(tabs).getByRole("link", { name: "個人資料" })).toHaveAttribute("aria-current", "page");
     expect(within(tabs).getByRole("link", { name: "投稿影片" })).not.toHaveAttribute("aria-current");
     for (const link of within(tabs).getAllByRole("link")) {
       expect(link.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     }
-    const joined = screen.getByRole("region", { name: "參加的活動" });
-    expect(within(joined).getByRole("link", { name: "十一月賽車" })).toHaveAttribute("href", "/party/p1");
-    expect(screen.queryByLabelText("暱稱")).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "參加的活動" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "登出" })).toBeInTheDocument();
     expect(fetchMemberVideoSubmissions).not.toHaveBeenCalled();
   });
@@ -193,16 +193,39 @@ describe("/member", () => {
     expect(screen.getByRole("alert")).toHaveTextContent(/已被其他會員使用/);
   });
 
-  it("falls back to the joined parties for an unknown tab", async () => {
+  it("falls back to 個人資料 for an unknown tab", async () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
     render(await MemberPage(memberProps("abc")));
 
-    expect(screen.getByRole("region", { name: "參加的活動" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "個人資料" })).toBeInTheDocument();
+  });
+
+  it("lists the joined parties on their tab", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+    render(await MemberPage(memberProps("parties")));
+
+    expect(screen.getByRole("link", { name: "參加的活動" })).toHaveAttribute("aria-current", "page");
+    const joined = screen.getByRole("region", { name: "參加的活動" });
+    expect(within(joined).getByRole("link", { name: "十一月賽車" })).toHaveAttribute("href", "/party/p1");
+    expect(screen.queryByLabelText("暱稱")).not.toBeInTheDocument();
+  });
+
+  it("offers 建立內戰場次 beside the Steam account only to members who may create scrims", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue({ ...profile, canCreateMatch: true });
+    const { unmount } = render(await MemberPage(memberProps()));
+    expect(screen.getByRole("link", { name: /建立內戰場次/ })).toHaveAttribute("href", "/matches/new");
+    // A primary (filled) button, not a plain link.
+    expect(screen.getByRole("link", { name: /建立內戰場次/ })).toHaveClass("cta-primary");
+    unmount();
+
+    (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+    render(await MemberPage(memberProps()));
+    expect(screen.queryByRole("link", { name: /建立內戰場次/ })).not.toBeInTheDocument();
   });
 
   it("says when the member has not joined anything yet", async () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue({ ...profile, parties: [] });
-    render(await MemberPage(memberProps()));
+    render(await MemberPage(memberProps("parties")));
 
     expect(screen.getByText(/還沒有報名任何活動/)).toBeInTheDocument();
   });
@@ -222,6 +245,7 @@ describe("/member", () => {
           playerCount: 10,
           capacity: 10,
           createdAt: "2026-10-25T00:00:00.000Z",
+          createdBy: "小華",
           team: "A",
           isCaptain: true,
         },
@@ -230,10 +254,13 @@ describe("/member", () => {
     render(await MemberPage(memberProps("matches")));
 
     const panel = screen.getByRole("region", { name: "內戰場次" });
-    expect(within(panel).getByText("1234")).toBeInTheDocument();
+    // The rating sits in the left column, under the heading.
+    const heading = within(panel).getByRole("heading", { level: 2, name: "內戰場次" });
+    expect(heading.parentElement).toContainElement(within(panel).getByText("1234"));
     const row = within(panel).getByRole("link", { name: /週五晚場/ });
     expect(row).toHaveAttribute("href", "/matches/m1");
     expect(within(row).getByText("A 隊・隊長")).toBeInTheDocument();
+    expect(within(row).getByText("小華・2026/10/25 08:00")).toBeInTheDocument();
     expect(within(panel).getByRole("link", { name: "查看所有內戰場次" })).toHaveAttribute("href", "/matches");
   });
 
@@ -245,15 +272,6 @@ describe("/member", () => {
     const panel = screen.getByRole("region", { name: "內戰場次" });
     expect(panel).toHaveTextContent("參加內戰與評分需要先綁定 Steam 帳號");
     expect(within(panel).getByRole("link", { name: "查看所有內戰場次" })).toBeInTheDocument();
-  });
-
-  it("shows the nickname form on its tab", async () => {
-    (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
-    render(await MemberPage(memberProps("nickname")));
-
-    expect(screen.getByRole("link", { name: "修改暱稱" })).toHaveAttribute("aria-current", "page");
-    expect(screen.getByLabelText("暱稱")).toHaveValue("小明");
-    expect(screen.queryByRole("region", { name: "參加的活動" })).not.toBeInTheDocument();
   });
 
   describe("好友 tab", () => {
@@ -387,6 +405,17 @@ describe("/member", () => {
       expect(rows[1]).toHaveTextContent("待審核");
       expect(rows[1]).toHaveTextContent("YouTube 連結");
       expect(rows[1]).not.toHaveTextContent("退回原因");
+    });
+
+    it("puts the forms in the main column and the history in the side column", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberVideoSubmissions as jest.Mock).mockResolvedValue(submissions());
+      render(await MemberPage(memberProps("videos")));
+
+      const history = screen.getByRole("region", { name: "投稿紀錄" });
+      const notices = screen.getByRole("list", { name: "投稿須知" });
+      expect(history.parentElement).toHaveClass("lg:col-start-8");
+      expect(history.parentElement).not.toContainElement(notices);
     });
 
     it("shows a member without the permission why there is no form, but still their history", async () => {
