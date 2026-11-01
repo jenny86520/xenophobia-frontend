@@ -6,12 +6,14 @@ import { MATCH_STATUS_TEXT } from "@/components/match/match-status";
 import { MemberTabColumns } from "@/components/member/member-tabs";
 import type { FriendPerson, FriendsOverview, MatchInvite } from "@/types/friends";
 import { AddFriendForm, FriendActionButton, RemoveFriendForm } from "./friend-forms";
+import { FriendName, friendHref } from "./friend-name";
 
 /**
  * The member page's 好友 tab in two columns from 1024px: the friends in the main column, and on the
  * right the member's own number with the add form, then scrim invites, requests received and
  * requests sent. Below 1024px the two stack, friends first. Every action is a form, so all of it
- * works without JavaScript. Others are only shown by nickname, member code and whether Steam is linked.
+ * works without JavaScript. Others are only shown by nickname, member code and whether Steam is linked;
+ * a friend's nickname opens their page, and the member's own note follows it.
  */
 export function MemberFriendsPanel({ overview }: { overview: FriendsOverview }) {
   return (
@@ -28,7 +30,7 @@ export function MemberFriendsPanel({ overview }: { overview: FriendsOverview }) 
             empty="目前沒有好友，在右側輸入朋友的會員編號就能送出邀請。"
           >
             {overview.friends.map((friend) => (
-              <PersonRow key={friend.memberId} person={friend}>
+              <PersonRow key={friend.memberId} person={friend} href={friendHref(friend.memberId)} memo={friend.note}>
                 {/* A disclosure keeps the confirm form out of the way; it opens without JavaScript. */}
                 <details className="group">
                   <summary className="cursor-pointer text-body text-ink-secondary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none">
@@ -125,11 +127,26 @@ function FriendsSection({
   );
 }
 
-function PersonRow({ person, note, children }: { person: FriendPerson; note?: string; children: ReactNode }) {
+function PersonRow({
+  person,
+  note,
+  href,
+  memo,
+  children,
+}: {
+  person: FriendPerson;
+  /** A status line, e.g. 等待對方回覆. */
+  note?: string;
+  /** The friend's page (friends only). */
+  href?: string;
+  /** The member's own private note about this friend. */
+  memo?: string | null;
+  children: ReactNode;
+}) {
   return (
     <li className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line py-4">
       <div className="flex min-w-0 flex-col gap-1">
-        <span className="text-lead break-all text-ink">{person.nickname}</span>
+        <FriendName nickname={person.nickname} note={memo} href={href} />
         <span className="flex flex-wrap gap-x-4 gap-y-1">
           <MetaLabel>{person.memberCode ?? "—"}</MetaLabel>
           {!person.hasSteam && <MetaLabel>尚未綁定 Steam</MetaLabel>}
@@ -150,7 +167,9 @@ function MatchInviteRow({ invite }: { invite: MatchInvite }) {
           {match.title}
         </TextLink>
         <p className="text-body text-ink-secondary">
-          「{invite.from.nickname}」{invite.kind === "group" ? "邀你加入小隊" : "邀你報名這一場"}
+          「{invite.from.nickname}」
+          {invite.from.note && <span className="text-ink-secondary">（{invite.from.note}）</span>}
+          {invite.kind === "group" ? "邀你加入小隊" : "邀你報名這一場"}
         </p>
         <MetaLabel>
           {MATCH_STATUS_TEXT[match.status]}・{match.playerCount} / {match.rosterSize} 人

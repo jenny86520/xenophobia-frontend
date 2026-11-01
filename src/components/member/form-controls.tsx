@@ -1,8 +1,8 @@
-import type { ChangeEvent, ReactNode } from "react";
+import type { ChangeEvent, ReactNode, Ref } from "react";
 import { cn } from "@/lib/utils";
 import type { MemberActionState } from "@/types/member";
 
-type FormFieldProps = {
+export type FormFieldProps = {
   id: string;
   name: string;
   label: string;
@@ -17,6 +17,9 @@ type FormFieldProps = {
   error?: string;
   /** Shows the 必填 tag without the required attribute (for a field only needed in some cases). */
   markRequired?: boolean;
+  /** A control drawn inside the input's right edge (the password toggle); the input leaves room for it. */
+  trailing?: ReactNode;
+  ref?: Ref<HTMLInputElement>;
 };
 
 /**
@@ -24,10 +27,36 @@ type FormFieldProps = {
  * A 必填/選填 tag sits beside the label (outside it, so the accessible name stays the label text);
  * assistive tech gets "required" from the input itself.
  */
-export function FormField({ id, name, label, type = "text", hint, error, markRequired, ...input }: FormFieldProps) {
+export function FormField({
+  id,
+  name,
+  label,
+  type = "text",
+  hint,
+  error,
+  markRequired,
+  trailing,
+  ...input
+}: FormFieldProps) {
   const hintId = hint ? `${id}-hint` : undefined;
   const errorId = error ? `${id}-error` : undefined;
   const requiredTag = input.required || markRequired;
+  const field = (
+    <input
+      id={id}
+      name={name}
+      type={type}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={[hintId, errorId].filter(Boolean).join(" ") || undefined}
+      className={cn(
+        "w-full rounded-sm border border-line-strong bg-surface px-3 py-2.5 text-body text-ink",
+        "placeholder:text-ink-muted focus-visible:border-signal focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+        "aria-invalid:border-destructive",
+        trailing !== undefined && "pr-12",
+      )}
+      {...input}
+    />
+  );
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-baseline gap-2">
@@ -41,19 +70,16 @@ export function FormField({ id, name, label, type = "text", hint, error, markReq
           {requiredTag ? "必填" : "選填"}
         </span>
       </div>
-      <input
-        id={id}
-        name={name}
-        type={type}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={[hintId, errorId].filter(Boolean).join(" ") || undefined}
-        className={cn(
-          "w-full rounded-sm border border-line-strong bg-surface px-3 py-2.5 text-body text-ink",
-          "placeholder:text-ink-muted focus-visible:border-signal focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-          "aria-invalid:border-destructive",
-        )}
-        {...input}
-      />
+      {/* Wrapped whenever a trailing slot is given (even an empty one), so the input keeps its
+          place in the tree when the slot fills in after hydration. */}
+      {trailing === undefined ? (
+        field
+      ) : (
+        <div className="relative">
+          {field}
+          {trailing}
+        </div>
+      )}
       {hint && (
         <p id={hintId} className="text-caption text-ink-muted">
           {hint}

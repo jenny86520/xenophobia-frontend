@@ -83,6 +83,10 @@ export async function requestResetAction(_: MemberActionState, form: FormData): 
 }
 
 export async function setPasswordAction(_: MemberActionState, form: FormData): Promise<MemberActionState> {
+  // A typo would cost the one-time link and the day's change, so both entries must match first.
+  if (text(form, "password") !== text(form, "passwordConfirm")) {
+    return { ok: false, message: "兩次輸入的密碼不一致", fields: { passwordConfirm: "兩次輸入的密碼不一致" } };
+  }
   const response = await postPublic("/api/member/auth/password", {
     token: text(form, "token"),
     password: text(form, "password"),
@@ -222,6 +226,26 @@ export async function sendFriendRequestAction(_: MemberActionState, form: FormDa
         ? `「${result.member.nickname}」也邀請過你，你們已經是好友了。`
         : `已送出好友邀請給「${result.member.nickname}」。`,
   };
+}
+
+/** Saves the member's private note about a friend (empty removes it); the friend id is bound. */
+export async function updateFriendNoteAction(
+  memberId: string,
+  _: MemberActionState,
+  form: FormData,
+): Promise<MemberActionState> {
+  const values = { note: text(form, "note") };
+  const sent = await friendRequest(`/api/member/friends/${encodeURIComponent(memberId)}/note`, {
+    method: "PUT",
+    body: JSON.stringify(values),
+  });
+  if ("state" in sent) return { ...sent.state, values };
+  const { response } = sent;
+  if (!response.ok) return { ...(await errorState(response, "儲存失敗，請稍後再試")), values };
+  const { note } = (await response.json()) as { note: string | null };
+  revalidatePath("/member");
+  revalidatePath(`/member/friends/${memberId}`);
+  return { ok: true, message: note ? "已儲存備註。" : "已清除備註。" };
 }
 
 /** Accept or decline a request sent to the member, or withdraw one they sent. */

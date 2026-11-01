@@ -339,13 +339,21 @@ describe("/member", () => {
     const overview: FriendsOverview = {
       memberCode: "XPA-0001",
       friends: [
-        { memberId: "m2", nickname: "小華", memberCode: "XPA-0002", hasSteam: true, since: "2026-10-30T10:00:00.000Z" },
+        {
+          memberId: "m2",
+          nickname: "小華",
+          memberCode: "XPA-0002",
+          hasSteam: true,
+          since: "2026-10-30T10:00:00.000Z",
+          note: "大學室友",
+        },
         {
           memberId: "m3",
           nickname: "小美",
           memberCode: "XPA-0003",
           hasSteam: false,
           since: "2026-10-30T10:00:00.000Z",
+          note: null,
         },
       ],
       incoming: [
@@ -360,14 +368,14 @@ describe("/member", () => {
         {
           id: "i1",
           kind: "group",
-          from: { nickname: "小華", memberCode: "XPA-0002" },
+          from: { nickname: "小華", memberCode: "XPA-0002", note: "大學室友" },
           match: { id: "x1", title: "週五內戰", status: "lobby", playerCount: 7, rosterSize: 10 },
           createdAt: "2026-10-31T11:00:00.000Z",
         },
         {
           id: "i2",
           kind: "signup",
-          from: { nickname: "小美", memberCode: "XPA-0003" },
+          from: { nickname: "小美", memberCode: "XPA-0003", note: null },
           match: { id: "x2", title: "週六內戰", status: "lobby", playerCount: 2, rosterSize: 10 },
           createdAt: "2026-10-31T09:00:00.000Z",
         },
@@ -396,7 +404,7 @@ describe("/member", () => {
 
       const invites = screen.getByRole("list", { name: /內戰場次邀請/ });
       const [group, signup] = within(invites).getAllByRole("listitem");
-      expect(group).toHaveTextContent("「小華」邀你加入小隊");
+      expect(group).toHaveTextContent("「小華」（大學室友）邀你加入小隊");
       expect(group).toHaveTextContent("報名中・7 / 10 人");
       expect(within(group).getByRole("button", { name: "加入小隊" })).toBeInTheDocument();
       expect(within(signup).getByRole("link", { name: "前往報名" })).toHaveAttribute("href", "/matches/x2");
@@ -410,6 +418,10 @@ describe("/member", () => {
       expect(screen.getByRole("heading", { name: "好友清單" })).toHaveClass("sr-only");
       const friends = screen.getByRole("list", { name: "好友清單" });
       const [hua, mei] = within(friends).getAllByRole("listitem");
+      // Each nickname opens the friend's page; the member's own note follows it.
+      expect(within(hua).getByRole("link", { name: "小華" })).toHaveAttribute("href", "/member/friends/m2");
+      expect(hua).toHaveTextContent("備註：大學室友");
+      expect(mei).not.toHaveTextContent("備註");
       expect(hua).not.toHaveTextContent("尚未綁定 Steam");
       expect(mei).toHaveTextContent("尚未綁定 Steam");
       expect(within(mei).getByRole("checkbox", { name: /確認刪除好友「小美」/ })).toBeRequired();
@@ -635,7 +647,10 @@ describe("/member/register", () => {
     render(<MemberRegisterPage />);
 
     expect(screen.getByText(/註冊後需聯絡管理員開通/)).toBeInTheDocument();
-    for (const label of ["姓名", "暱稱", "帳號", "Discord ID", "Email"]) {
+    // 稱呼 is only for admins to tell sign-ups apart: no real name, and no autofill of one.
+    expect(screen.getByLabelText("稱呼")).toHaveAccessibleDescription("讓管理員辨識你，不必填真名。");
+    expect(screen.getByLabelText("稱呼")).toHaveAttribute("autocomplete", "off");
+    for (const label of ["稱呼", "暱稱", "帳號", "Discord ID", "Email"]) {
       expect(screen.getByLabelText(label)).toBeRequired();
       expect(screen.getByLabelText(label).closest("div")).toHaveTextContent("必填");
     }
@@ -668,5 +683,11 @@ describe("/member/password", () => {
     render(await MemberPasswordPage(props("abc123")));
     expect(document.querySelector('input[name="token"]')).toHaveValue("abc123");
     expect(screen.getByLabelText("新密碼")).toHaveAttribute("minlength", "8");
+    // The password is asked twice; both stay hidden until their own toggle is pressed.
+    for (const label of ["新密碼", "再次輸入新密碼"]) {
+      expect(screen.getByLabelText(label)).toHaveAttribute("type", "password");
+      expect(screen.getByLabelText(label)).toBeRequired();
+    }
+    expect(screen.getByLabelText("再次輸入新密碼")).toHaveAttribute("name", "passwordConfirm");
   });
 });

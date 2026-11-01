@@ -1,5 +1,6 @@
 import { MetaLabel } from "@/components/brand/meta-label";
 import { TextLink } from "@/components/brand/text-link";
+import { FriendName, friendHref } from "@/components/member/friend-name";
 import type { MatchFriends } from "@/types/friends";
 import { InviteFriendButton } from "./match-forms";
 
@@ -42,7 +43,7 @@ export function MatchInviteFriends({ matchId, friends }: { matchId: string; frie
               className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line py-4"
             >
               <div className="flex min-w-0 flex-col gap-1">
-                <span className="text-lead break-all text-ink">{friend.nickname}</span>
+                <FriendName nickname={friend.nickname} note={friend.note} href={friendHref(friend.memberId)} />
                 {state.length > 0 && (
                   <span className="flex flex-wrap gap-x-4 gap-y-1">
                     {state.map((text) => (

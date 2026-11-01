@@ -8,7 +8,22 @@ export type FriendPerson = {
   hasSteam: boolean;
 };
 
-export type Friend = FriendPerson & { since: string };
+/** A friend, with the viewer's own private note (null when none). */
+export type Friend = FriendPerson & { since: string; note: string | null };
+
+/** GET /api/member/friends/:memberId/profile: what a friend's page shows. */
+export type FriendProfile = {
+  memberId: string;
+  nickname: string;
+  memberCode: string | null;
+  discordId: string;
+  /** The linked Steam account; null when not linked. */
+  steam: { steamName: string | null; profileUrl: string } | null;
+  /** Scrim rating; only with a linked Steam account. */
+  rating: number | null;
+  /** The viewer's own private note. */
+  note: string | null;
+};
 
 export type FriendRequest = { id: string; member: FriendPerson; createdAt: string };
 
@@ -18,7 +33,8 @@ export type MatchInviteKind = "group" | "signup";
 export type MatchInvite = {
   id: string;
   kind: MatchInviteKind;
-  from: { nickname: string; memberCode: string | null };
+  /** The inviting friend, with the viewer's own private note. */
+  from: { nickname: string; memberCode: string | null; note: string | null };
   match: { id: string; title: string; status: MatchStatus; playerCount: number; rosterSize: number };
   createdAt: string;
 };
@@ -35,5 +51,5 @@ export type FriendsOverview = {
 /** GET /api/matches/:id/friends: the match page's 邀請好友 block. */
 export type MatchFriends = {
   canInviteToGroup: boolean;
-  friends: Array<FriendPerson & { seated: boolean; invited: Record<MatchInviteKind, boolean> }>;
+  friends: Array<FriendPerson & { seated: boolean; invited: Record<MatchInviteKind, boolean>; note: string | null }>;
 };

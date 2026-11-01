@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 import { forwardedForHeader } from "@/lib/forwarded-for";
 import { backendBaseUrl } from "@/lib/public-content-client";
-import type { FriendsOverview } from "@/types/friends";
+import type { FriendProfile, FriendsOverview } from "@/types/friends";
 import type { MemberMatches } from "@/types/match";
 import type { MemberProfile, MemberRegistrationView, MemberVideoSubmissions } from "@/types/member";
 
@@ -94,6 +94,17 @@ export async function fetchMemberRegistration(partyId: string): Promise<MemberRe
 }
 
 /** The member's friends, friend requests and scrim invites (the 好友 tab), or null when not signed in. */
+/** A friend's page; null when signed out or when they are not (or no longer) a friend (404). */
+export async function fetchMemberFriendProfile(memberId: string): Promise<FriendProfile | null> {
+  const token = await memberToken();
+  if (!token) return null;
+  const path = `/api/member/friends/${encodeURIComponent(memberId)}/profile`;
+  const response = await memberFetch(path, {}, token);
+  if (response.status === 401 || response.status === 404) return null;
+  if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
+  return (await response.json()) as FriendProfile;
+}
+
 export async function fetchMemberFriends(): Promise<FriendsOverview | null> {
   const token = await memberToken();
   if (!token) return null;

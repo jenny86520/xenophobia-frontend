@@ -99,7 +99,7 @@ async function tabContent(tab: MemberTab, profile: MemberProfile) {
   if (tab === "profile") {
     const details = [
       { label: "會員編號", value: profile.memberCode ?? "—" },
-      { label: "姓名", value: profile.name },
+      { label: "稱呼", value: profile.name },
       { label: "暱稱", value: profile.nickname },
       { label: "帳號", value: profile.username },
       { label: "Discord ID", value: profile.discordId },

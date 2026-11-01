@@ -25,6 +25,7 @@ import {
   requestResetAction,
   setPasswordAction,
   submitYoutubeVideoAction,
+  updateFriendNoteAction,
   updateNicknameAction,
 } from "./actions";
 
@@ -125,8 +126,31 @@ describe("registerAction", () => {
 describe("password and reset", () => {
   it("shows the backend's message for an expired link", async () => {
     respond(400, { message: ["連結已失效，請聯絡管理員重發"], fields: { token: "連結已失效，請聯絡管理員重發" } });
-    const state = await setPasswordAction({}, form({ token: "t", password: "new-password" }));
+    const state = await setPasswordAction(
+      {},
+      form({ token: "t", password: "new-password", passwordConfirm: "new-password" }),
+    );
     expect(state.message).toBe("連結已失效，請聯絡管理員重發");
+  });
+
+  it("refuses two different entries without asking the backend, so the link is not used up", async () => {
+    respond(200, {});
+    await expect(
+      setPasswordAction({}, form({ token: "t", password: "new-password", passwordConfirm: "new-passw0rd" })),
+    ).resolves.toEqual({
+      ok: false,
+      message: "兩次輸入的密碼不一致",
+      fields: { passwordConfirm: "兩次輸入的密碼不一致" },
+    });
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("sends only the token and the password once both entries match", async () => {
+    respond(200, {});
+    await expect(
+      setPasswordAction({}, form({ token: "t", password: "new-password", passwordConfirm: "new-password" })),
+    ).resolves.toMatchObject({ ok: true });
+    expect(sentBody()).toEqual({ token: "t", password: "new-password" });
   });
 
   it("shows the backend's neutral reset answer", async () => {
@@ -339,5 +363,37 @@ describe("friend actions", () => {
     respond(401);
     await expect(dismissMatchInviteAction("i1")).rejects.toThrow("REDIRECT /member/login");
     expect(cookieStore.delete).toHaveBeenCalledWith("xpa_member");
+  });
+});
+
+describe("updateFriendNoteAction", () => {
+  it("saves the note with PUT and refreshes the friend's page and the member page", async () => {
+    respond(200, { note: "大學室友" });
+    await expect(updateFriendNoteAction("m2", {}, form({ note: " 大學室友 " }))).resolves.toEqual({
+      ok: true,
+      message: "已儲存備註。",
+    });
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/member\/friends\/m2\/note$/);
+    expect(init.method).toBe("PUT");
+    expect(sentBody()).toEqual({ note: " 大學室友 " });
+    expect(mockRevalidate).toHaveBeenCalledWith("/member/friends/m2");
+  });
+
+  it("says the note was cleared when it was emptied", async () => {
+    respond(200, { note: null });
+    await expect(updateFriendNoteAction("m2", {}, form({ note: "" }))).resolves.toMatchObject({
+      ok: true,
+      message: "已清除備註。",
+    });
+  });
+
+  it("keeps what was typed and shows the backend's field error", async () => {
+    respond(400, { message: ["備註最多 50 字"], fields: { note: "備註最多 50 字" } });
+    await expect(updateFriendNoteAction("m2", {}, form({ note: "x".repeat(51) }))).resolves.toMatchObject({
+      ok: false,
+      fields: { note: "備註最多 50 字" },
+      values: { note: "x".repeat(51) },
+    });
   });
 });

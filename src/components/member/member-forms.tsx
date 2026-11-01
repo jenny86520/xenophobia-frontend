@@ -13,6 +13,7 @@ import {
 import type { LegalConsentDocument, MemberActionState } from "@/types/member";
 import { LegalDialogButton } from "@/components/legal/legal-dialog-button";
 import { CheckboxField, FormField, FormMessage, SubmitButton } from "./form-controls";
+import { PasswordField } from "./password-field";
 
 /**
  * Member forms. They are plain <form action={…}> elements bound to Server Actions, so they also
@@ -28,7 +29,7 @@ export function RegisterForm() {
   const error = (name: string) => state.fields?.[name];
   return (
     <form action={action} className="flex max-w-xl flex-col gap-6">
-      <FormField id="name" name="name" label="姓名" autoComplete="name" required maxLength={50} defaultValue={value("name")} error={error("name")} hint="方便管理員辨識用。"/>
+      <FormField id="name" name="name" label="稱呼" autoComplete="off" required maxLength={50} defaultValue={value("name")} error={error("name")} hint="讓管理員辨識你，不必填真名。"/>
       <FormField id="nickname" name="nickname" label="暱稱" required maxLength={30} defaultValue={value("nickname")} error={error("nickname")} hint="在網站上將顯示這個名稱，後續可自行修改。" />
       <FormField
         id="username"
@@ -68,7 +69,7 @@ export function LoginForm() {
   return (
     <form action={action} className="flex max-w-md flex-col gap-6">
       <FormField id="login-username" name="username" label="帳號" autoComplete="username" required defaultValue={state.values?.username ?? ""} />
-      <FormField id="login-password" name="password" label="密碼" type="password" autoComplete="current-password" required />
+      <PasswordField id="login-password" name="password" label="密碼" autoComplete="current-password" required />
       <FormMessage state={state} />
       <SubmitButton pending={pending} className="self-start">
         <KeyRound aria-hidden="true" className="size-4" />
@@ -97,17 +98,26 @@ export function SetPasswordForm({ token }: { token: string }) {
   return (
     <form action={action} className="flex max-w-md flex-col gap-6">
       <input type="hidden" name="token" value={token} />
-      <FormField
+      <PasswordField
         id="new-password"
         name="password"
         label="新密碼"
-        type="password"
         autoComplete="new-password"
         required
         minLength={8}
         maxLength={128}
         hint="至少 8 個字元。"
         error={state.fields?.password}
+      />
+      <PasswordField
+        id="new-password-confirm"
+        name="passwordConfirm"
+        label="再次輸入新密碼"
+        autoComplete="new-password"
+        required
+        minLength={8}
+        maxLength={128}
+        error={state.fields?.passwordConfirm}
       />
       <FormMessage state={state} />
       <SubmitButton pending={pending} className="self-start">

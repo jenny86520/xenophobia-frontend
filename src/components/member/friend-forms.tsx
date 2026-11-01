@@ -2,7 +2,7 @@
 
 import { UserPlus } from "lucide-react";
 import { useActionState } from "react";
-import { removeFriendAction, sendFriendRequestAction } from "@/app/member/actions";
+import { removeFriendAction, sendFriendRequestAction, updateFriendNoteAction } from "@/app/member/actions";
 import { cn } from "@/lib/utils";
 import type { MemberActionState } from "@/types/member";
 import { CheckboxField, FormField, FormMessage, SubmitButton } from "./form-controls";
@@ -16,6 +16,31 @@ export const secondaryButtonClasses = cn(
   "inline-flex items-center justify-center gap-2 rounded-sm border border-line-strong px-4 py-2 text-body text-ink",
   "hover:border-signal focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-60",
 );
+
+/** The member's private note about one friend; saving an empty note removes it. */
+export function FriendNoteForm({ memberId, note }: { memberId: string; note: string | null }) {
+  const [state, action, pending] = useActionState<MemberActionState, FormData>(
+    updateFriendNoteAction.bind(null, memberId),
+    {},
+  );
+  return (
+    <form action={action} className="flex max-w-md flex-col gap-4">
+      <FormField
+        id="friend-note"
+        name="note"
+        label="備註"
+        maxLength={50}
+        defaultValue={state.values?.note ?? note ?? ""}
+        error={state.fields?.note}
+        hint="只有你看得到，最多 50 字；清空後儲存就會刪除。"
+      />
+      <FormMessage state={state.fields?.note ? {} : state} />
+      <SubmitButton pending={pending} className="self-start">
+        儲存備註
+      </SubmitButton>
+    </form>
+  );
+}
 
 export function AddFriendForm() {
   const [state, action, pending] = useActionState<MemberActionState, FormData>(sendFriendRequestAction, {});

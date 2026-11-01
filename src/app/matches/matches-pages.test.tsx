@@ -177,6 +177,7 @@ describe("/matches/[id]", () => {
       hasSteam: true,
       seated: false,
       invited: { group: false, signup: false },
+      note: null,
       ...extra,
     });
 
@@ -185,7 +186,7 @@ describe("/matches/[id]", () => {
       (fetchMatchFriends as jest.Mock).mockResolvedValue({
         canInviteToGroup: true,
         friends: [
-          friend("m1", "小華"),
+          friend("m1", "小華", { note: "大學室友" }),
           friend("m2", "小美", { hasSteam: false, invited: { group: true, signup: false } }),
           friend("m3", "阿強", { seated: true }),
         ],
@@ -194,6 +195,10 @@ describe("/matches/[id]", () => {
 
       const block = screen.getByRole("region", { name: "邀請好友" });
       const [hua, mei, keung] = within(within(block).getByRole("list", { name: "好友" })).getAllByRole("listitem");
+      // The member's own note follows the nickname, which opens the friend's page.
+      expect(hua).toHaveTextContent("備註：大學室友");
+      expect(within(hua).getByRole("link", { name: "小華" })).toHaveAttribute("href", "/member/friends/m1");
+      expect(mei).not.toHaveTextContent("備註");
       expect(within(hua).getByRole("button", { name: "邀進小隊" })).toBeInTheDocument();
       expect(within(hua).getByRole("button", { name: "邀請報名" })).toBeInTheDocument();
       expect(mei).toHaveTextContent("已邀請進小隊");
