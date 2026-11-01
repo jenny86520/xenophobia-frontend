@@ -212,6 +212,7 @@ public/brand/             # 網站 logo
 
 - **standalone**：`next.config.ts` 設定了 `output: "standalone"`。`Dockerfile` 只把 `.next/standalone`、`.next/static` 與 `public` 放進映像，以 `node` 使用者執行 `node server.js`（3000 埠）。本機的 `npm run dev` 不受影響。
 - **建置參數 `NEXT_PUBLIC_BACKEND_URL`（必填）**：瀏覽器連得到的後端網址，用來組出圖片與影片網址，在建置時寫入。改了要重新建置。
+- **建置參數 `DEPLOYMENT_ID`（選填）**：部署代號，設定成 `next.config.ts` 的 `deploymentId`。換版腳本（`deploy/scripts/update.sh`）會帶入前台的 commit。換版後，使用者在舊版開著的頁面點連結或送出表單時，會整頁重新載入新版，不會出現找不到舊程式檔或 Server Action 的錯誤。不設定時（本機建置）沒有這個保護，其他行為不變。
 - **執行時的 `BACKEND_URL`**：前台伺服器呼叫後端的內部網址，例如 `http://backend:3001`。
 - **`.env*` 不會進入映像**（見 `.dockerignore`）。
 - **單獨建置**：`docker build --build-arg NEXT_PUBLIC_BACKEND_URL=https://api.example.com -t xpa-frontend .`
