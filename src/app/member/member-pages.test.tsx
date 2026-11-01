@@ -442,13 +442,74 @@ describe("/member", () => {
       render(await MemberPage(memberProps("videos")));
 
       expect(screen.getByRole("link", { name: "投稿影片" })).toHaveAttribute("aria-current", "page");
-      const notices = screen.getByRole("list", { name: "投稿須知" });
-      expect(notices).toHaveTextContent("投稿後需由管理員審核，通過後才會出現在網站上。");
-      expect(notices).toHaveTextContent("通過的影片會陸續上傳至官網 YouTube 頻道。");
-      expect(notices).toHaveTextContent("每天最多 5 部");
-      expect(notices).toHaveTextContent("MP4／WebM、500 MB");
+      expect(
+        screen.getByText(
+          "為遊戲項目投稿你的 highlight 影片。投稿需經管理員審核，通過後會公開在網站上，並陸續上傳至官網 YouTube 頻道。",
+        ),
+      ).toBeInTheDocument();
+      // The upload limits sit under the file field, where they apply.
+      expect(screen.getByLabelText("影片檔")).toHaveAccessibleDescription(
+        "MP4 或 WebM，500 MB 以內；每天最多 5 部，今天還能上傳 5 部。",
+      );
       expect(screen.getByRole("form", { name: "以 YouTube 連結投稿" })).toBeInTheDocument();
       expect(screen.getByRole("form", { name: "上傳影片檔投稿" })).toBeInTheDocument();
+      // Where the video is comes first: each form opens with its source field.
+      for (const [form, first] of [
+        ["以 YouTube 連結投稿", "youtube-url"],
+        ["上傳影片檔投稿", "upload-file"],
+      ]) {
+        expect(screen.getByRole("form", { name: form }).querySelector("input, select")).toHaveAttribute("id", first);
+      }
+    });
+
+    it("points a member with Steam to their own Leetify page to find highlights", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue({
+        ...profile,
+        steam: {
+          playerId: "p1",
+          steamId: "76561198000000001",
+          steamName: "Ace",
+          avatarUrl: null,
+          profileUrl: "https://steamcommunity.com/profiles/76561198000000001",
+          linkedAt: "2026-10-25T00:00:00.000Z",
+          rating: 1000,
+        },
+      });
+      (fetchMemberVideoSubmissions as jest.Mock).mockResolvedValue(submissions());
+      render(await MemberPage(memberProps("videos")));
+
+      // A button opens the guide as a popover dialog.
+      expect(screen.getByRole("button", { name: "從 Leetify 找片段" })).toHaveAttribute(
+        "popovertarget",
+        "leetify-guide",
+      );
+      const guide = screen.getByRole("dialog", { name: "從 Leetify 找你的精彩片段", hidden: true });
+      const link = within(guide).getByRole("link", { name: /開啟我的 Leetify 頁面/, hidden: true });
+      expect(link).toHaveAttribute("href", "https://leetify.com/app/profile/76561198000000001");
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(
+        within(guide)
+          .getAllByRole("listitem", { hidden: true })
+          .map((item) => item.textContent),
+      ).toEqual([
+        expect.stringContaining("到 Leetify 打開你的精彩片段"),
+        "在片段頁下載影片，或分享到 YouTube 後複製連結。",
+        "回到投稿表單，上傳影片檔或貼上 YouTube 連結。",
+      ]);
+      expect(within(guide).queryByText(/綁定 Steam 後/)).not.toBeInTheDocument();
+    });
+
+    it("still guides a member without Steam, to Leetify's front page", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberVideoSubmissions as jest.Mock).mockResolvedValue(submissions());
+      render(await MemberPage(memberProps("videos")));
+
+      const guide = screen.getByRole("dialog", { name: "從 Leetify 找你的精彩片段", hidden: true });
+      expect(within(guide).getByRole("link", { name: /前往 Leetify/, hidden: true })).toHaveAttribute(
+        "href",
+        "https://leetify.com",
+      );
+      expect(guide).toHaveTextContent("綁定 Steam 後，這裡會直接連到你的 Leetify 頁面。");
     });
 
     it("lists the member's submissions with status text and the rejection reason", async () => {
@@ -474,9 +535,9 @@ describe("/member", () => {
       render(await MemberPage(memberProps("videos")));
 
       const history = screen.getByRole("region", { name: "投稿紀錄" });
-      const notices = screen.getByRole("list", { name: "投稿須知" });
+      const form = screen.getByRole("form", { name: "以 YouTube 連結投稿" });
       expect(history.parentElement).toHaveClass("lg:col-start-8");
-      expect(history.parentElement).not.toContainElement(notices);
+      expect(history.parentElement).not.toContainElement(form);
     });
 
     it("shows a member without the permission why there is no form, but still their history", async () => {
@@ -486,6 +547,7 @@ describe("/member", () => {
 
       expect(screen.getByText(/目前的角色不能投稿影片/)).toBeInTheDocument();
       expect(screen.queryByRole("form", { name: "以 YouTube 連結投稿" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "從 Leetify 找片段" })).not.toBeInTheDocument();
       expect(within(screen.getByRole("region", { name: "投稿紀錄" })).getAllByRole("listitem")).toHaveLength(2);
       expect(fetchAboutContent).not.toHaveBeenCalled();
     });
@@ -497,6 +559,7 @@ describe("/member", () => {
 
       expect(screen.getByText("影片投稿目前暫停，恢復後即可投稿。")).toBeInTheDocument();
       expect(screen.queryByText(/目前的角色不能投稿影片/)).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "從 Leetify 找片段" })).not.toBeInTheDocument();
       expect(screen.queryByRole("form", { name: "以 YouTube 連結投稿" })).not.toBeInTheDocument();
       expect(within(screen.getByRole("region", { name: "投稿紀錄" })).getAllByRole("listitem")).toHaveLength(2);
     });

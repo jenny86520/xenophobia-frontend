@@ -149,7 +149,11 @@ async function tabContent(tab: MemberTab, profile: MemberProfile) {
     };
     const games = submissions.canSubmit ? ((await fetchAboutContent())?.games ?? []) : [];
     return (
-      <MemberVideosPanel submissions={submissions} games={games.map((game) => ({ id: game.id, name: game.name }))} />
+      <MemberVideosPanel
+        submissions={submissions}
+        games={games.map((game) => ({ id: game.id, name: game.name }))}
+        steamId={profile.steam?.steamId ?? null}
+      />
     );
   }
 

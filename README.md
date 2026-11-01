@@ -62,7 +62,7 @@ npm run dev                  # http://localhost:3000
 | `/matches` | CS2 內戰場次列表（報名中、已鎖定與分隊中的在前；每列顯示建立者與建立時間，後台建立的顯示「管理員」）；角色有「可建立內戰場次」且未暫停的會員看到「建立場次」 |
 | `/matches/new` | 建立場次（標題、選填的進行中遊戲類派對；遊戲固定是 Counter-Strike 2）；沒有權限、暫停或網站沒有 Counter-Strike 2 遊戲項目時（後端的 `canCreateMatch` 為否）只顯示說明 |
 | `/matches/[id]` | 場次頁：報名（單人、建立小隊、以邀請碼加入、退出）、報名中時會員可「邀請好友」（邀進自己的小隊或邀請報名，列出每位好友的狀態）、名單（依小隊分組；隊伍確認後顯示兩隊、隊長、總分與分差）；建立的會員另有管理區，見[內戰場次](#內戰場次) |
-| `/member` | 會員專區：上方是暱稱、登出與 Steam 帳號列（可建立內戰場次的會員右側有「建立內戰場次」），下方以分頁切換「個人資料」（預設：個人資料與修改暱稱表單）、「參加的活動」（`?tab=parties`）、「內戰場次」（`?tab=matches`：評分在左欄，右側是參加過的場次與隊伍，以及到全部場次的連結；未綁定 Steam 時說明需先綁定）、「好友」（`?tab=friends`：寬螢幕分左右兩欄，左側是好友清單，右側是自己的會員編號與加好友表單、內戰場次邀請、收到與送出的好友邀請；分頁名稱旁顯示待處理數量）與「投稿影片」（`?tab=videos`：左側是說明與表單，右側是投稿紀錄）；條款改版需要重新同意時，頁首下方只顯示「條款已更新」同意區塊、不顯示分頁；未登入時只說明如何成為會員 |
+| `/member` | 會員專區：上方是暱稱、登出與 Steam 帳號列（可建立內戰場次的會員右側有「建立內戰場次」），下方以分頁切換「個人資料」（預設：個人資料與修改暱稱表單）、「參加的活動」（`?tab=parties`）、「內戰場次」（`?tab=matches`：評分在左欄，右側是參加過的場次與隊伍，以及到全部場次的連結；未綁定 Steam 時說明需先綁定）、「好友」（`?tab=friends`：寬螢幕分左右兩欄，左側是好友清單，右側是自己的會員編號與加好友表單、內戰場次邀請、收到與送出的好友邀請；分頁名稱旁顯示待處理數量）與「投稿影片」（`?tab=videos`：左側是一段說明與表單（先選來源並填 YouTube 網址或影片檔，再填遊戲、標題、日期；來源旁有「從 Leetify 找片段」按鈕），右側是投稿紀錄）；條款改版需要重新同意時，頁首下方只顯示「條款已更新」同意區塊、不顯示分頁；未登入時只說明如何成為會員 |
 | `/member/login` | 會員登入、申請重設密碼 |
 | `/member/register` | 會員註冊（需勾選同意使用條款與隱私權政策；註冊後需由管理員開通） |
 | `/member/password` | 透過信件中的一次性連結設定密碼 |
@@ -138,6 +138,7 @@ public/brand/             # 網站 logo
 ## 會員投稿影片
 
 - 位置：會員頁的「投稿影片」分頁（`/member?tab=videos`）。分頁是一般連結（`components/member/member-tabs.tsx`，`<nav>` 加 `aria-current`），由伺服器依網址渲染，不開 JavaScript 也能切換；只有打開的分頁才會向後端讀資料。角色沒有「可投稿影片」權限時只顯示說明與投稿紀錄。
+- Leetify 引導：「影片來源」同一列右側有「從 Leetify 找片段」按鈕，按下後以彈出視窗（`InfoDialog`，不需 JavaScript）分三個步驟說明到 Leetify 找片段、下載或分享到 YouTube、回到投稿表單上傳或貼連結。已綁定 Steam 時連到 `https://leetify.com/app/profile/<SteamID64>`，否則連到 `https://leetify.com` 並提示綁定 Steam。只是連結：Leetify 公開 API 沒有影片、片段存放在沒有公開 API 的 Allstar，所以網站不呼叫它們，也不傳送資料。
 - **YouTube 連結**：和其他會員表單一樣是 Server Action（`submitYoutubeVideoAction`），不開 JavaScript 也能送出。
 - **上傳影片檔**：Server Action 無法顯示上傳進度，所以表單（`components/member/video-submission-forms.tsx`）用 `XMLHttpRequest` 送到同網域的 Route Handler `POST /member/videos/upload`，再由它轉送給後端。這個表單需要 JavaScript，頁面上有說明。
   - Route Handler 沒有 Server Action 內建的來源檢查，所以自己比對 `Origin` 與 `Host`（或 nginx 帶的 `X-Forwarded-Host`），不同就回 403。

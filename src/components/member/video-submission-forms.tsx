@@ -1,7 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useState, useSyncExternalStore, type ChangeEvent, type FormEvent } from "react";
+import {
+  useActionState,
+  useState,
+  useSyncExternalStore,
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { submitYoutubeVideoAction } from "@/app/member/actions";
 import type { MemberActionState } from "@/types/member";
 import { OTHER_GAME, submissionGame, VIDEO_ACCEPT, videoFileProblem } from "@/utils/video-upload";
@@ -20,35 +27,47 @@ const noSubscription = () => () => {};
  * YouTube form, a plain Server Action form, works without JavaScript; the upload form needs it to
  * show progress and says so until the page is hydrated.
  */
-export function VideoSubmissionForms({ games, uploadsLeftToday }: { games: GameOption[]; uploadsLeftToday: number }) {
+export function VideoSubmissionForms({
+  games,
+  uploadsLeftToday,
+  sourceAside,
+}: {
+  games: GameOption[];
+  uploadsLeftToday: number;
+  /** Shown beside the source choice (the Leetify guide). */
+  sourceAside?: ReactNode;
+}) {
   return (
-    <div className="group/source flex max-w-xl flex-col gap-8">
-      <fieldset className="flex flex-col gap-3">
-        <legend className="mb-3 text-body text-ink">影片來源</legend>
-        <div className="flex flex-wrap gap-x-8 gap-y-3">
-          <label className="flex items-center gap-2 text-body text-ink">
-            <input
-              type="radio"
-              name="video-source"
-              id="source-youtube"
-              value="youtube"
-              defaultChecked
-              className="size-4 accent-signal"
-            />
-            YouTube 連結
-          </label>
-          <label className="flex items-center gap-2 text-body text-ink">
-            <input
-              type="radio"
-              name="video-source"
-              id="source-upload"
-              value="upload"
-              className="size-4 accent-signal"
-            />
-            上傳影片檔
-          </label>
-        </div>
-      </fieldset>
+    <div className="group/source flex max-w-xl flex-col gap-6">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <fieldset className="flex flex-col gap-3">
+          <legend className="mb-3 text-body text-ink">影片來源</legend>
+          <div className="flex flex-wrap gap-x-8 gap-y-3">
+            <label className="flex items-center gap-2 text-body text-ink">
+              <input
+                type="radio"
+                name="video-source"
+                id="source-youtube"
+                value="youtube"
+                defaultChecked
+                className="size-4 accent-signal"
+              />
+              YouTube 連結
+            </label>
+            <label className="flex items-center gap-2 text-body text-ink">
+              <input
+                type="radio"
+                name="video-source"
+                id="source-upload"
+                value="upload"
+                className="size-4 accent-signal"
+              />
+              上傳影片檔
+            </label>
+          </div>
+        </fieldset>
+        {sourceAside}
+      </div>
       <div className="group-has-[#source-upload:checked]/source:hidden">
         <YoutubeSubmissionForm games={games} />
       </div>
@@ -139,7 +158,6 @@ function YoutubeSubmissionForm({ games }: { games: GameOption[] }) {
   const [state, action, pending] = useActionState(submitYoutubeVideoAction, EMPTY);
   return (
     <form action={action} className="flex flex-col gap-6" aria-label="以 YouTube 連結投稿">
-      <DetailsFields prefix="youtube" games={games} state={state} />
       <FormField
         id="youtube-url"
         name="youtubeUrl"
@@ -150,6 +168,7 @@ function YoutubeSubmissionForm({ games }: { games: GameOption[] }) {
         error={state.fields?.youtubeUrl}
         hint="例如 https://youtu.be/… 或 https://www.youtube.com/watch?v=…，也可以貼 Shorts 網址。"
       />
+      <DetailsFields prefix="youtube" games={games} state={state} />
       <RightsField prefix="youtube" state={state} />
       <FormMessage state={state} />
       <SubmitButton pending={pending} className="self-start">
@@ -259,7 +278,6 @@ function VideoUploadForm({ games, uploadsLeftToday }: { games: GameOption[]; upl
         </p>
       )}
       <fieldset disabled={!hydrated || exhausted || uploading} className="flex flex-col gap-6 disabled:opacity-60">
-        <DetailsFields prefix="upload" games={games} state={state} />
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline gap-2">
             <label htmlFor="upload-file" className="text-body text-ink">
@@ -281,7 +299,7 @@ function VideoUploadForm({ games, uploadsLeftToday }: { games: GameOption[]; upl
             className="text-body text-ink file:mr-4 file:rounded-sm file:border file:border-line-strong file:bg-surface-elevated file:px-3 file:py-2 file:text-ink"
           />
           <p id={fileHintId} className="text-caption text-ink-muted">
-            MP4 或 WebM，500 MB 以內。今天還能上傳 {uploadsLeftToday} 部。
+            MP4 或 WebM，500 MB 以內；每天最多 5 部，今天還能上傳 {uploadsLeftToday} 部。
           </p>
           {fileErrorId && (
             <p id={fileErrorId} className="text-caption text-destructive">
@@ -289,6 +307,7 @@ function VideoUploadForm({ games, uploadsLeftToday }: { games: GameOption[]; upl
             </p>
           )}
         </div>
+        <DetailsFields prefix="upload" games={games} state={state} />
         <RightsField prefix="upload" state={state} />
         {uploading && (
           <div className="flex flex-col gap-2">
