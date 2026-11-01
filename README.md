@@ -1,8 +1,8 @@
 # Xenophobia Frontend
 
-XenoPhobiA（XPA）團隊官網的公開前台，提供派對（活動）目錄、團隊介紹，以及會員專區與活動報名。
+XenoPhobiA（XPA）團隊官網的公開前台，提供派對（活動）目錄、團隊介紹、傳奇榜，以及會員專區（活動報名、好友、影片投稿）、Steam 登入與 CS2 內戰場次。
 
-前台只負責呈現畫面：所有資料都在伺服器端向 [xenophobia-backend](../xenophobia-backend) 的 REST API 取得，前台不保存任何業務資料或規則。
+前台只負責呈現畫面：所有資料都在伺服器端向 [xenophobia-backend](https://github.com/jenny86520/xenophobia-backend) 的 REST API 取得，前台不保存任何業務資料或規則。
 
 ## 技術棧
 
@@ -18,7 +18,7 @@ XenoPhobiA（XPA）團隊官網的公開前台，提供派對（活動）目錄�
 
 ## 快速開始
 
-需要 Node.js 20 以上（開發環境使用 24）和 npm，並先啟動後端（預設 `http://localhost:3001`，步驟見[後端 README](../xenophobia-backend/README.md)）。
+需要 Node.js 20 以上（開發環境使用 24）和 npm，並先啟動後端（預設 `http://localhost:3001`，步驟見[後端 README](https://github.com/jenny86520/xenophobia-backend/blob/main/README.md)）。
 
 ```bash
 npm install
@@ -79,16 +79,21 @@ npm run dev                  # http://localhost:3000
 src/
 ├── app/                  # 路由：頁面組成與資料抓取
 │   ├── _sections/        # 首頁各區塊（部分與 /about 共用）
-│   ├── party/  about/  member/
+│   ├── party/  about/  legends/  member/  matches/  player/
 │   ├── member/actions.ts # 會員相關的 Server Actions
+│   ├── matches/actions.ts# 內戰場次的 Server Actions
+│   ├── player/actions.ts # 訪客玩家的 Server Actions
+│   ├── steam/            # Steam 登入的 Route Handler（login、callback）
 │   └── member/videos/upload/route.ts # 投稿影片上傳的轉送（Route Handler）
 ├── components/
 │   ├── brand/            # 設計系統元件（Section、Heading、BrandName、Placeholder…）
 │   ├── ui/               # shadcn/ui 元件（button、badge 有客製，不要用 CLI 覆蓋）
 │   ├── layout/           # Header、Footer、行動版選單、導覽項目（nav-items.ts）
-│   └── about/  contact/  games/  legal/  member/  party/
+│   └── about/  contact/  games/  legal/  legends/  match/  member/  party/  player/
 ├── hooks/                # 自訂 hook（use-countdown）
-├── lib/                  # 後端存取：public-content-client.ts、member-session.ts
+├── lib/                  # 後端存取：public-content-client.ts（公開內容）、member-session.ts（會員）、
+│                         # player-session.ts 與 player-actor.ts（訪客與內戰身分）、steam-login.ts、
+│                         # forwarded-for.ts（轉送訪客 IP）、youtube-iframe-api.ts
 ├── types/                # API 回應型別
 └── utils/                # 純函式（含測試）
 scripts/check-content.mjs # check:content 的實作
@@ -106,7 +111,7 @@ public/brand/             # 網站 logo
 ## 會員 session
 
 - 會員的 JWT 只存在 httpOnly cookie `xpa_member`，瀏覽器的 JavaScript 讀不到，也不會直接呼叫會員 API，所以後端的 CORS 不需要額外設定。
-- 登入、登出、註冊、設定密碼、修改暱稱、報名和取消報名、好友（送出、接受、拒絕、收回、刪除）與內戰場次邀請（接受小隊邀請後導向場次頁、略過）都是 Server Action（`src/app/member/actions.ts`），只負責把請求轉給後端，再回傳後端的訊息。
+- 登入、登出、註冊、設定密碼、修改暱稱、同意新版條款、報名和取消報名、以 YouTube 網址投稿影片、好友（送出、接受、拒絕、收回、刪除、好友備註）與內戰場次邀請（接受小隊邀請後導向場次頁、略過）都是 Server Action（`src/app/member/actions.ts`），只負責把請求轉給後端，再回傳後端的訊息。
 - 密碼欄位（`PasswordField`，登入與設定密碼）右側有「顯示密碼」切換按鈕（`aria-pressed`），頁面 hydration 後才出現；不開 JavaScript 時是一般的隱藏密碼欄位。送出表單後恢復隱藏。
 - 頁首與行動版選單的 Member 旁顯示待處理數量（收到的好友邀請加上有效的場次邀請）：根 layout 在有會員 cookie 時呼叫 `fetchMemberFriendSummary()`，失敗或未登入時當作 0；數字對輔助科技隱藏，另有「N 件待處理」的文字。數量在換頁或重新整理時更新，好友相關的 Server Action 會重新整理整個 layout。
 - 表單都用 `<form action>` 搭配 `useActionState`，**不開 JavaScript 也能運作**。
@@ -165,7 +170,7 @@ public/brand/             # 網站 logo
 
 ## 設計系統
 
-完整規格見 [openspec/specs/visual-design-system](../../openspec/specs/visual-design-system/spec.md)。開發時最常用到的規則：
+完整規格見 [openspec/specs/visual-design-system](https://github.com/jenny86520/xenophobia-portal/blob/main/openspec/specs/visual-design-system/spec.md)。開發時最常用到的規則：
 
 - **合併 class**：一律用 `@/lib/utils` 的 `cn()`。它用 `createCn` 把自訂字級（`text-display`、`text-h1`…`text-label`）登記為字級，否則 tailwind-merge 會把它們當成顏色，和 `text-ink` 這類顏色 class 合併時把字級丟掉。新增字級 token 時要一起加到 `TEXT_SIZES`。
 - **顏色**：一律使用 `src/app/globals.css` 定義的 token（`ink`、`surface`、`line`、`signal`、`cta`…），不寫死色碼。網站只有深色模式。
@@ -203,12 +208,12 @@ public/brand/             # 網站 logo
 
 - `NEXT_PUBLIC_BACKEND_URL` 必須是訪客瀏覽器連得到的公開位址；圖片和影片由瀏覽器直接向後端讀取。它在 `npm run build` 時就會寫進程式，改了之後要重新建置。
 - 正式環境要使用 HTTPS，會員 cookie 才能帶上 `Secure`。
-- nginx 要讓 `/member/videos/upload` 收 500 MB 的請求並關閉請求緩衝（[deploy/](../../deploy/README.md) 的設定已包含），其他路徑維持預設的 1 MB。
-- **前台只能經由 nginx 對外**：Next 會保留訪客自己帶來的 `X-Forwarded-For`，只有 nginx 設定的位址可信。前台伺服器的位址也要列在後端的 `TRUST_PROXY` 中。用根目錄 [deploy/](../../deploy/README.md) 的 Docker compose 部署時已設定好；其他部署方式見 [docs/deploy](../../docs/deploy/README.md)。
+- nginx 要讓 `/member/videos/upload` 收 500 MB 的請求並關閉請求緩衝（[deploy/](https://github.com/jenny86520/xenophobia-portal/blob/main/deploy/README.md) 的設定已包含），其他路徑維持預設的 1 MB。
+- **前台只能經由 nginx 對外**：Next 會保留訪客自己帶來的 `X-Forwarded-For`，只有 nginx 設定的位址可信。前台伺服器的位址也要列在後端的 `TRUST_PROXY` 中。用根目錄 [deploy/](https://github.com/jenny86520/xenophobia-portal/blob/main/deploy/README.md) 的 Docker compose 部署時已設定好；其他部署方式見 [docs/deploy](https://github.com/jenny86520/xenophobia-portal/blob/main/docs/deploy/README.md)。
 
 ## 以容器執行
 
-正式環境用根目錄 [deploy/](../../deploy/README.md) 的 Docker compose 執行整套服務，這裡只說明前台映像。
+正式環境用根目錄 [deploy/](https://github.com/jenny86520/xenophobia-portal/blob/main/deploy/README.md) 的 Docker compose 執行整套服務，這裡只說明前台映像。
 
 - **standalone**：`next.config.ts` 設定了 `output: "standalone"`。`Dockerfile` 只把 `.next/standalone`、`.next/static` 與 `public` 放進映像，以 `node` 使用者執行 `node server.js`（3000 埠）。本機的 `npm run dev` 不受影響。
 - **建置參數 `NEXT_PUBLIC_BACKEND_URL`（必填）**：瀏覽器連得到的後端網址，用來組出圖片與影片網址，在建置時寫入。改了要重新建置。
@@ -219,7 +224,7 @@ public/brand/             # 網站 logo
 
 ## 相關文件
 
-- [根目錄 README](../../README.md)：整套系統的啟動方式與文件索引
-- [後端 README](../xenophobia-backend/README.md)：API 與環境設定
-- [openspec/specs/](../../openspec/specs/)：系統行為規格（以此為準）
-- [CLAUDE.md](../../CLAUDE.md)：給開發者的實作細節與慣例
+- [根目錄 README](https://github.com/jenny86520/xenophobia-portal/blob/main/README.md)：整套系統的啟動方式與文件索引
+- [後端 README](https://github.com/jenny86520/xenophobia-backend/blob/main/README.md)：API 與環境設定
+- [openspec/specs/](https://github.com/jenny86520/xenophobia-portal/tree/main/openspec/specs/)：系統行為規格（以此為準）
+- [CLAUDE.md](https://github.com/jenny86520/xenophobia-portal/blob/main/CLAUDE.md)：給開發者的實作細節與慣例
