@@ -7,7 +7,7 @@ import { MetaLabel } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
 import { Display } from "@/components/brand/typography";
 import { Countdown } from "@/components/party/countdown";
-import { formatPartyTime } from "@/utils/party-time";
+import { TIME_UNDECIDED } from "@/utils/party-time";
 import type { TeamProfile } from "@/types/about";
 import type { NextParty } from "@/types/party";
 
@@ -92,16 +92,20 @@ export function Hero({ profile, nextParty }: HeroProps) {
                 <span aria-hidden="true" className="size-2 rounded-full bg-signal shadow-glow motion-safe:animate-pulse" />
                 <MetaLabel>{nextParty.startTime ? "Countdown" : "Next"}</MetaLabel>
               </span>
-              {/* Without a time there is nothing to count down to: the date and 時間待定 instead. */}
+              {/* Without a time there is nothing to count down to: the date in the countdown's place
+                  (short, so it fits like the countdown) with 時間待定 on a smaller line under it. */}
               {nextParty.startTime ? (
                 <Countdown
                   startDate={nextParty.startDate}
                   startTime={nextParty.startTime}
-                  className="font-mono text-h2 leading-none tracking-tight text-ink tabular-nums"
+                  className="font-mono text-h2 leading-none tracking-tight whitespace-nowrap text-ink tabular-nums"
                 />
               ) : (
-                <p className="font-mono text-h2 leading-none tracking-tight text-ink tabular-nums">
-                  {formatPartyTime(nextParty)}
+                <p className="flex flex-col gap-2">
+                  <span className="font-mono text-h2 leading-none tracking-tight whitespace-nowrap text-ink tabular-nums">
+                    {mmdd}
+                  </span>
+                  <span className="text-body text-ink-secondary">{TIME_UNDECIDED}</span>
                 </p>
               )}
               <Link

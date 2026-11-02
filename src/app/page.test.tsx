@@ -205,7 +205,11 @@ describe("HomePage", () => {
     await renderHome({ nextParty: { ...upcoming.nextParty!, startTime: "" } });
 
     expect(screen.queryByText("Countdown")).toBeNull();
-    expect(screen.getAllByText("2099-10-05（時間待定）").length).toBeGreaterThan(0);
+    // The hero keeps the short date in the countdown's place, with 時間待定 on its own line.
+    const hero = screen.getByRole("region", { name: /XenoPhobiA|XPA/ });
+    expect(within(hero).getByText("時間待定")).toBeInTheDocument();
+    expect(within(hero).getAllByText("10/05").length).toBeGreaterThan(0);
+    expect(within(hero).queryByText("2099-10-05（時間待定）")).toBeNull();
   });
 
   it("has no inline back-to-top text link (the floating button lives in the layout)", async () => {
