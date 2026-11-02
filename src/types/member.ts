@@ -8,8 +8,12 @@ export type MemberPartySummary = {
   title: string;
   startDate: string;
   startTime: string;
+  endDate: string;
+  endTime: string;
   status: string;
   registeredAt: string;
+  /** The sub-parties of this party the member signed up for, in start order. */
+  subParties: { id: string; title: string; startDateTime: string; endDateTime: string }[];
 };
 
 export type MemberProfile = {
@@ -48,7 +52,15 @@ export type LegalConsent = {
 export type RegistrationStatus = "open" | "not-open" | "closed";
 
 /** Why a member cannot register (or leave) right now; null when the action is allowed. */
-export type RegistrationBlock = "not-open" | "closed" | "paused" | "no-permission" | "role-not-allowed" | null;
+export type RegistrationBlock =
+  | "not-open"
+  | "closed"
+  | "paused"
+  | "no-permission"
+  | "role-not-allowed"
+  /** A sub-party: register for the party first. */
+  | "main-required"
+  | null;
 
 /** Public registration state of a party: the count, never names. */
 export type RegistrationSummary = {
@@ -69,11 +81,22 @@ export type Participant = {
   guest: boolean;
 };
 
+/** A signed-in member's view of one sub-party: its own count, sign-up and list. */
+export type SubPartyRegistrationView = {
+  subPartyId: string;
+  count: number;
+  registered: boolean;
+  blockedBy: RegistrationBlock;
+  participants: Participant[];
+};
+
 /** What a signed-in member sees: the summary plus their own state and the participant list. */
 export type MemberRegistrationView = RegistrationSummary & {
   registered: boolean;
   blockedBy: RegistrationBlock;
   participants: Participant[];
+  /** Each sub-party; they follow the party's registration settings. */
+  subParties: SubPartyRegistrationView[];
 };
 
 export type VideoSubmissionStatus = "pending" | "accepted" | "rejected";

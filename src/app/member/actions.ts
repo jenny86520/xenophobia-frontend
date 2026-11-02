@@ -163,16 +163,22 @@ export async function submitYoutubeVideoAction(_: MemberActionState, form: FormD
   return { ok: true, message: "已送出投稿，請等待管理員審核。" };
 }
 
-/** Join or leave a party; the party id and intent are bound when the form is rendered. */
+/**
+ * Join or leave a party, or one of its sub-parties; the ids and intent are bound when the form is
+ * rendered (subPartyId null for the party itself).
+ */
 export async function registrationAction(
   partyId: string,
   intent: "join" | "leave",
+  subPartyId: string | null = null,
 ): Promise<MemberActionState> {
+  const partyPath = `/api/member/parties/${encodeURIComponent(partyId)}`;
+  const path = subPartyId
+    ? `${partyPath}/sub-parties/${encodeURIComponent(subPartyId)}/registration`
+    : `${partyPath}/registration`;
   let response: Response;
   try {
-    response = await memberFetch(`/api/member/parties/${encodeURIComponent(partyId)}/registration`, {
-      method: intent === "join" ? "POST" : "DELETE",
-    });
+    response = await memberFetch(path, { method: intent === "join" ? "POST" : "DELETE" });
   } catch {
     return UNREACHABLE;
   }
@@ -180,7 +186,8 @@ export async function registrationAction(
   if (!response.ok) return errorState(response, "操作失敗，請稍後再試");
   revalidatePath(`/party/${partyId}`);
   revalidatePath("/member");
-  return { ok: true, message: intent === "join" ? "已報名。" : "已取消報名。" };
+  // No success text: the refreshed page already shows the new state (and the other button).
+  return { ok: true };
 }
 
 // ---- Friends ----

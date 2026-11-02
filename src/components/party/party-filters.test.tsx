@@ -17,7 +17,7 @@ describe("PartyFilters", () => {
   beforeEach(() => mockReplace.mockReset());
 
   it("replaces the URL with the new filter, leaving defaults out", () => {
-    render(<PartyFilters value={{ status: "active", format: "all", category: "all", order: "desc" }} />);
+    render(<PartyFilters value={{ status: "all", format: "all", category: "all", order: "desc" }} />);
 
     const trigger = screen.getByRole("combobox", { name: "Mode" });
     fireEvent.keyDown(trigger, { key: "Enter" });
@@ -26,8 +26,17 @@ describe("PartyFilters", () => {
     expect(mockReplace).toHaveBeenCalledWith("/party?format=online", { scroll: false });
   });
 
+  it("writes ?status=active when only active parties are chosen", () => {
+    render(<PartyFilters value={{ status: "all", format: "all", category: "all", order: "desc" }} />);
+
+    fireEvent.keyDown(screen.getByRole("combobox", { name: "Status" }), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("option", { name: "Active" }), { key: "Enter" });
+
+    expect(mockReplace).toHaveBeenCalledWith("/party?status=active", { scroll: false });
+  });
+
   it("switches to oldest first as ?order=asc", () => {
-    render(<PartyFilters value={{ status: "active", format: "all", category: "all", order: "desc" }} />);
+    render(<PartyFilters value={{ status: "all", format: "all", category: "all", order: "desc" }} />);
 
     const trigger = screen.getByRole("combobox", { name: "Sort" });
     expect(trigger).toHaveTextContent("Newest");

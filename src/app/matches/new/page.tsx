@@ -5,6 +5,7 @@ import { TextLink } from "@/components/brand/text-link";
 import { CreateMatchForm } from "@/components/match/match-forms";
 import { fetchMemberProfile } from "@/lib/member-session";
 import { fetchPartyList } from "@/lib/public-content-client";
+import { UNDECIDED } from "@/utils/party-time";
 
 export const metadata: Metadata = {
   title: "建立場次",
@@ -44,7 +45,10 @@ export default async function NewMatchPage() {
   }
 
   const parties = await fetchPartyList("active", "all", "games");
-  const partyOptions = parties.map((party) => ({ value: party.id, label: `${party.startDate} ${party.title}` }));
+  const partyOptions = parties.map((party) => ({
+    value: party.id,
+    label: `${party.startDate || UNDECIDED} ${party.title}`,
+  }));
 
   return (
     <main id="main">

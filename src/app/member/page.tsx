@@ -21,6 +21,7 @@ import {
 import { fetchAboutContent } from "@/lib/public-content-client";
 import type { MemberProfile } from "@/types/member";
 import { parseMemberTab, type MemberTab } from "@/utils/member-tabs";
+import { formatPartyTime, formatSubPartyRange } from "@/utils/party-time";
 import { logoutAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -166,16 +167,23 @@ async function tabContent(tab: MemberTab, profile: MemberProfile) {
       ) : (
         <ol className="border-t border-line">
           {profile.parties.map((party) => (
-            <li
-              key={party.id}
-              className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line py-4"
-            >
-              <TextLink href={`/party/${party.id}`} className="text-lead text-ink">
-                {party.title}
-              </TextLink>
-              <MetaLabel>
-                {party.startDate} {party.startTime}
-              </MetaLabel>
+            <li key={party.id} className="flex flex-col gap-2 border-b border-line py-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                <TextLink href={`/party/${party.id}`} className="text-lead text-ink">
+                  {party.title}
+                </TextLink>
+                <MetaLabel>{formatPartyTime(party)}</MetaLabel>
+              </div>
+              {party.subParties.length > 0 && (
+                <ul aria-label={`「${party.title}」報名的子派對`} className="flex flex-col gap-1 pl-4">
+                  {party.subParties.map((sub) => (
+                    <li key={sub.id} className="flex flex-wrap items-baseline justify-between gap-x-6 text-body text-ink-secondary">
+                      <span>子派對：{sub.title}</span>
+                      <MetaLabel>{formatSubPartyRange(sub.startDateTime, sub.endDateTime)}</MetaLabel>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ol>

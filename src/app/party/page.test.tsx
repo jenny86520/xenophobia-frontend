@@ -23,12 +23,12 @@ describe("PartyPage", () => {
     mockReplace.mockReset();
   });
 
-  it("loads active parties of every mode and type by default, newest first", async () => {
+  it("loads parties of every status, mode and type by default, newest first", async () => {
     mockedFetchPartyList.mockResolvedValue([]);
 
     await renderPage();
 
-    expect(mockedFetchPartyList).toHaveBeenCalledWith("active", "all", "all", "desc");
+    expect(mockedFetchPartyList).toHaveBeenCalledWith("all", "all", "all", "desc");
     expect(screen.getByRole("combobox", { name: "Sort" })).toHaveTextContent("Newest");
     expect(screen.getByText("沒有符合目前篩選條件的活動。")).toBeInTheDocument();
   });
@@ -48,6 +48,15 @@ describe("PartyPage", () => {
 
     await renderPage({ status: "unknown", order: "newest" });
 
+    expect(mockedFetchPartyList).toHaveBeenCalledWith("all", "all", "all", "desc");
+    expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent("All");
+  });
+
+  it("loads only active parties from ?status=active", async () => {
+    mockedFetchPartyList.mockResolvedValue([]);
+
+    await renderPage({ status: "active" });
+
     expect(mockedFetchPartyList).toHaveBeenCalledWith("active", "all", "all", "desc");
     expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent("Active");
   });
@@ -57,7 +66,7 @@ describe("PartyPage", () => {
 
     await renderPage({ order: "asc" });
 
-    expect(mockedFetchPartyList).toHaveBeenCalledWith("active", "all", "all", "asc");
+    expect(mockedFetchPartyList).toHaveBeenCalledWith("all", "all", "all", "asc");
     expect(screen.getByRole("combobox", { name: "Sort" })).toHaveTextContent("Oldest");
   });
 
@@ -89,7 +98,7 @@ describe("PartyPage", () => {
 
     await renderPage();
 
-    expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent("Active");
+    expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent("All");
     expect(screen.getByRole("combobox", { name: "Mode" })).toHaveTextContent("All");
     expect(screen.getByRole("combobox", { name: "Type" })).toHaveTextContent("All");
   });

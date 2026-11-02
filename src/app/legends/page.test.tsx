@@ -114,6 +114,27 @@ describe("LegendsPage", () => {
     expect(document.getElementById("legend-rules-scrim-matches")).toHaveTextContent("隊伍確認之後的內戰場次");
   });
 
+  it("explains the sub-party board on its own", async () => {
+    await renderPage({
+      ...legends,
+      boards: [
+        {
+          code: "sub-party-attendance",
+          title: "分場達人",
+          metric: "參加子派對次數",
+          unit: "次",
+          countsTowardOverall: true,
+          entries: [{ rank: 1, nickname: "阿明", value: 3 }],
+        },
+      ],
+    });
+
+    const board = screen.getByRole("region", { name: "分場達人" });
+    expect(board).toHaveTextContent("參加子派對次數・單位：次");
+    expect(board).toHaveTextContent("一個派對裡的每一場");
+    expect(document.getElementById("legend-rules-sub-party-attendance")).toHaveTextContent("每個子派對算一次");
+  });
+
   it("gives a board added later a default icon and no ⓘ", async () => {
     await renderPage();
 

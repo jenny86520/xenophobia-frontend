@@ -42,7 +42,10 @@ const upcoming: UpcomingPartyResponse = {
     format: "online",
     startDate: "2099-10-05",
     startTime: "20:00",
+    endDate: "",
+    endTime: "",
     location: "Discord",
+    isPublic: true,
     coverUrl: null,
   },
   recentParties: [
@@ -54,6 +57,9 @@ const upcoming: UpcomingPartyResponse = {
       format: "offline",
       startDate: "2026-09-30",
       startTime: "18:30",
+      endDate: "",
+      endTime: "",
+      isPublic: true,
       coverUrl: null,
     },
   ],
@@ -193,6 +199,13 @@ describe("HomePage", () => {
     await renderHome();
     expect(screen.getByText("Countdown")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Night of Strategy/ })).toHaveAttribute("href", "/party/p0");
+  });
+
+  it("shows the date and 時間待定 instead of a countdown when the next party has no time yet", async () => {
+    await renderHome({ nextParty: { ...upcoming.nextParty!, startTime: "" } });
+
+    expect(screen.queryByText("Countdown")).toBeNull();
+    expect(screen.getAllByText("2099-10-05（時間待定）").length).toBeGreaterThan(0);
   });
 
   it("has no inline back-to-top text link (the floating button lives in the layout)", async () => {

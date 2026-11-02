@@ -27,7 +27,11 @@ const BOARD_COPY: Record<string, BoardCopy> = {
   },
   "party-attendance": {
     tagline: "哪裡有派對，哪裡就有他們。",
-    rules: "計算報名並且已經開始的活動次數。",
+    rules: "計算報名並且已經開始的活動次數；只有日期的活動在當天結束後才計入，時間待定的活動不計入。子派對另有排行榜。",
+  },
+  "sub-party-attendance": {
+    tagline: "一個派對裡的每一場，都有他們的身影。",
+    rules: "計算報名並且已經開始的子派對，每個子派對算一次；只有日期的子派對在當天結束後才計入。",
   },
   "scrim-matches": {
     tagline: "一場接一場，從不缺席的內戰常駐戰力。",

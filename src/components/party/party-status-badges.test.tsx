@@ -26,4 +26,15 @@ describe("PartyStatusBadges", () => {
     const active = screen.getByText("ACTIVE").closest('[data-slot="badge"]');
     expect(active?.className).not.toMatch(/success|warning/);
   });
+
+  it("marks a members-only party in words with an icon, and nothing for a public one", () => {
+    const { container, rerender } = render(<PartyStatusBadges format="offline" isPublic={false} />);
+
+    const badge = container.querySelector("[data-members-only]");
+    expect(badge).toHaveTextContent("會員限定");
+    expect(badge?.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+
+    rerender(<PartyStatusBadges format="offline" isPublic />);
+    expect(screen.queryByText("會員限定")).not.toBeInTheDocument();
+  });
 });

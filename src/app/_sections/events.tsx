@@ -12,6 +12,7 @@ import { PartyRow } from "@/components/party/party-row";
 import { PartyStatusBadges } from "@/components/party/party-status-badges";
 import type { NextParty, PartySummary } from "@/types/party";
 import { cn } from "@/lib/utils";
+import { formatPartyTime } from "@/utils/party-time";
 
 type EventsProps = {
   nextParty: NextParty | null;
@@ -72,7 +73,7 @@ export function Events({ nextParty, recentParties }: EventsProps) {
               </div>
               <dl className="col-span-4 flex flex-col md:col-span-8 lg:col-span-3 lg:col-start-10">
                 {[
-                  { label: "When", value: `${nextParty.startDate} ${nextParty.startTime}` },
+                  { label: "When", value: formatPartyTime(nextParty) },
                   { label: "Where", value: nextParty.location },
                   { label: "Type", value: nextParty.category },
                 ].map((row) => (
@@ -84,7 +85,7 @@ export function Events({ nextParty, recentParties }: EventsProps) {
                   </div>
                 ))}
                 <div className="border-t border-line pt-3">
-                  <PartyStatusBadges format={nextParty.format} />
+                  <PartyStatusBadges format={nextParty.format} isPublic={nextParty.isPublic} />
                 </div>
               </dl>
             </EditorialGrid>

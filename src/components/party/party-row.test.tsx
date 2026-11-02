@@ -10,6 +10,9 @@ const partySummary: PartySummary = {
   format: "offline",
   startDate: "2026-09-30",
   startTime: "18:30",
+  endDate: "",
+  endTime: "",
+  isPublic: true,
   coverUrl: null,
 };
 
@@ -22,8 +25,11 @@ const partyListItem: PartyListItem = {
   status: "active",
   startDate: "2026-09-30",
   startTime: "18:30",
+  endDate: "2026-09-30",
+  endTime: "22:00",
   location: "Red Room Studio, Taipei",
   summary: "Strategy-focused game night.",
+  isPublic: true,
   coverUrl: null,
 };
 
@@ -37,12 +43,31 @@ describe("PartyRow", () => {
     expect(screen.getByText("18:30")).toBeInTheDocument();
   });
 
-  it("renders the party-list usage with a lifecycle badge and shows date + category", () => {
+  it("renders the party-list usage with a lifecycle badge and shows date, time range + category", () => {
     render(<PartyRow party={partyListItem} showLifecycleBadge={true} metaFields="date-category" />);
 
     expect(screen.getByText("ACTIVE")).toBeInTheDocument();
     expect(screen.getByText("2026-09-30")).toBeInTheDocument();
+    expect(screen.getByText("18:30 – 22:00")).toBeInTheDocument();
     expect(screen.getAllByText("games").length).toBeGreaterThan(0);
+  });
+
+  it("says 待定 or 時間待定 and marks a members-only party", () => {
+    const { rerender } = render(
+      <PartyRow
+        party={{ ...partyListItem, startDate: "", startTime: "", endDate: "", endTime: "", isPublic: false }}
+        showLifecycleBadge={true}
+        metaFields="date-category"
+      />,
+    );
+    expect(screen.getByText("待定")).toBeInTheDocument();
+    expect(screen.getByText("會員限定")).toBeInTheDocument();
+
+    rerender(
+      <PartyRow party={{ ...partySummary, startTime: "" }} showLifecycleBadge={false} metaFields="date-time" />,
+    );
+    expect(screen.getByText("2026-09-30")).toBeInTheDocument();
+    expect(screen.getByText("時間待定")).toBeInTheDocument();
   });
 
   it("draws the cover as a backdrop hidden from assistive technology and keeps the row one link", () => {

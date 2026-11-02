@@ -174,8 +174,21 @@ describe("member actions with a session", () => {
     const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
     expect(url).toMatch(/\/api\/member\/parties\/p1\/registration$/);
     expect(init.method).toBe("POST");
-    expect(state).toEqual({ ok: true, message: "已報名。" });
+    expect(state).toEqual({ ok: true });
     expect(mockRevalidate).toHaveBeenCalledWith("/party/p1");
+  });
+
+  it("joins and leaves a sub-party through its own path", async () => {
+    respond(200, {});
+    const joined = await registrationAction("p1", "join", "s1");
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/member\/parties\/p1\/sub-parties\/s1\/registration$/);
+    expect(init.method).toBe("POST");
+    expect(joined).toEqual({ ok: true });
+    expect(mockRevalidate).toHaveBeenCalledWith("/party/p1");
+
+    respond(409, { message: "請先報名主派對" });
+    await expect(registrationAction("p1", "join", "s1")).resolves.toMatchObject({ ok: false, message: "請先報名主派對" });
   });
 
   it("passes a refusal through unchanged", async () => {

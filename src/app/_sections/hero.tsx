@@ -7,6 +7,7 @@ import { MetaLabel } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
 import { Display } from "@/components/brand/typography";
 import { Countdown } from "@/components/party/countdown";
+import { formatPartyTime } from "@/utils/party-time";
 import type { TeamProfile } from "@/types/about";
 import type { NextParty } from "@/types/party";
 
@@ -89,13 +90,20 @@ export function Hero({ profile, nextParty }: HeroProps) {
             <div className="col-span-4 flex flex-col gap-3 self-end border-t border-line pt-4 md:col-span-6 lg:col-span-4 lg:col-start-9">
               <span className="inline-flex items-center gap-2">
                 <span aria-hidden="true" className="size-2 rounded-full bg-signal shadow-glow motion-safe:animate-pulse" />
-                <MetaLabel>Countdown</MetaLabel>
+                <MetaLabel>{nextParty.startTime ? "Countdown" : "Next"}</MetaLabel>
               </span>
-              <Countdown
-                startDate={nextParty.startDate}
-                startTime={nextParty.startTime}
-                className="font-mono text-h2 leading-none tracking-tight text-ink tabular-nums"
-              />
+              {/* Without a time there is nothing to count down to: the date and 時間待定 instead. */}
+              {nextParty.startTime ? (
+                <Countdown
+                  startDate={nextParty.startDate}
+                  startTime={nextParty.startTime}
+                  className="font-mono text-h2 leading-none tracking-tight text-ink tabular-nums"
+                />
+              ) : (
+                <p className="font-mono text-h2 leading-none tracking-tight text-ink tabular-nums">
+                  {formatPartyTime(nextParty)}
+                </p>
+              )}
               <Link
                 href={`/party/${nextParty.id}`}
                 className="link-underline self-start text-body text-ink-secondary hover:text-ink"

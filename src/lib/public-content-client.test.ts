@@ -9,7 +9,16 @@ import {
 // connection() needs a Next request scope (and the Request global jsdom lacks).
 jest.mock("next/server", () => ({ connection: jest.fn().mockResolvedValue(undefined) }));
 const requestHeaders = new Headers();
-jest.mock("next/headers", () => ({ headers: () => Promise.resolve(requestHeaders) }));
+let memberCookie: string | undefined;
+jest.mock("next/headers", () => ({
+  headers: () => Promise.resolve(requestHeaders),
+  cookies: () =>
+    Promise.resolve({ get: (name: string) => (name === "xpa_member" && memberCookie ? { value: memberCookie } : undefined) }),
+}));
+
+beforeEach(() => {
+  memberCookie = undefined;
+});
 
 function mockFetchResponse(status: number, body: unknown) {
   global.fetch = jest.fn().mockResolvedValue({
@@ -37,6 +46,32 @@ describe("fetchPartyDetail", () => {
   it("throws instead of returning the error body on other failures", async () => {
     mockFetchResponse(500, { statusCode: 500, error: "INTERNAL_SERVER_ERROR", message: "boom" });
     await expect(fetchPartyDetail("1")).rejects.toThrow("HTTP 500");
+  });
+});
+
+describe("members-only parties", () => {
+  const authorizationOf = (call = 0) =>
+    ((global.fetch as jest.Mock).mock.calls[call][1] as { headers: Record<string, string> }).headers.Authorization;
+
+  it("sends the member's token for parties and matches, and nothing for visitors", async () => {
+    mockFetchResponse(200, []);
+    await fetchPartyList("all", "all", "all");
+    expect(authorizationOf()).toBeUndefined();
+
+    memberCookie = "member-token";
+    mockFetchResponse(200, []);
+    await fetchPartyList("active", "online", "all");
+    expect(authorizationOf()).toBe("Bearer member-token");
+  });
+
+  it("says a visitor may not see a members-only party, without any of its content", async () => {
+    mockFetchResponse(403, { statusCode: 403, error: "MEMBERS_ONLY", message: "此活動僅限會員查看" });
+    await expect(fetchPartyDetail("secret")).resolves.toEqual({ membersOnly: true });
+  });
+
+  it("still throws on a 403 that is not about a members-only party", async () => {
+    mockFetchResponse(403, { statusCode: 403, error: "FORBIDDEN", message: "no" });
+    await expect(fetchPartyDetail("other")).rejects.toThrow("HTTP 403");
   });
 });
 

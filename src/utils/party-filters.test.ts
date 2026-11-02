@@ -1,8 +1,8 @@
 import { parsePartyFilters, partyFiltersHref } from "./party-filters";
 
 describe("parsePartyFilters", () => {
-  it("defaults to active / all / all, newest first", () => {
-    expect(parsePartyFilters({})).toEqual({ status: "active", format: "all", category: "all", order: "desc" });
+  it("defaults to all / all / all, newest first", () => {
+    expect(parsePartyFilters({})).toEqual({ status: "all", format: "all", category: "all", order: "desc" });
   });
 
   it("reads valid values from the URL", () => {
@@ -17,7 +17,7 @@ describe("parsePartyFilters", () => {
 
   it("falls back to the default for unknown values", () => {
     expect(parsePartyFilters({ status: "unknown", category: ["games", "x"], order: "newest" })).toEqual({
-      status: "active",
+      status: "all",
       format: "all",
       category: "games",
       order: "desc",
@@ -27,11 +27,11 @@ describe("parsePartyFilters", () => {
 
 describe("partyFiltersHref", () => {
   it("leaves default values out of the URL", () => {
-    expect(partyFiltersHref({ status: "active", format: "all", category: "all", order: "desc" })).toBe("/party");
-    expect(partyFiltersHref({ status: "all", format: "online", category: "all", order: "desc" })).toBe(
-      "/party?status=all&format=online",
+    expect(partyFiltersHref({ status: "all", format: "all", category: "all", order: "desc" })).toBe("/party");
+    expect(partyFiltersHref({ status: "active", format: "online", category: "all", order: "desc" })).toBe(
+      "/party?status=active&format=online",
     );
-    expect(partyFiltersHref({ status: "active", format: "all", category: "all", order: "asc" })).toBe(
+    expect(partyFiltersHref({ status: "all", format: "all", category: "all", order: "asc" })).toBe(
       "/party?order=asc",
     );
   });

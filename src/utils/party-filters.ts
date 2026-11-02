@@ -1,9 +1,9 @@
 export type FilterOption = { value: string; label: string };
 
 export const STATUS_OPTIONS: FilterOption[] = [
+  { value: "all", label: "All" },
   { value: "active", label: "Active" },
   { value: "expired", label: "Expired" },
-  { value: "all", label: "All" },
 ];
 export const FORMAT_OPTIONS: FilterOption[] = [
   { value: "all", label: "All" },
@@ -24,7 +24,7 @@ export const ORDER_OPTIONS: FilterOption[] = [
 
 export type PartyFilterValues = { status: string; format: string; category: string; order: string };
 
-export const DEFAULT_FILTERS: PartyFilterValues = { status: "active", format: "all", category: "all", order: "desc" };
+export const DEFAULT_FILTERS: PartyFilterValues = { status: "all", format: "all", category: "all", order: "desc" };
 
 const OPTIONS: Record<keyof PartyFilterValues, FilterOption[]> = {
   status: STATUS_OPTIONS,

@@ -1,4 +1,4 @@
-import { CalendarCheck, Crosshair, Ghost, Swords, Trophy, type LucideIcon } from "lucide-react";
+import { CalendarCheck, CalendarRange, Crosshair, Ghost, Swords, Trophy, type LucideIcon } from "lucide-react";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { InfoDialog } from "@/components/brand/info-dialog";
@@ -13,6 +13,7 @@ const BOARD_ICONS: Record<string, LucideIcon> = {
   overall: Trophy,
   "scrim-rating": Crosshair,
   "party-attendance": CalendarCheck,
+  "sub-party-attendance": CalendarRange,
   "scrim-matches": Swords,
   "scrim-cancelled": Ghost,
 };

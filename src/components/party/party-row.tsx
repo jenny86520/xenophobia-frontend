@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { MetaLabel } from "@/components/brand/meta-label";
 import type { PartyListItem, PartySummary } from "@/types/party";
 import { resolvePartyLifecycleStatus } from "@/utils/party-lifecycle";
+import { UNDECIDED, formatPartyTimeOfDay } from "@/utils/party-time";
 import { PartyCoverBackdrop } from "./party-cover-backdrop";
 import { PartyStatusBadges } from "./party-status-badges";
 
@@ -15,8 +16,8 @@ type PartyRowProps = (
 };
 
 /**
- * Editorial list row for a party (design §5): date (mono), title, category, format and
- * lifecycle, summary. The whole row is one link to the detail page. Render inside a
+ * Editorial list row for a party (design §5): date (mono) and time ("待定" while undecided), title,
+ * category, format, 會員限定 and lifecycle, summary. The whole row is one link to the detail page. Render inside a
  * <ul>/<ol>; rows are separated by hairline rules. A party with a cover gets it as a
  * dimmed backdrop behind the row.
  */
@@ -33,8 +34,11 @@ export function PartyRow({ party, showLifecycleBadge, metaFields, titleAs: Title
         className="grid grid-cols-4 gap-x-4 gap-y-3 px-2 py-6 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none md:grid-cols-8 md:gap-x-6 lg:grid-cols-12"
       >
         <div className="col-span-4 flex items-baseline gap-3 md:col-span-2 md:flex-col md:gap-1">
-          <span className="list-row-index font-mono text-label text-ink tabular-nums">{party.startDate}</span>
-          <MetaLabel>{metaFields === "date-time" ? party.startTime : party.category}</MetaLabel>
+          <span className="list-row-index font-mono text-label text-ink tabular-nums">
+            {party.startDate || UNDECIDED}
+          </span>
+          {party.startDate && <MetaLabel>{formatPartyTimeOfDay(party)}</MetaLabel>}
+          {metaFields === "date-category" && <MetaLabel>{party.category}</MetaLabel>}
         </div>
         <div className="col-span-4 flex flex-col gap-2 md:col-span-6 lg:col-span-6">
           <Title className="font-heading text-h3 text-ink">{party.title}</Title>
@@ -42,7 +46,7 @@ export function PartyRow({ party, showLifecycleBadge, metaFields, titleAs: Title
         </div>
         <div className="col-span-4 flex flex-col items-start gap-2 md:col-span-6 md:col-start-3 lg:col-span-3 lg:col-start-auto">
           {metaFields === "date-time" && <MetaLabel>{party.category}</MetaLabel>}
-          <PartyStatusBadges format={party.format} lifecycle={lifecycle} />
+          <PartyStatusBadges format={party.format} lifecycle={lifecycle} isPublic={party.isPublic} />
         </div>
         <div className="hidden items-start justify-end lg:col-span-1 lg:flex">
           <ArrowRight aria-hidden="true" className="list-row-arrow size-5 text-ink-muted" />

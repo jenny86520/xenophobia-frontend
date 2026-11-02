@@ -100,7 +100,20 @@ const profile: MemberProfile = {
   phone: "0912345678",
   role: { id: "r1", name: "一般會員" },
   parties: [
-    { id: "p1", title: "十一月賽車", startDate: "2026-11-01", startTime: "19:00", status: "active", registeredAt: "" },
+    {
+      id: "p1",
+      title: "十一月賽車",
+      startDate: "2026-11-01",
+      startTime: "19:00",
+      endDate: "2026-11-01",
+      endTime: "23:00",
+      status: "active",
+      registeredAt: "",
+      subParties: [
+        { id: "s1", title: "夜衝", startDateTime: "2026-11-01T22:00:00+08:00", endDateTime: "" },
+        { id: "s2", title: "續攤", startDateTime: "", endDateTime: "" },
+      ],
+    },
   ],
   steam: null,
   canCreateMatch: false,
@@ -268,6 +281,13 @@ describe("/member", () => {
     expect(screen.getByRole("link", { name: "參加的活動" })).toHaveAttribute("aria-current", "page");
     const joined = screen.getByRole("region", { name: "參加的活動" });
     expect(within(joined).getByRole("link", { name: "十一月賽車" })).toHaveAttribute("href", "/party/p1");
+    expect(joined).toHaveTextContent("2026-11-01 19:00 – 23:00");
+    const subParties = within(joined).getByRole("list", { name: "「十一月賽車」報名的子派對" });
+    expect(
+      within(subParties)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["子派對：夜衝11/01 22:00", "子派對：續攤待定"]);
     expect(screen.queryByLabelText("暱稱")).not.toBeInTheDocument();
   });
 
