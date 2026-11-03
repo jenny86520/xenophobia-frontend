@@ -14,6 +14,7 @@ import { MemberSteam } from "@/components/player/member-steam";
 import {
   fetchMemberFriends,
   fetchMemberFriendSummary,
+  fetchMemberLegalChanges,
   fetchMemberMatches,
   fetchMemberProfile,
   fetchMemberVideoSubmissions,
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
 /**
  * Members-only: the nickname, sign-out and Steam row, then tabs (?tab=) for the profile (details and
  * nickname form, the default), joined parties, scrims, friends and video submissions; everyone else sees how to become a member. Only the open tab's data is fetched.
- * While the member must agree to renewed terms, the consent panel replaces the tabs.
+ * While the member must agree to renewed terms, the consent panel (with what changed) replaces the tabs.
  */
 export default async function MemberPage({ searchParams }: PageProps<"/member">) {
   const profile = await fetchMemberProfile();
@@ -83,7 +84,7 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
 
       <Section spacing="tight">
         {profile.legalConsent.required ? (
-          <LegalConsentPanel consent={profile.legalConsent} />
+          <LegalConsentPanel consent={profile.legalConsent} changes={await fetchMemberLegalChanges()} />
         ) : (
           <>
             <MemberTabs current={tab} counts={{ friends: await fetchMemberFriendSummary() }} />

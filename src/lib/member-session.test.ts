@@ -9,6 +9,7 @@ jest.mock("next/headers", () => ({
 
 import {
   MEMBER_COOKIE,
+  fetchMemberLegalChanges,
   fetchMemberProfile,
   fetchMemberVideoSubmissions,
   memberCookieOptions,
@@ -101,6 +102,31 @@ describe("fetchMemberProfile", () => {
     cookieStore.get.mockReturnValue({ value: "jwt" });
     respond(500);
     await expect(fetchMemberProfile()).rejects.toThrow("HTTP 500");
+  });
+});
+
+describe("fetchMemberLegalChanges", () => {
+  it("returns what changed with the member's token", async () => {
+    cookieStore.get.mockReturnValue({ value: "jwt" });
+    respond(200, { documents: [] });
+
+    await expect(fetchMemberLegalChanges()).resolves.toEqual({ documents: [] });
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/member\/legal-consent$/);
+    expect(new Headers(init.headers).get("Authorization")).toBe("Bearer jwt");
+  });
+
+  it("is null without a session or on any failure, never throwing", async () => {
+    respond(200);
+    await expect(fetchMemberLegalChanges()).resolves.toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+
+    cookieStore.get.mockReturnValue({ value: "jwt" });
+    respond(500);
+    await expect(fetchMemberLegalChanges()).resolves.toBeNull();
+
+    global.fetch = jest.fn().mockRejectedValue(new Error("down")) as unknown as typeof fetch;
+    await expect(fetchMemberLegalChanges()).resolves.toBeNull();
   });
 });
 

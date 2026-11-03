@@ -4,7 +4,12 @@ import { forwardedForHeader } from "@/lib/forwarded-for";
 import { backendBaseUrl } from "@/lib/public-content-client";
 import type { FriendProfile, FriendsOverview } from "@/types/friends";
 import type { MemberMatches } from "@/types/match";
-import type { MemberProfile, MemberRegistrationView, MemberVideoSubmissions } from "@/types/member";
+import type {
+  LegalConsentChanges,
+  MemberProfile,
+  MemberRegistrationView,
+  MemberVideoSubmissions,
+} from "@/types/member";
 
 /**
  * The member's access token lives only in this httpOnly cookie: browser JavaScript cannot read it,
@@ -80,6 +85,21 @@ export async function fetchMemberMatches(): Promise<MemberMatches | null> {
   if (response.status === 401) return null;
   if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
   return (await response.json()) as MemberMatches;
+}
+
+/**
+ * What changed in the terms the member must agree to again. Never throws: null when signed out or on any
+ * failure, so the consent panel still lets the member read the full text and agree.
+ */
+export async function fetchMemberLegalChanges(): Promise<LegalConsentChanges | null> {
+  const token = await memberToken();
+  if (!token) return null;
+  try {
+    const response = await memberFetch("/api/member/legal-consent", {}, token);
+    return response.ok ? ((await response.json()) as LegalConsentChanges) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** The member's view of a party's registration, or null when not signed in. */

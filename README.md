@@ -62,7 +62,7 @@ npm run dev                  # http://localhost:3000
 | `/matches` | CS2 內戰場次列表（報名中、已鎖定與分隊中的在前；每列顯示建立者與建立時間，後台建立的顯示「管理員」）；角色有「可建立內戰場次」且未暫停的會員看到「建立場次」 |
 | `/matches/new` | 建立場次（標題、選填的進行中遊戲類派對；遊戲固定是 Counter-Strike 2）；沒有權限、暫停或網站沒有 Counter-Strike 2 遊戲項目時（後端的 `canCreateMatch` 為否）只顯示說明 |
 | `/matches/[id]` | 場次頁：報名（單人、建立小隊、以邀請碼加入、退出）、報名中時會員可「邀請好友」（邀進自己的小隊或邀請報名，列出每位好友的狀態）、名單（依小隊分組；隊伍確認後顯示兩隊、隊長、總分與分差）；建立的會員另有管理區，見[內戰場次](#內戰場次) |
-| `/member` | 會員專區：上方是暱稱、登出與 Steam 帳號列（可建立內戰場次的會員右側有「建立內戰場次」），下方以分頁切換「個人資料」（預設：個人資料與修改暱稱表單）、「參加的活動」（`?tab=parties`）、「內戰場次」（`?tab=matches`：評分在左欄，右側是參加過的場次與隊伍，以及到全部場次的連結；未綁定 Steam 時說明需先綁定）、「好友」（`?tab=friends`：寬螢幕分左右兩欄，左側是好友清單（暱稱連到好友資料頁，旁邊顯示自己寫的備註），右側是自己的會員編號與加好友表單、內戰場次邀請、收到與送出的好友邀請；分頁名稱旁顯示待處理數量）與「投稿影片」（`?tab=videos`：左側是一段說明與表單（先選來源並填 YouTube 網址或影片檔，再填遊戲、標題、日期；來源旁有「從 Leetify 找片段」按鈕），右側是投稿紀錄）；條款改版需要重新同意時，頁首下方只顯示「條款已更新」同意區塊、不顯示分頁；未登入時只說明如何成為會員 |
+| `/member` | 會員專區：上方是暱稱、登出與 Steam 帳號列（可建立內戰場次的會員右側有「建立內戰場次」），下方以分頁切換「個人資料」（預設：個人資料與修改暱稱表單）、「參加的活動」（`?tab=parties`）、「內戰場次」（`?tab=matches`：評分在左欄，右側是參加過的場次與隊伍，以及到全部場次的連結；未綁定 Steam 時說明需先綁定）、「好友」（`?tab=friends`：寬螢幕分左右兩欄，左側是好友清單（暱稱連到好友資料頁，旁邊顯示自己寫的備註），右側是自己的會員編號與加好友表單、內戰場次邀請、收到與送出的好友邀請；分頁名稱旁顯示待處理數量）與「投稿影片」（`?tab=videos`：左側是一段說明與表單（先選來源並填 YouTube 網址或影片檔，再填遊戲、標題、日期；來源旁有「從 Leetify 找片段」按鈕），右側是投稿紀錄）；條款改版需要重新同意時，頁首下方只顯示「條款已更新」同意區塊（每份文件下方列出與自己上次同意版本相比改了哪裡，並可開啟最新全文）、不顯示分頁；未登入時只說明如何成為會員 |
 | `/member/login` | 會員登入、申請重設密碼 |
 | `/member/friends/[memberId]` | 好友資料頁：暱稱、會員編號、Discord ID、Steam 名稱（連到 Steam 個人頁）、內戰分數，以及自己的備註表單（只有自己看得到，最多 50 字）；不是好友時顯示「找不到這位好友」 |
 | `/member/register` | 會員註冊（需勾選同意使用條款與隱私權政策；「稱呼」只讓管理員辨識，不必填真名；註冊後需由管理員開通） |
@@ -165,7 +165,8 @@ public/brand/             # 網站 logo
 - 內文是純文字，由 `utils/legal-text.ts` 的 `parseLegalText` 轉成段落：空行分隔段落，`# ` 開頭是小標，連續的 `- ` 開頭成為清單，段內換行保留；內容只當文字顯示，不解析 HTML。還沒發布（內容為空）時顯示 `Placeholder`（`legal.privacy`／`legal.terms`），`check:content` 會列出；讀取失敗時顯示「目前無法載入，請稍後再試。」。
 - 樣式在 `globals.css` 的 `.legal-dialog`：最寬 720px、最高 85dvh、內文捲動，背景遮罩用 `--xpa-background`；淡入只在 `prefers-reduced-motion: no-preference` 下用 `@starting-style`。
 - 註冊表單的同意勾選框是 `CheckboxField`（`form-controls.tsx`），Server Action 只在勾選時送 `acceptTerms: true`，其餘由後端驗證並記錄同意的時間與條款版本。
-- **重新同意**：管理員發布條款時要求會員重新同意後，`GET /api/member/me` 的 `legalConsent.required` 為真。會員頁在頁首下方以 `LegalConsentPanel`（`components/member/legal-consent-panel.tsx`）取代分頁，列出需要同意的文件（按名稱開啟條款視窗）與 `LegalConsentForm`（隱藏欄位帶目前兩份文件的版本，必勾後送 `acceptLegalAction`）。同意期間條款又改版時，後端回 `409`，表單顯示說明，頁面以新版重新顯示。
+- **重新同意**：管理員發布條款時要求會員重新同意後，`GET /api/member/me` 的 `legalConsent.required` 為真。會員頁在頁首下方以 `LegalConsentPanel`（`components/member/legal-consent-panel.tsx`）取代分頁，列出需要同意的文件與 `LegalConsentForm`（隱藏欄位帶目前兩份文件的版本，必勾後送 `acceptLegalAction`）。同意期間條款又改版時，後端回 `409`，表單顯示說明，頁面以新版重新顯示。
+  - 每份文件一列：名稱（`LegalDialogButton`，開啟根版型已渲染的最新全文視窗，不需 JavaScript）與版本，下方是 `LegalChanges`（`components/member/legal-changes.tsx`）：`fetchMemberLegalChanges()`（`GET /api/member/legal-consent`，只在需要同意時讀取，失敗回 `null` 不擋同意）取得後端算好的差異，刪除以 `<del>` 加刪除線、新增以 `<ins>` 加底線，行首可見 −／+ 與 sr-only「刪除：／新增：／修改前：／修改後：」，收合處顯示「省略 N 行未變動」；差異區塊有最大高度、可用鍵盤捲動。沒有可比對的版本時請會員閱讀全文，內容相同時說明相同。前台不做任何比對。
 - 同意前，後端對會員的所有寫入回 `428`。`app/member/actions.ts` 與 `app/matches/actions.ts` 的 `errorState()` 遇到 `428` 就導向 `/member`；綁定 Steam 的回呼導向 `/member?steam=consent-required`。
 
 ## 設計系統

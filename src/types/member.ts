@@ -49,6 +49,29 @@ export type LegalConsent = {
   documents: LegalConsentDocument[];
 };
 
+/** A run of text within one line of a compared legal document. */
+export type LegalDiffSegment = { text: string; change: "same" | "added" | "removed" };
+
+/** One line as segments; a whole added or removed line is a single segment. */
+export type LegalDiffLine = LegalDiffSegment[];
+
+export type LegalDiffBlock =
+  | { kind: "unchanged"; lines: string[] }
+  | { kind: "omitted"; lineCount: number }
+  | { kind: "changed"; removed: LegalDiffLine[]; added: LegalDiffLine[] };
+
+/** What changed since the version the member agreed to (computed by the backend). */
+export type LegalConsentChangesDocument = {
+  key: LegalKey;
+  title: string;
+  version: number;
+  agreedVersion: number | null;
+  /** null when there is nothing to compare with; empty blocks when the text is the same. */
+  comparison: { fromVersion: number; blocks: LegalDiffBlock[] } | null;
+};
+
+export type LegalConsentChanges = { documents: LegalConsentChangesDocument[] };
+
 export type RegistrationStatus = "open" | "not-open" | "closed";
 
 /** Why a member cannot register (or leave) right now; null when the action is allowed. */

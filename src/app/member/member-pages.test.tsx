@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import {
   fetchMemberFriends,
   fetchMemberFriendSummary,
+  fetchMemberLegalChanges,
   fetchMemberMatches,
   fetchMemberProfile,
   fetchMemberVideoSubmissions,
@@ -20,6 +21,7 @@ jest.mock("@/lib/member-session", () => ({
   fetchMemberMatches: jest.fn(),
   fetchMemberFriends: jest.fn(),
   fetchMemberFriendSummary: jest.fn(),
+  fetchMemberLegalChanges: jest.fn(),
 }));
 jest.mock("@/lib/public-content-client", () => ({ fetchAboutContent: jest.fn() }));
 jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }));
@@ -135,6 +137,21 @@ const renewedTerms: MemberProfile["legalConsent"] = {
   ],
 };
 
+const termsChanges = {
+  documents: [
+    {
+      key: "terms",
+      title: "使用條款",
+      version: 3,
+      agreedVersion: 2,
+      comparison: {
+        fromVersion: 2,
+        blocks: [{ kind: "changed", removed: [], added: [[{ text: "退出條款", change: "added" }]] }],
+      },
+    },
+  ],
+};
+
 /** Page props for /member with any query (e.g. ?steam= from /steam/callback). */
 const memberQuery = (query: Record<string, string>) =>
   ({ searchParams: Promise.resolve(query), params: Promise.resolve({}) }) as unknown as PageProps<"/member">;
@@ -142,6 +159,7 @@ const memberQuery = (query: Record<string, string>) =>
 describe("/member", () => {
   it("asks for renewed consent instead of showing the tabs, whatever the tab", async () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue({ ...profile, legalConsent: renewedTerms });
+    (fetchMemberLegalChanges as jest.Mock).mockResolvedValue(termsChanges);
     render(await MemberPage(memberProps("friends")));
 
     // The header stays: nickname, sign-out and Steam row.
@@ -149,12 +167,14 @@ describe("/member", () => {
     expect(screen.getByRole("button", { name: "登出" })).toBeInTheDocument();
 
     const panel = screen.getByRole("region", { name: "條款已更新" });
-    // Only the document that needs consent is listed, with its version; it opens its dialog.
+    // Only the document that needs consent is listed, with its version and what changed; its name opens its dialog.
     const items = within(panel).getAllByRole("listitem");
     expect(items).toHaveLength(1);
     expect(items[0]).toHaveTextContent("使用條款");
     expect(items[0]).toHaveTextContent("第 3 版");
     expect(within(items[0]).getByRole("button", { name: "使用條款" })).toHaveAttribute("popovertarget", "legal-terms");
+    expect(items[0]).toHaveTextContent("與你同意的第 2 版相比");
+    expect(within(items[0]).getByRole("region", { name: "使用條款的變更" })).toHaveTextContent("新增：退出條款");
 
     const consent = within(panel).getByRole("checkbox", { name: /我已閱讀並同意更新後的\s*使用條款/ });
     expect(consent).toBeRequired();
@@ -166,6 +186,18 @@ describe("/member", () => {
     expect(screen.queryByRole("navigation", { name: "會員專區" })).not.toBeInTheDocument();
     expect(fetchMemberFriends).not.toHaveBeenCalled();
     expect(fetchMemberFriendSummary).not.toHaveBeenCalled();
+  });
+
+  it("still lets the member read the full text and agree when the changes cannot be loaded", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue({ ...profile, legalConsent: renewedTerms });
+    (fetchMemberLegalChanges as jest.Mock).mockResolvedValue(null);
+    render(await MemberPage(memberProps()));
+
+    const panel = screen.getByRole("region", { name: "條款已更新" });
+    const [item] = within(panel).getAllByRole("listitem");
+    expect(within(item).getByRole("button", { name: "使用條款" })).toHaveAttribute("popovertarget", "legal-terms");
+    expect(within(panel).queryByRole("region", { name: "使用條款的變更" })).not.toBeInTheDocument();
+    expect(within(panel).getByRole("button", { name: "同意並繼續" })).toBeInTheDocument();
   });
 
   it("names both documents when both need consent", async () => {
@@ -199,6 +231,7 @@ describe("/member", () => {
   it("opens the 個人資料 tab by default: the details and the nickname form", async () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
     render(await MemberPage(memberProps()));
+    expect(fetchMemberLegalChanges).not.toHaveBeenCalled();
 
     const details = screen.getByRole("region", { name: "個人資料" });
     for (const value of ["XPA-0001", "王小明", "ming", "ming#1234", "ming@example.com", "0912345678", "一般會員"]) {
