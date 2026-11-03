@@ -1190,7 +1190,8 @@
  * Home header: hidden over the hero, then fixed at the top and fading in as the hero
  * scrolls out (a view timeline on #hero, shared through timeline-scope). Only opacity
  * and pointer-events animate: a transform would make the header the containing block
- * of the fixed full-screen MobileMenu panel. Keyboard focus inside shows it at once. Without
+ * of the fixed full-screen MobileMenu panel. Keyboard focus inside shows it at once; with a
+ * mouse, hovering the top of the hero unrolls it from the top (clip-path). Without
  * support, with reduced motion or on other pages, it stays the ordinary header.
  */
 @supports (animation-timeline: view()) and (timeline-scope: --hero) and selector(:has(*)) {
@@ -1210,6 +1211,24 @@
       animation: xpa-header-reveal linear both;
       animation-timeline: --hero;
       animation-range: exit 40% exit 90%;
+    }
+    /* Mouse and trackpad: the hidden header keeps receiving the pointer (only opacity is
+       animated), so moving to the top of the hero hovers it and it unrolls from the top. A
+       click always comes after that hover, so no invisible link is ever clicked. Touch has no
+       hover, so there the hidden header stays unclickable. Once the hero starts to leave (where
+       the scroll fade-in begins) the second animation keeps the clip off, so hovering a header
+       that is already showing never replays the unroll. */
+    @media (hover: hover) and (pointer: fine) {
+      body:has(#hero) .site-header {
+        animation-name: xpa-header-reveal-opacity;
+      }
+      body:has(#hero) .site-header:hover {
+        animation:
+          xpa-header-drop 200ms ease-out both,
+          xpa-header-unclipped linear forwards;
+        animation-timeline: auto, --hero;
+        animation-range: normal, exit 40% exit 41%;
+      }
     }
     /* Keyboard focus only: after clicking the logo to return home, focus stays on that
        link (not :focus-visible), and the header must start hidden like a fresh visit. */
@@ -1231,6 +1250,36 @@
   to {
     opacity: 1;
     pointer-events: auto;
+  }
+}
+
+@keyframes xpa-header-reveal-opacity {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Unrolls from the top, then ends at none so nothing stays clipped (a clip also limits hit testing). */
+@keyframes xpa-header-drop {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  99% {
+    clip-path: inset(0);
+  }
+  to {
+    clip-path: none;
+  }
+}
+
+/* Holds the hovered header unclipped once the hero is leaving (listed after the drop, so it wins). */
+@keyframes xpa-header-unclipped {
+  from,
+  to {
+    clip-path: none;
   }
 }
 

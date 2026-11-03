@@ -17,7 +17,8 @@ type SiteHeaderProps = {
 /**
  * Brand, primary navigation and CTA (design §1). Below 1024px nav and CTA move into MobileMenu.
  * On the home page `.site-header` (globals.css) is hidden over the hero and fades in fixed at
- * the top once the hero scrolls away; without support for that it stays an ordinary header.
+ * the top once the hero scrolls away (a mouse at the top of the hero unrolls it at once); without
+ * support for that it stays an ordinary header.
  */
 export function SiteHeader({ brandName, cta, memberPending = 0 }: SiteHeaderProps) {
   return (

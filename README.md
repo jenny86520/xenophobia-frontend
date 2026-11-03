@@ -178,6 +178,7 @@ public/brand/             # 網站 logo
 - **版面**：用 `Section`、`Container`、`EditorialGrid` 排版，標題用 `Heading`，團隊名稱一律用 `BrandName`。
 - **缺內容**：還沒有內容的地方放 `Placeholder`，不要自己編寫文案，並登記到 `placeholder-registry.ts` 或 `check-content.mjs`。
 - **動態**：只用 CSS，全部包在 `prefers-reduced-motion: no-preference` 裡；保留清楚的焦點框。
+- **首頁 Header**（`globals.css` 的 `.site-header` 區塊）：在 Hero 上隱藏，Hero 捲出時固定在頂端以透明度淡入；鍵盤焦點進入時立即顯示。用滑鼠或觸控板（`hover: hover` 且 `pointer: fine`）時，隱藏的 Header 仍接收指標，滑鼠移到頂端就由上往下展開（`clip-path`，200ms，結尾回到 `none`，不留裁切），移開立即隱藏；Hero 開始離開後另一個動畫保持不裁切，已顯示的 Header 懸停不會重播。觸控裝置維持在 Hero 上點不到。
 - **品牌特效**（`globals.css` 最後的「Brand effects」一節，效果取自 KittenJam Motion Library，只取效果、不用 GSAP）：
   - 捲動橫移大字：首頁 Hero 之後的 `BrandMarquee`（`_sections/marquee.tsx`），三行 `BrandName` 大字（中間空心）隨捲動反向橫移，整段 `aria-hidden`。
   - 捲動逐字點亮：品牌宣言用 `LitText`（`components/brand/lit-text.tsx`），`Intl.Segmenter` 拆字，每個字帶位置 `--p`，跟著 `--lit` 時間軸依序點亮；輔助科技讀不可選取的 `sr-only` 完整句子。
