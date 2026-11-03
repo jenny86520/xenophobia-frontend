@@ -30,6 +30,7 @@ const about: AboutContent = {
   highlights: [],
   roadmap: [],
   socialLinks: [],
+  stats: { members: 0 },
   games: [{ id: "g1", name: "CS2", summary: "", videos: [] }],
 };
 
@@ -133,6 +134,28 @@ describe("HomePage", () => {
     const more = within(events).getByRole("link", { name: "More Party" });
     expect(more).toHaveAttribute("href", "/party");
     expect(more).toHaveAttribute("lang", "en");
+  });
+
+  it("shows the key figures in order: founded year, members, parties, games", async () => {
+    const { container } = await renderHome({}, { stats: { members: 12 } });
+
+    const statement = container.querySelector("#statement") as HTMLElement;
+    const figures = within(statement)
+      .getAllByRole("term")
+      .map((term) => [term.textContent, term.nextElementSibling?.textContent]);
+    expect(figures.map(([label]) => label)).toEqual(["Est.", "Members", "Parties", "Games"]);
+    expect(figures[1]).toEqual(["Members", "12"]);
+    expect(figures[2]).toEqual(["Parties", "03"]);
+    expect(within(statement).queryByText("Milestones")).not.toBeInTheDocument();
+  });
+
+  it("shows 00 members as a real figure, not a placeholder", async () => {
+    const { container } = await renderHome({}, { stats: { members: 0 } });
+
+    const statement = container.querySelector("#statement") as HTMLElement;
+    const members = within(statement).getByText("Members").closest("div") as HTMLElement;
+    expect(members).toHaveTextContent("00");
+    expect(members.querySelector("[data-placeholder]")).toBeNull();
   });
 
   it("links the Who we are section to the about page", async () => {

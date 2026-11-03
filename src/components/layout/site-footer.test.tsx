@@ -24,6 +24,7 @@ const about = (
   games: [],
   roadmap: [],
   socialLinks,
+  stats: { members: 0 },
 });
 
 describe("SiteFooter", () => {

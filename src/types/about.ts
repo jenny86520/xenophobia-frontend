@@ -44,4 +44,6 @@ export type AboutContent = {
   games: Game[];
   roadmap: RoadmapItem[];
   socialLinks: SocialLink[];
+  /** Figures the backend computes; `members` counts activated members only. */
+  stats: { members: number };
 };

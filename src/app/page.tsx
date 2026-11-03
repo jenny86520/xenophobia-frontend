@@ -19,7 +19,7 @@ export default async function HomePage() {
     fetchAllParties(),
     fetchLegends(),
   ]);
-  const { teamProfile, games, milestones, contactInfo } = about;
+  const { teamProfile, games, milestones, contactInfo, stats } = about;
 
   return (
     <main id="main">
@@ -27,7 +27,7 @@ export default async function HomePage() {
       <BrandMarquee name={teamProfile.name} />
       <Statement
         profile={teamProfile}
-        stats={{ parties: parties.length, games: games.length, milestones: milestones.length }}
+        stats={{ members: stats.members, parties: parties.length, games: games.length }}
       />
       <Games games={games} index={2} />
       <Legends legends={legends} />

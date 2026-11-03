@@ -25,6 +25,7 @@ const base: AboutContent = {
   highlights: [{ id: "h1", icon: "users", title: "社群互動", content: "與志同道合的玩家交流" }],
   roadmap: [],
   socialLinks: [],
+  stats: { members: 0 },
   games: [
     {
       id: "g1",

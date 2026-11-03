@@ -10,8 +10,8 @@ import type { TeamProfile } from "@/types/about";
 
 type StatementProps = {
   profile: TeamProfile;
-  /** Figures derived from real data only (spec: founded year, parties, games, milestones). */
-  stats: { parties: number; games: number; milestones: number };
+  /** Figures derived from real data only (spec: founded year, members, parties, games). */
+  stats: { members: number; parties: number; games: number };
 };
 
 /** 2 · Statement: what do we believe? Manifesto, mission, data-derived figures and a link to /about. */
@@ -53,9 +53,9 @@ export function Statement({ profile, stats }: StatementProps) {
             label="Est."
             value={profile.foundedYear ?? <Placeholder name="brand.founded-year" label="成立年份" inline />}
           />
+          <StatFigure label="Members" value={formatCount(stats.members)} />
           <StatFigure label="Parties" value={formatCount(stats.parties)} />
           <StatFigure label="Games" value={formatCount(stats.games)} />
-          <StatFigure label="Milestones" value={formatCount(stats.milestones)} />
         </dl>
       </EditorialGrid>
     </Section>
