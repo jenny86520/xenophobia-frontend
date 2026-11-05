@@ -1,7 +1,17 @@
 /** Scrim match types, as the backend's /api/matches routes return them. */
 
 export type MatchStatus =
-  "lobby" | "roster_locked" | "team_draft" | "teams_confirmed" | "veto_active" | "veto_complete" | "cancelled";
+  | "lobby"
+  | "roster_locked"
+  | "team_draft"
+  | "teams_confirmed"
+  | "veto_active"
+  | "veto_complete"
+  | "server_starting"
+  | "server_ready"
+  | "in_game"
+  | "completed"
+  | "cancelled";
 
 export type VetoRule = "random" | "stronger_first" | "weaker_first";
 
@@ -35,6 +45,62 @@ export type MatchVeto = {
   overdue: boolean;
   finalMap: { key: string; name: string; imageUrl: string | null } | null;
 };
+
+/** The match on its game server, for everyone (no address or password). */
+export type MatchServer = {
+  serverName: string | null;
+  scoreA: number | null;
+  scoreB: number | null;
+  /** Set once completed; null then is a draw. */
+  winner: "A" | "B" | null;
+  /** server: MatchZy's result; manual: typed in by a manager (no full stats). */
+  resultSource: "server" | "manual" | null;
+  liveAt: string | null;
+  completedAt: string | null;
+};
+
+/** How to join the server: only for the match's players and its managers. */
+export type MatchConnect = { address: string; password: string; url: string };
+
+/** One player's stats from the server; ADR and headshot % come worked out from the backend. */
+export type MatchPlayerStats = {
+  playerId: string;
+  name: string;
+  team: "A" | "B";
+  kills: number;
+  deaths: number;
+  assists: number;
+  damage: number;
+  roundsPlayed: number;
+  adr: number;
+  headshotPercent: number;
+  headshotKills: number;
+  multiKills: { 2: number; 3: number; 4: number; 5: number };
+  clutches: number;
+  firstKills: number;
+  firstDeaths: number;
+  tradeKills: number;
+  mvp: number;
+};
+
+/** The last start on a server, for managers. */
+export type MatchServerSession = {
+  status: "starting" | "loaded" | "live" | "finished" | "aborted" | "failed";
+  serverId: string;
+  serverName: string | null;
+  startedBy: string;
+  createdAt: string;
+  deadlineAt: string;
+  scriptRunAt: string | null;
+  rconSentAt: string | null;
+  configFetchedAt: string | null;
+  liveAt: string | null;
+  endedAt: string | null;
+  error: string | null;
+};
+
+/** A scrim server the start form offers. */
+export type ScrimServerOption = { id: string; name: string; inUse: boolean };
 
 export type MatchSummary = {
   id: string;
@@ -83,6 +149,8 @@ export type MatchDetail = MatchSummary & {
   confirmedAt: string | null;
   cancelledAt: string | null;
   veto: MatchVeto | null;
+  /** From the start on a server on: its name and the live or final score. */
+  server: MatchServer | null;
 };
 
 export type ViewerMatch = MatchDetail & {
@@ -94,7 +162,10 @@ export type ViewerMatch = MatchDetail & {
     canManage: boolean;
     /** The viewer is the captain of the team whose turn it is to ban. */
     canBan: boolean;
+    /** How to join, for this match's players and its creator while it waits or runs. */
+    connect: MatchConnect | null;
   };
+  stats: MatchPlayerStats[];
 };
 
 export type CandidateSide = {
@@ -111,6 +182,9 @@ export type ManagedMatch = MatchDetail & {
   createdBy: string;
   createdByMemberId: string | null;
   candidates: TeamCandidate[] | null;
+  stats: MatchPlayerStats[];
+  connect: MatchConnect | null;
+  serverSession: MatchServerSession | null;
 };
 
 /** The member page's 內戰場次 tab: GET /api/member/matches. */

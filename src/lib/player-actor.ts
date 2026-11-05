@@ -1,7 +1,7 @@
 import { memberFetch, memberToken } from "@/lib/member-session";
 import { playerToken } from "@/lib/player-session";
 import type { MatchFriends } from "@/types/friends";
-import type { ManagedMatch, ViewerMatch } from "@/types/match";
+import type { ManagedMatch, ScrimServerOption, ViewerMatch } from "@/types/match";
 
 /**
  * Who takes part in a match from this browser: the signed-in member first (their linked Steam
@@ -45,6 +45,17 @@ export async function fetchManagedMatch(id: string): Promise<ManagedMatch | null
   if ([401, 403, 404].includes(response.status)) return null;
   if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
   return (await response.json()) as ManagedMatch;
+}
+
+/** The scrim servers the creating member may start the match on, or null when they may not manage it. */
+export async function fetchMatchServers(id: string): Promise<ScrimServerOption[] | null> {
+  const token = await memberToken();
+  if (!token) return null;
+  const path = `/api/matches/${encodeURIComponent(id)}/manage/servers`;
+  const response = await memberFetch(path, {}, token);
+  if ([401, 403, 404].includes(response.status)) return null;
+  if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
+  return (await response.json()) as ScrimServerOption[];
 }
 
 /**

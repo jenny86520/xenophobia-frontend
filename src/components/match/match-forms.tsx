@@ -4,6 +4,9 @@ import { useActionState, useState } from "react";
 import {
   cancelMatchAction,
   captainBanAction,
+  matchResultAction,
+  serverAbortAction,
+  serverStartAction,
   managerBanAction,
   vetoResetAction,
   vetoStartAction,
@@ -23,7 +26,7 @@ import {
 } from "@/app/matches/actions";
 import { CheckboxField, FormField, FormMessage, SelectField, SubmitButton } from "@/components/member/form-controls";
 import { cn } from "@/lib/utils";
-import type { MatchActionState } from "@/types/match";
+import type { MatchActionState, ScrimServerOption } from "@/types/match";
 
 /**
  * Match forms: each is a <form action> bound to a Server Action with useActionState, so all of
@@ -520,5 +523,91 @@ export function VetoResetForm({ matchId }: { matchId: string }) {
       label="重設 Ban 圖"
       confirmText="確認重設，清除所有 Ban 與先手，回到隊伍已確認"
     />
+  );
+}
+
+// ---- The game server ----
+
+/** The start form: scrim servers that are free (one in use by another match is named, not offered). */
+export function ServerStartForm({ matchId, servers }: { matchId: string; servers: ScrimServerOption[] }) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(serverStartAction.bind(null, matchId), {});
+  const free = servers.filter((server) => !server.inUse);
+  const busy = servers.filter((server) => server.inUse);
+  if (servers.length === 0) {
+    return <p className="text-body text-ink-secondary">還沒有內戰用的伺服器，請管理員在後台伺服器設定中開啟「用於內戰」。</p>;
+  }
+  return (
+    <form action={action} className="flex max-w-sm flex-col gap-4">
+      <SelectField
+        id="server-start"
+        name="serverId"
+        label="伺服器"
+        required
+        placeholder="請選擇伺服器"
+        options={free.map((server) => ({ value: server.id, label: server.name }))}
+        defaultValue={free.length === 1 ? free[0].id : undefined}
+        error={state.fields?.serverId}
+      />
+      {busy.length > 0 && (
+        <p className="text-caption text-ink-muted">{`使用中，暫時不能選：${busy.map((s) => s.name).join("、")}`}</p>
+      )}
+      <SubmitButton pending={pending} className="self-start">
+        開打
+      </SubmitButton>
+      <FormMessage state={state} />
+    </form>
+  );
+}
+
+export function ServerAbortForm({ matchId }: { matchId: string }) {
+  return (
+    <ConfirmedActionForm
+      id="server-abort"
+      action={serverAbortAction.bind(null, matchId)}
+      label="中止比賽"
+      confirmText="確認中止，伺服器上的比賽會結束，比分與數據清除，之後可以重新開打"
+    />
+  );
+}
+
+/** Manual scores, when the server cannot report them (or to correct a result). */
+export function MatchResultForm({ matchId, completed }: { matchId: string; completed: boolean }) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(matchResultAction.bind(null, matchId), {});
+  return (
+    <form action={action} className="flex max-w-sm flex-col gap-4">
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          id="result-score-a"
+          name="scoreA"
+          label="A 隊"
+          type="number"
+          min={0}
+          max={99}
+          required
+          defaultValue={state.values?.scoreA}
+          error={state.fields?.scoreA}
+        />
+        <FormField
+          id="result-score-b"
+          name="scoreB"
+          label="B 隊"
+          type="number"
+          min={0}
+          max={99}
+          required
+          defaultValue={state.values?.scoreB}
+          error={state.fields?.scoreB}
+        />
+      </div>
+      <CheckboxField id="result-confirm" name="confirm" required error={state.fields?.confirm}>
+        {completed
+          ? "確認以這個比分更正結果（標示為手動輸入）"
+          : "確認以這個比分結束比賽（標示為手動輸入，伺服器上進行中的比賽會一併中止）"}
+      </CheckboxField>
+      <button type="submit" disabled={pending} className={cn(secondaryButton, "self-start")}>
+        {pending ? "處理中…" : "儲存比分"}
+      </button>
+      <FormMessage state={state} />
+    </form>
   );
 }

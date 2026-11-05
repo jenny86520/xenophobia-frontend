@@ -6,7 +6,9 @@ export type FormFieldProps = {
   id: string;
   name: string;
   label: string;
-  type?: "text" | "email" | "tel" | "password" | "url" | "date";
+  type?: "text" | "email" | "tel" | "password" | "url" | "date" | "number";
+  min?: number;
+  max?: number;
   autoComplete?: string;
   required?: boolean;
   defaultValue?: string;

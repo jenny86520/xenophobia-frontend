@@ -3,20 +3,21 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export const VETO_REFRESH_MS = 3000;
+export const MATCH_REFRESH_MS = 3000;
 
 /**
- * While the veto is on, re-renders the page from the server every few seconds (only while the tab
- * is visible), so both captains see the other's ban without reloading. Renders nothing; without
- * JavaScript a reload does the same.
+ * While something moves on its own (the veto, the server getting ready, a match in game), re-renders
+ * the page from the server every few seconds (only while the tab is visible), so everyone sees the
+ * other captain's ban or the live score without reloading. Renders nothing; without JavaScript a
+ * reload does the same.
  */
-export function VetoAutoRefresh({ active }: { active: boolean }) {
+export function MatchAutoRefresh({ active }: { active: boolean }) {
   const router = useRouter();
   useEffect(() => {
     if (!active) return;
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") router.refresh();
-    }, VETO_REFRESH_MS);
+    }, MATCH_REFRESH_MS);
     return () => window.clearInterval(timer);
   }, [active, router]);
   return null;

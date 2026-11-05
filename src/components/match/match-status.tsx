@@ -1,4 +1,16 @@
-import { Ban, CircleSlash, Lock, MapPinned, ShieldCheck, Shuffle, UserPlus } from "lucide-react";
+import {
+  Ban,
+  CircleCheck,
+  CircleSlash,
+  Crosshair,
+  Hourglass,
+  Lock,
+  MapPinned,
+  Server,
+  ShieldCheck,
+  Shuffle,
+  UserPlus,
+} from "lucide-react";
 import type { MatchStatus } from "@/types/match";
 
 export const MATCH_STATUS_TEXT: Record<MatchStatus, string> = {
@@ -8,6 +20,10 @@ export const MATCH_STATUS_TEXT: Record<MatchStatus, string> = {
   teams_confirmed: "隊伍已確認",
   veto_active: "Ban 圖中",
   veto_complete: "地圖已決定",
+  server_starting: "伺服器準備中",
+  server_ready: "等待開打",
+  in_game: "比賽中",
+  completed: "已完成",
   cancelled: "已取消",
 };
 
@@ -18,6 +34,10 @@ const ICON = {
   teams_confirmed: ShieldCheck,
   veto_active: Ban,
   veto_complete: MapPinned,
+  server_starting: Server,
+  server_ready: Hourglass,
+  in_game: Crosshair,
+  completed: CircleCheck,
   cancelled: CircleSlash,
 } as const;
 

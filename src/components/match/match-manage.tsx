@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Spotlight } from "@/components/brand/spotlight";
 import { Heading } from "@/components/brand/typography";
 import { cn } from "@/lib/utils";
-import type { ManagedMatch, TeamCandidate } from "@/types/match";
+import type { ManagedMatch, MatchServerSession, ScrimServerOption, TeamCandidate } from "@/types/match";
 import {
   CancelMatchForm,
   GenerateTeamsButton,
@@ -14,6 +14,9 @@ import {
   type TeamPlayer,
   UnlockForm,
   ManagerBanForm,
+  MatchResultForm,
+  ServerAbortForm,
+  ServerStartForm,
   VetoResetForm,
   VetoStartForm,
   VetoUndoForm,
@@ -90,11 +93,54 @@ function CandidateCard({
   );
 }
 
+/** "18:42" in Taiwan time. */
+function clock(iso: string): string {
+  return new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(iso));
+}
+
+/** Where the last start got to, in words, so a manager can tell a slow server from a stuck one. */
+function SessionSteps({ session }: { session: MatchServerSession }) {
+  const steps = [
+    { at: session.createdAt, text: `${session.startedBy} 開打（${session.serverName ?? "伺服器"}）` },
+    { at: session.scriptRunAt, text: "伺服器沒有回應，已執行啟動腳本" },
+    { at: session.rconSentAt, text: "已送出載入比賽的指令" },
+    { at: session.configFetchedAt, text: "伺服器已拿到比賽設定" },
+    { at: session.liveAt, text: "正式開打" },
+  ].filter((step): step is { at: string; text: string } => step.at !== null);
+  return (
+    <ol className="border-t border-line">
+      {steps.map((step) => (
+        <li key={step.text} className="flex gap-4 border-b border-line py-2 text-body text-ink">
+          <span className="font-mono text-label text-ink-secondary tabular-nums">{clock(step.at)}</span>
+          {step.text}
+        </li>
+      ))}
+      {session.status === "starting" && (
+        <li className="py-2 text-caption text-ink-muted">{`期限 ${clock(session.deadlineAt)}（台灣時間），超過就會回到地圖已決定。`}</li>
+      )}
+    </ol>
+  );
+}
+
 /**
  * The creating member's management area on the match page. Which tools show depends on the
  * status; the backend still checks every step. Destructive steps need a ticked box.
  */
-export function MatchManage({ match, candidate }: { match: ManagedMatch; candidate: string | string[] | undefined }) {
+export function MatchManage({
+  match,
+  candidate,
+  servers,
+}: {
+  match: ManagedMatch;
+  candidate: string | string[] | undefined;
+  /** The scrim servers to start on, fetched while the map is decided. */
+  servers?: ScrimServerOption[] | null;
+}) {
   const players = match.entries.flatMap((entry) => entry.players);
   const options = players.map((player) => ({ value: player.playerId, label: player.name }));
   const groups = match.entries.filter((entry) => entry.isGroup);
@@ -102,11 +148,14 @@ export function MatchManage({ match, candidate }: { match: ManagedMatch; candida
   const removable = match.status === "lobby" && options.length > 0;
   const vetoing = match.status === "veto_active" || match.status === "veto_complete";
   const unconfirmable = match.status === "teams_confirmed";
+  const onServer = ["server_starting", "server_ready", "in_game"].includes(match.status);
+  const scoreable = match.status === "veto_complete" || onServer || match.status === "completed";
+  const session = match.serverSession;
   const veto = match.veto;
   const banOptions = (veto?.maps ?? [])
     .filter((map) => !map.bannedBy)
     .map((map) => ({ value: map.key, label: map.name }));
-  const leftColumn = removable || unlockable || vetoing || unconfirmable;
+  const leftColumn = removable || unlockable || vetoing || unconfirmable || onServer;
 
   return (
     <div className="flex flex-col gap-10">
@@ -157,10 +206,38 @@ export function MatchManage({ match, candidate }: { match: ManagedMatch; candida
         </div>
       )}
 
+      {match.status === "veto_complete" && (
+        <div className="flex flex-col gap-4">
+          <Heading level={3}>開打</Heading>
+          <p className="text-body text-ink-secondary">
+            選一台伺服器，網站會在它沒開時自動啟動、載入兩隊名單與這張地圖；玩家在這頁按「進入遊戲」就會分到自己的隊伍。
+          </p>
+          {session?.status === "failed" && session.error && (
+            <p role="alert" className="text-body text-destructive">{`上一次開打失敗：${session.error}`}</p>
+          )}
+          <ServerStartForm matchId={match.id} servers={servers ?? []} />
+        </div>
+      )}
+
+      {onServer && session && (
+        <div className="flex flex-col gap-3">
+          <Heading level={3}>伺服器進度</Heading>
+          <SessionSteps session={session} />
+        </div>
+      )}
+
+      {scoreable && (
+        <div className="flex flex-col gap-3">
+          <Heading level={3}>{match.status === "completed" ? "更正比分" : "手動輸入比分"}</Heading>
+          <p className="text-body text-ink-secondary">伺服器沒辦法回傳結果時使用；手動輸入的場次沒有玩家數據。</p>
+          <MatchResultForm matchId={match.id} completed={match.status === "completed"} />
+        </div>
+      )}
+
       {/* The steps that undo something, side by side below a rule: removing a player (while signing
           up is open), unlocking (once locked), taking confirmed teams back, or undo and reset (during the
           veto) on the left, cancelling on the right. */}
-      {match.status !== "cancelled" && (
+      {match.status !== "cancelled" && match.status !== "completed" && (
         <div className="grid grid-cols-1 gap-8 border-t border-line pt-6 md:grid-cols-2">
           {removable && (
             <div className="flex flex-col gap-3">
@@ -178,6 +255,12 @@ export function MatchManage({ match, candidate }: { match: ManagedMatch; candida
             <div className="flex flex-col gap-3">
               <Heading level={3}>退回分隊</Heading>
               <UnconfirmTeamsForm matchId={match.id} />
+            </div>
+          )}
+          {onServer && (
+            <div className="flex flex-col gap-3">
+              <Heading level={3}>中止比賽</Heading>
+              <ServerAbortForm matchId={match.id} />
             </div>
           )}
           {vetoing && (

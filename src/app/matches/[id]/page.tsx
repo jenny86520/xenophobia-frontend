@@ -10,10 +10,11 @@ import { JoinGroupForm, LeaveButton, SignUpButtons } from "@/components/match/ma
 import { MatchInviteFriends } from "@/components/match/match-invite-friends";
 import { MatchManage } from "@/components/match/match-manage";
 import { MatchRoster } from "@/components/match/match-roster";
+import { MatchServerPanel } from "@/components/match/match-server-panel";
 import { MatchStatusLabel } from "@/components/match/match-status";
 import { VetoPanel } from "@/components/match/veto-panel";
 import { SteamLoginLink } from "@/components/player/steam-login-link";
-import { fetchManagedMatch, fetchMatchFriends, fetchViewerMatch } from "@/lib/player-actor";
+import { fetchManagedMatch, fetchMatchFriends, fetchMatchServers, fetchViewerMatch } from "@/lib/player-actor";
 import { fetchMatchDetail } from "@/lib/public-content-client";
 import type { ViewerMatch } from "@/types/match";
 
@@ -71,6 +72,8 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
   // Only signed-in members have friends, and invites only make sense while sign-up is open.
   const friends = viewerMatch && match.status === "lobby" ? await fetchMatchFriends(id) : null;
   const shown = managed ?? match;
+  // The start form lists the scrim servers only while there is something to start.
+  const servers = managed && match.status === "veto_complete" ? await fetchMatchServers(id) : null;
 
   return (
     <main id="main">
@@ -176,6 +179,26 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
         </Section>
       )}
 
+      {match.server && (
+        <Section spacing="tight" labelledBy="server-title" ruled>
+          <EditorialGrid className="gap-y-6">
+            <div className="col-span-4 md:col-span-8 lg:col-span-4">
+              <Heading level={2} id="server-title">
+                比賽
+              </Heading>
+            </div>
+            <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
+              <MatchServerPanel
+                status={match.status}
+                server={match.server}
+                connect={viewerMatch?.viewer.connect ?? managed?.connect ?? null}
+                stats={viewerMatch?.stats ?? managed?.stats ?? null}
+              />
+            </div>
+          </EditorialGrid>
+        </Section>
+      )}
+
       {managed && (
         <Section spacing="tight" labelledBy="manage-title" ruled>
           <EditorialGrid className="gap-y-6">
@@ -185,7 +208,7 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
               </Heading>
             </div>
             <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
-              <MatchManage match={managed} candidate={candidate} />
+              <MatchManage match={managed} candidate={candidate} servers={servers} />
             </div>
           </EditorialGrid>
         </Section>

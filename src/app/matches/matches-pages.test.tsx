@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import MatchesPage from "./page";
 import MatchPage from "./[id]/page";
 import NewMatchPage from "./new/page";
-import { fetchManagedMatch, fetchMatchFriends, fetchViewerMatch } from "@/lib/player-actor";
+import { fetchManagedMatch, fetchMatchFriends, fetchMatchServers, fetchViewerMatch } from "@/lib/player-actor";
 import { fetchMatchDetail, fetchMatches, fetchPartyList } from "@/lib/public-content-client";
 import { fetchMemberProfile } from "@/lib/member-session";
 import type { ManagedMatch, MatchDetail, MatchVeto, ViewerMatch } from "@/types/match";
@@ -18,6 +18,7 @@ jest.mock("@/lib/player-actor", () => ({
   fetchViewerMatch: jest.fn(),
   fetchManagedMatch: jest.fn(),
   fetchMatchFriends: jest.fn(),
+  fetchMatchServers: jest.fn(),
 }));
 jest.mock("@/lib/public-content-client", () => ({
   fetchMatches: jest.fn(),
@@ -47,6 +48,9 @@ jest.mock("@/app/matches/actions", () =>
       "vetoUndoAction",
       "vetoResetAction",
       "inviteFriendAction",
+      "serverStartAction",
+      "serverAbortAction",
+      "matchResultAction",
     ].map((name) => [name, jest.fn()]),
   ),
 );
@@ -80,6 +84,7 @@ const base: MatchDetail = {
   confirmedAt: null,
   cancelledAt: null,
   veto: null,
+  server: null,
 };
 
 const withRatings = (match: MatchDetail): MatchDetail => ({
@@ -92,7 +97,8 @@ const withRatings = (match: MatchDetail): MatchDetail => ({
 
 const viewer = (overrides: Partial<ViewerMatch["viewer"]> = {}, match: MatchDetail = base): ViewerMatch => ({
   ...withRatings(match),
-  viewer: { playerId: "z", entryId: null, inviteCode: null, canManage: false, canBan: false, ...overrides },
+  viewer: { playerId: "z", entryId: null, inviteCode: null, canManage: false, canBan: false, connect: null, ...overrides },
+  stats: [],
 });
 
 const renderMatch = async (search: Record<string, string> = {}) =>
@@ -278,6 +284,9 @@ describe("/matches/[id]", () => {
       entries: withRatings(base).entries.map((e) => ({ ...e, inviteCode: e.isGroup ? "K7P2QM" : null })),
       createdBy: "會員host1",
       createdByMemberId: "host1",
+      stats: [],
+      connect: null,
+      serverSession: null,
       candidates: null,
     };
     (fetchManagedMatch as jest.Mock).mockResolvedValue(managed);
@@ -305,6 +314,9 @@ describe("/matches/[id]", () => {
       status: "team_draft",
       createdBy: "admin",
       createdByMemberId: "host1",
+      stats: [],
+      connect: null,
+      serverSession: null,
       candidates: [
         { teamA: side(["a", "c"], 2000), teamB: side(["b"], 1900), difference: 100 },
         { teamA: side(["a", "b"], 2100), teamB: side(["c"], 1800), difference: 300 },
@@ -497,6 +509,9 @@ describe("/matches/[id] map veto", () => {
       ...withRatings(match),
       createdBy: "阿凱",
       createdByMemberId: "host1",
+      stats: [],
+      connect: null,
+      serverSession: null,
       candidates: null,
     });
     (fetchViewerMatch as jest.Mock).mockResolvedValue(
@@ -529,5 +544,154 @@ describe("/matches/[id] map veto", () => {
     expect(within(manage).getByRole("checkbox", { name: /確認重設/ })).toBeRequired();
     expect(within(manage).queryByRole("button", { name: "退回分隊" })).not.toBeInTheDocument();
     expect(within(manage).getByRole("heading", { name: "取消場次" })).toBeInTheDocument();
+  });
+});
+
+describe("/matches/[id] on the game server", () => {
+  const decided: MatchDetail = { ...base, status: "veto_complete" };
+  const managedOf = (match: MatchDetail, extra: Partial<ManagedMatch> = {}): ManagedMatch => ({
+    ...withRatings(match),
+    createdBy: "阿凱",
+    createdByMemberId: "host1",
+    candidates: null,
+    stats: [],
+    connect: null,
+    serverSession: null,
+    ...extra,
+  });
+
+  it("offers the free scrim servers and shows why the last start failed", async () => {
+    (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer({ canManage: true }, decided));
+    (fetchManagedMatch as jest.Mock).mockResolvedValue(
+      managedOf(decided, {
+        serverSession: {
+          status: "failed",
+          serverId: "srv1",
+          serverName: "CS2 #1",
+          startedBy: "阿凱",
+          createdAt: "2026-11-05T12:00:00.000Z",
+          deadlineAt: "2026-11-05T12:10:00.000Z",
+          scriptRunAt: null,
+          rconSentAt: null,
+          configFetchedAt: null,
+          liveAt: null,
+          endedAt: "2026-11-05T12:10:03.000Z",
+          error: "伺服器沒有在期限內上線",
+        },
+      }),
+    );
+    (fetchMatchServers as jest.Mock).mockResolvedValue([
+      { id: "srv1", name: "CS2 #1", inUse: false },
+      { id: "srv2", name: "CS2 #2", inUse: true },
+    ]);
+    await renderMatch();
+    const manage = screen.getByRole("region", { name: "管理" });
+    const select = within(manage).getByRole("combobox", { name: "伺服器" });
+    expect(within(select).getByRole("option", { name: "CS2 #1" })).toBeInTheDocument();
+    expect(within(select).queryByRole("option", { name: "CS2 #2" })).not.toBeInTheDocument();
+    expect(within(manage).getByText("使用中，暫時不能選：CS2 #2")).toBeInTheDocument();
+    expect(within(manage).getByRole("alert")).toHaveTextContent("上一次開打失敗：伺服器沒有在期限內上線");
+    expect(within(manage).getByRole("button", { name: "開打" })).toBeInTheDocument();
+    expect(within(manage).getByRole("checkbox", { name: /確認以這個比分結束比賽/ })).toBeRequired();
+  });
+
+  it("shows the score to visitors without the way in or the stats", async () => {
+    (fetchMatchDetail as jest.Mock).mockResolvedValue({
+      ...base,
+      status: "in_game",
+      server: {
+        serverName: "CS2 #1",
+        scoreA: 7,
+        scoreB: 5,
+        winner: null,
+        resultSource: null,
+        liveAt: "2026-11-05T12:05:00.000Z",
+        completedAt: null,
+      },
+    });
+    await renderMatch();
+    const panel = screen.getByRole("region", { name: "比賽" });
+    expect(panel).toHaveTextContent("比賽進行中。");
+    expect(within(panel).getByLabelText("A 隊 7 比 B 隊 5")).toBeInTheDocument();
+    expect(within(panel).queryByRole("link", { name: "進入遊戲" })).not.toBeInTheDocument();
+    expect(within(panel).getByText("登入後可看到每位玩家的數據")).toBeInTheDocument();
+  });
+
+  it("gives a player of the match the way in", async () => {
+    const waiting: MatchDetail = {
+      ...base,
+      status: "server_ready",
+      server: {
+        serverName: "CS2 #1",
+        scoreA: null,
+        scoreB: null,
+        winner: null,
+        resultSource: null,
+        liveAt: null,
+        completedAt: null,
+      },
+    };
+    (fetchViewerMatch as jest.Mock).mockResolvedValue(
+      viewer(
+        {
+          entryId: "e1",
+          connect: { address: "cs.example.com:27015", password: "pw123", url: "steam://connect/cs.example.com:27015/pw123" },
+        },
+        waiting,
+      ),
+    );
+    await renderMatch();
+    const panel = screen.getByRole("region", { name: "比賽" });
+    expect(within(panel).getByRole("link", { name: "進入遊戲" })).toHaveAttribute(
+      "href",
+      "steam://connect/cs.example.com:27015/pw123",
+    );
+    expect(panel).toHaveTextContent("connect cs.example.com:27015; password pw123");
+  });
+
+  it("shows the result and each team's stats once completed", async () => {
+    const done: MatchDetail = {
+      ...base,
+      status: "completed",
+      server: {
+        serverName: "CS2 #1",
+        scoreA: 13,
+        scoreB: 13,
+        winner: null,
+        resultSource: "server",
+        liveAt: "2026-11-05T12:05:00.000Z",
+        completedAt: "2026-11-05T12:50:00.000Z",
+      },
+    };
+    const stat = (playerId: string, name: string, team: "A" | "B", kills: number) => ({
+      playerId,
+      name,
+      team,
+      kills,
+      deaths: 10,
+      assists: 2,
+      damage: 2000,
+      roundsPlayed: 26,
+      adr: 76.9,
+      headshotPercent: 40,
+      headshotKills: 6,
+      multiKills: { 2: 1, 3: 0, 4: 0, 5: 0 },
+      clutches: 0,
+      firstKills: 0,
+      firstDeaths: 0,
+      tradeKills: 0,
+      mvp: 1,
+    });
+    (fetchViewerMatch as jest.Mock).mockResolvedValue({
+      ...viewer({}, done),
+      stats: [stat("a", "阿強", "A", 15), stat("c", "訪客C", "B", 12)],
+    });
+    await renderMatch();
+    const panel = screen.getByRole("region", { name: "比賽" });
+    expect(panel).toHaveTextContent("平手");
+    const teamA = within(panel).getByRole("table", { name: "A 隊" });
+    expect(within(teamA).getByRole("rowheader", { name: "阿強" })).toBeInTheDocument();
+    expect(within(teamA).getByText("76.9")).toBeInTheDocument();
+    expect(within(panel).getByRole("table", { name: "B 隊" })).toHaveTextContent("訪客C");
   });
 });

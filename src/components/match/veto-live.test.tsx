@@ -1,5 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
-import { StepCountdown, VETO_REFRESH_MS, VetoAutoRefresh } from "./veto-live";
+import { StepCountdown, MATCH_REFRESH_MS, MatchAutoRefresh } from "./veto-live";
 
 const refresh = jest.fn();
 jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
@@ -17,26 +17,26 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-describe("VetoAutoRefresh", () => {
-  it("refreshes the page every few seconds while the veto is on and the tab is visible", () => {
-    render(<VetoAutoRefresh active />);
-    act(() => jest.advanceTimersByTime(VETO_REFRESH_MS * 2));
+describe("MatchAutoRefresh", () => {
+  it("refreshes the page every few seconds while active and the tab is visible", () => {
+    render(<MatchAutoRefresh active />);
+    act(() => jest.advanceTimersByTime(MATCH_REFRESH_MS * 2));
     expect(refresh).toHaveBeenCalledTimes(2);
 
     setVisibility("hidden");
-    act(() => jest.advanceTimersByTime(VETO_REFRESH_MS * 3));
+    act(() => jest.advanceTimersByTime(MATCH_REFRESH_MS * 3));
     expect(refresh).toHaveBeenCalledTimes(2);
   });
 
-  it("does nothing when the veto is not on, and stops once it ends", () => {
-    const { rerender } = render(<VetoAutoRefresh active={false} />);
-    act(() => jest.advanceTimersByTime(VETO_REFRESH_MS * 2));
+  it("does nothing while inactive, and stops once it ends", () => {
+    const { rerender } = render(<MatchAutoRefresh active={false} />);
+    act(() => jest.advanceTimersByTime(MATCH_REFRESH_MS * 2));
     expect(refresh).not.toHaveBeenCalled();
 
-    rerender(<VetoAutoRefresh active />);
-    act(() => jest.advanceTimersByTime(VETO_REFRESH_MS));
-    rerender(<VetoAutoRefresh active={false} />);
-    act(() => jest.advanceTimersByTime(VETO_REFRESH_MS * 3));
+    rerender(<MatchAutoRefresh active />);
+    act(() => jest.advanceTimersByTime(MATCH_REFRESH_MS));
+    rerender(<MatchAutoRefresh active={false} />);
+    act(() => jest.advanceTimersByTime(MATCH_REFRESH_MS * 3));
     expect(refresh).toHaveBeenCalledTimes(1);
   });
 });

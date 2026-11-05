@@ -23,6 +23,9 @@ import {
   vetoResetAction,
   vetoStartAction,
   vetoUndoAction,
+  matchResultAction,
+  serverAbortAction,
+  serverStartAction,
   confirmTeamsAction,
   createMatchAction,
   importPartyAction,
@@ -263,5 +266,40 @@ describe("inviting a friend", () => {
     respond(401);
     await expect(inviteFriendAction("m1", "f1", "signup")).rejects.toThrow("REDIRECT /member/login");
     expect(cookieStore.delete).toHaveBeenCalledWith("xpa_member");
+  });
+});
+
+describe("the game server", () => {
+  beforeEach(() => {
+    cookies.xpa_member = "member-jwt";
+  });
+
+  it("starts on the chosen server, and asks for one when none is chosen", async () => {
+    respond(200);
+    await expect(serverStartAction("m1", {}, form({}))).resolves.toMatchObject({ fields: { serverId: "請選擇伺服器" } });
+    expect(global.fetch).not.toHaveBeenCalled();
+    await expect(serverStartAction("m1", {}, form({ serverId: "srv1" }))).resolves.toMatchObject({ ok: true });
+    expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/manage/server/start");
+    expect(sentBody()).toEqual({ serverId: "srv1" });
+  });
+
+  it("needs the box ticked to abort or to type in a score, then sends the scores", async () => {
+    respond(200);
+    expect((await serverAbortAction("m1", {}, form({}))).fields).toHaveProperty("confirm");
+    const refused = await matchResultAction("m1", {}, form({ scoreA: "16", scoreB: "14" }));
+    expect(refused.fields).toHaveProperty("confirm");
+    expect(refused.values).toMatchObject({ scoreA: "16", scoreB: "14" });
+    expect(global.fetch).not.toHaveBeenCalled();
+
+    await matchResultAction("m1", {}, form({ scoreA: "16", scoreB: "14", confirm: "on" }));
+    expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/manage/result");
+    expect(sentBody()).toEqual({ scoreA: 16, scoreB: 14 });
+  });
+
+  it("keeps the scores and shows the field error from the backend", async () => {
+    respond(400, { message: ["比分需為 0 到 99 的整數"], fields: { scoreB: "比分需為 0 到 99 的整數" } });
+    const result = await matchResultAction("m1", {}, form({ scoreA: "1", scoreB: "120", confirm: "on" }));
+    expect(result).toMatchObject({ ok: false, fields: { scoreB: "比分需為 0 到 99 的整數" } });
+    expect(result.values?.scoreB).toBe("120");
   });
 });

@@ -5,7 +5,7 @@ import type { FirstBanReason, MatchStatus, MatchVeto, VetoRule } from "@/types/m
 import { mediaUrl } from "@/utils/media";
 import { Spotlight } from "@/components/brand/spotlight";
 import { CaptainBanButton } from "./match-forms";
-import { StepCountdown, VetoAutoRefresh } from "./veto-live";
+import { StepCountdown, MatchAutoRefresh } from "./veto-live";
 
 export const VETO_RULE_TEXT: Record<VetoRule, string> = {
   random: "隨機",
@@ -41,7 +41,7 @@ export function VetoPanel({
   const active = status === "veto_active";
   return (
     <div className="flex flex-col gap-8">
-      <VetoAutoRefresh active={active} />
+      <MatchAutoRefresh active={active} />
       <p className="text-body text-ink-secondary">
         先手：<span className="text-ink">{veto.firstTeam} 隊</span>（{FIRST_BAN_REASON_TEXT[veto.firstReason]}，規則為
         {VETO_RULE_TEXT[veto.rule]}）

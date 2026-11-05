@@ -239,6 +239,44 @@ export async function vetoResetAction(matchId: string, _: MatchActionState, form
   return asManager(matchId, "/veto/reset", { method: "POST" }, () => "Ban 圖已重設。");
 }
 
+// ---- The game server ----
+
+export async function serverStartAction(
+  matchId: string,
+  _: MatchActionState,
+  form: FormData,
+): Promise<MatchActionState> {
+  const serverId = String(form.get("serverId") ?? "");
+  if (!serverId) return { ok: false, message: "請選擇伺服器", fields: { serverId: "請選擇伺服器" } };
+  return asManager(
+    matchId,
+    "/server/start",
+    { method: "POST", body: JSON.stringify({ serverId }) },
+    () => "已開打，正在準備伺服器。",
+  );
+}
+
+export async function serverAbortAction(matchId: string, _: MatchActionState, form: FormData): Promise<MatchActionState> {
+  if (!confirmed(form)) return NOT_CONFIRMED;
+  return asManager(matchId, "/server/abort", { method: "POST" }, () => "已中止，可以重新開打。");
+}
+
+/** Scores typed in by the manager; the backend checks the range. */
+export async function matchResultAction(matchId: string, _: MatchActionState, form: FormData): Promise<MatchActionState> {
+  if (!confirmed(form)) return keepValues(NOT_CONFIRMED, form);
+  const score = (name: string) => {
+    const text = String(form.get(name) ?? "").trim();
+    return text === "" ? null : Number(text);
+  };
+  const result = await asManager(
+    matchId,
+    "/result",
+    { method: "POST", body: JSON.stringify({ scoreA: score("scoreA"), scoreB: score("scoreB") }) },
+    () => "比分已儲存。",
+  );
+  return keepValues(result, form);
+}
+
 /** Each roster player posts `team-<playerId>` = A or B; the backend checks sizes, captains and groups. */
 export async function confirmTeamsAction(
   matchId: string,
