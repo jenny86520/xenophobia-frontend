@@ -19,8 +19,10 @@ import {
   joinGroupAction,
   leaveAction,
   lockAction,
+  managerTeamNameAction,
   removePlayerAction,
   signUpAction,
+  teamNameAction,
   unconfirmTeamsAction,
   unlockAction,
 } from "@/app/matches/actions";
@@ -355,6 +357,21 @@ export function TeamConfirmForm({
       </fieldset>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {(["A", "B"] as const).map((side) => (
+          <FormField
+            key={side}
+            id={`team-name-${side.toLowerCase()}`}
+            name={`team${side}Name`}
+            label={`${side} 隊隊名`}
+            maxLength={20}
+            autoComplete="off"
+            defaultValue={chosen?.[`team${side}Name`]}
+            hint={`沒填就顯示「${side} 隊」；最多 20 個字，不能有雙引號或分號。`}
+            error={state.fields?.[`team${side}Name`]}
+          />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {(["A", "B"] as const).map((side) => (
           <SelectField
             key={side}
             id={`captain-${side.toLowerCase()}`}
@@ -380,6 +397,46 @@ export function TeamConfirmForm({
       <SubmitButton pending={pending} className="self-start">
         確認分隊
       </SubmitButton>
+      <FormMessage state={state} />
+    </form>
+  );
+}
+
+/**
+ * Renames a team from its column in the match room: the captain their own (`side` alone), a manager
+ * either (`asManager`). Empty goes back to A 隊 / B 隊. Typed text survives the room's refresh.
+ */
+export function TeamNameForm({
+  matchId,
+  side,
+  current,
+  asManager,
+}: {
+  matchId: string;
+  side: "A" | "B";
+  /** The name typed so far (empty while it is the default). */
+  current: string;
+  asManager: boolean;
+}) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(
+    asManager ? managerTeamNameAction.bind(null, matchId, side) : teamNameAction.bind(null, matchId),
+    {},
+  );
+  return (
+    <form action={action} className="flex flex-col gap-3">
+      <FormField
+        id={`rename-team-${side.toLowerCase()}`}
+        name="name"
+        label={asManager ? `${side} 隊隊名` : "我們的隊名"}
+        maxLength={20}
+        autoComplete="off"
+        hint={`空白就是「${side} 隊」；最多 20 個字。`}
+        defaultValue={state.values?.name ?? current}
+        error={state.fields?.name}
+      />
+      <button type="submit" disabled={pending} className={cn(secondaryButton, "self-start px-4 py-2")}>
+        {pending ? "處理中…" : "改名"}
+      </button>
       <FormMessage state={state} />
     </form>
   );
@@ -430,7 +487,9 @@ export function VetoStartForm({ matchId }: { matchId: string }) {
   const rule = state.values?.rule ?? "random";
   return (
     <form action={action} className="flex flex-col gap-6">
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* Stacked: the room's middle column is narrow, so the rule's three choices take its whole
+          width and the seconds field stays short under them. */}
+      <div className="flex flex-col gap-6">
         <fieldset className="flex min-w-0 flex-col gap-2">
           <legend className="mb-2 text-body text-ink">先手規則</legend>
           <div className="grid grid-cols-3 overflow-hidden rounded-sm border border-line-strong">
@@ -458,15 +517,18 @@ export function VetoStartForm({ matchId }: { matchId: string }) {
           </div>
           <p className="text-caption text-ink-muted">依總分決定時以確認分隊時的評分比較；兩隊同分改為抽籤。</p>
         </fieldset>
-        <FormField
-          id="veto-step-seconds"
-          name="stepSeconds"
-          label="每步期限（秒）"
-          defaultValue={state.values?.stepSeconds ?? "30"}
-          hint="10 到 300 秒。時間到會自動隨機 Ban，管理者也可以隨時代為 Ban。"
-          error={state.fields?.stepSeconds}
-        />
+        <div className="max-w-56">
+          <FormField
+            id="veto-step-seconds"
+            name="stepSeconds"
+            label="每步期限（秒）"
+            defaultValue={state.values?.stepSeconds ?? "30"}
+            hint="10 到 300 秒"
+            error={state.fields?.stepSeconds}
+          />
+        </div>
       </div>
+      <p className="text-body text-ink-secondary">時間到會自動隨機 Ban，管理者也可以隨時代為 Ban。</p>
       <SubmitButton pending={pending} className="self-start">
         開始 Ban 圖
       </SubmitButton>

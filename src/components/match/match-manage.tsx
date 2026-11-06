@@ -29,39 +29,47 @@ export function candidateIndex(value: string | string[] | undefined, count: numb
 }
 
 /**
- * One candidate. The whole card is one link (its title stretched over the card) that selects it and
- * presets the team form below; the page stays at the candidates. Works without JavaScript.
+ * One candidate. For the manager the whole card is one link (its title stretched over the card)
+ * that selects it and presets the team form below; the page stays at the candidates. Works without
+ * JavaScript. Everyone else gets the same card to follow along, without the link.
  */
 function CandidateCard({
   candidate,
   index,
   selected,
   matchId,
+  selectable,
 }: {
   candidate: TeamCandidate;
   index: number;
   selected: boolean;
   matchId: string;
+  selectable: boolean;
 }) {
   return (
     <li
       data-spotlight
       className={cn(
         "relative flex flex-col gap-4 rounded-sm border p-4 transition-colors",
-        "has-[a:focus-visible]:ring-3 has-[a:focus-visible]:ring-ring/50",
-        selected ? "border-signal bg-surface-elevated" : "border-line hover:border-line-strong",
+        selectable && "has-[a:focus-visible]:ring-3 has-[a:focus-visible]:ring-ring/50",
+        selected ? "border-signal bg-surface-elevated" : "border-line",
+        selectable && !selected && "hover:border-line-strong",
       )}
     >
       <div className="flex items-baseline justify-between gap-4">
         <h4 className="font-heading text-h3 text-ink">
-          <Link
-            href={`/matches/${matchId}?candidate=${index + 1}#team-candidates`}
-            scroll={false}
-            aria-current={selected ? "true" : undefined}
-            className="after:absolute after:inset-0 focus-visible:outline-none"
-          >
-            {`方案 ${index + 1}`}
-          </Link>
+          {selectable ? (
+            <Link
+              href={`/matches/${matchId}?candidate=${index + 1}#team-candidates`}
+              scroll={false}
+              aria-current={selected ? "true" : undefined}
+              className="after:absolute after:inset-0 focus-visible:outline-none"
+            >
+              {`方案 ${index + 1}`}
+            </Link>
+          ) : (
+            `方案 ${index + 1}`
+          )}
         </h4>
         <span className="font-mono text-label text-ink tabular-nums">分差 {candidate.difference}</span>
       </div>
@@ -79,17 +87,51 @@ function CandidateCard({
                   className="flex items-baseline justify-between gap-4 border-b border-line py-2 text-body text-ink"
                 >
                   <span>{player.name}</span>
-                  <span className="font-mono text-label text-ink-secondary tabular-nums">{player.rating}</span>
+                  {player.rating !== undefined && (
+                    <span className="font-mono text-label text-ink-secondary tabular-nums">{player.rating}</span>
+                  )}
                 </li>
               ))}
             </ul>
           </div>
         );
       })}
-      <p className={cn("text-caption", selected ? "text-ink" : "text-ink-muted")}>
-        {selected ? "使用中：下方的分隊以這個方案預填" : "點選整格以這個方案預填"}
-      </p>
+      {selectable && (
+        <p className={cn("text-caption", selected ? "text-ink" : "text-ink-muted")}>
+          {selected ? "使用中：下方的分隊以這個方案預填" : "點選整格以這個方案預填"}
+        </p>
+      )}
     </li>
+  );
+}
+
+/** The candidates side by side; only the manager's cards select one. */
+export function CandidateList({
+  matchId,
+  candidates,
+  selected,
+  selectable,
+}: {
+  matchId: string;
+  candidates: TeamCandidate[];
+  selected: number | null;
+  selectable: boolean;
+}) {
+  return (
+    <Spotlight>
+      <ol className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {candidates.map((c, i) => (
+          <CandidateCard
+            key={i}
+            candidate={c}
+            index={i}
+            selected={i === selected}
+            matchId={matchId}
+            selectable={selectable}
+          />
+        ))}
+      </ol>
+    </Spotlight>
   );
 }
 
@@ -128,10 +170,12 @@ function SessionSteps({ session }: { session: MatchServerSession }) {
 }
 
 /**
- * The creating member's management area on the match page. Which tools show depends on the
- * status; the backend still checks every step. Destructive steps need a ticked box.
+ * The manager's main step for the current status, shown in the middle of the match room: lock (and
+ * import the party), generate the candidates, pick and confirm the teams, start the veto, ban for a
+ * team, start on a server (with the last failure), and the server's progress. Renders nothing when
+ * the status has no such step; the backend still checks every one.
  */
-export function MatchManage({
+export function StageActions({
   match,
   candidate,
   servers,
@@ -141,6 +185,81 @@ export function MatchManage({
   /** The scrim servers to start on, fetched while the map is decided. */
   servers?: ScrimServerOption[] | null;
 }) {
+  const session = match.serverSession;
+  const veto = match.veto;
+  const onServer = ON_SERVER.includes(match.status);
+  const banOptions = (veto?.maps ?? [])
+    .filter((map) => !map.bannedBy)
+    .map((map) => ({ value: map.key, label: map.name }));
+  const turnName = veto?.turn && match.teams ? match.teams[veto.turn].name : `${veto?.turn ?? ""} 隊`;
+
+  if (match.status === "lobby") {
+    return (
+      <div className="flex flex-col gap-4">
+        <p className="text-body text-ink-secondary">名單恰好 10 人時才能鎖定；鎖定後就不能再報名或退出。</p>
+        <div className="flex flex-wrap items-start gap-4">
+          <LockButton matchId={match.id} />
+          {match.party && <ImportPartyButton matchId={match.id} />}
+        </div>
+      </div>
+    );
+  }
+  if (match.status === "roster_locked") return <GenerateTeamsButton matchId={match.id} />;
+  if (match.status === "team_draft" && match.candidates && match.candidates.length > 0) {
+    return <TeamDraft match={match} candidates={match.candidates} candidate={candidate} />;
+  }
+  if (match.status === "teams_confirmed") {
+    return (
+      <div className="flex flex-col gap-4">
+        <Heading level={3}>開始 Ban 圖</Heading>
+        <VetoStartForm matchId={match.id} />
+      </div>
+    );
+  }
+  if (match.status === "veto_active" && veto?.step) {
+    return (
+      <div className="flex flex-col gap-4">
+        <Heading level={3}>{`代 ${turnName} Ban`}</Heading>
+        <p className="text-body text-ink-secondary">
+          輪到的隊伍需要協助時，可以替他們 Ban 指定的地圖，或隨機 Ban 一張；時間到系統也會自動隨機 Ban。
+        </p>
+        <ManagerBanForm matchId={match.id} step={veto.step} maps={banOptions} />
+      </div>
+    );
+  }
+  if (match.status === "veto_complete") {
+    return (
+      <div className="flex flex-col gap-4">
+        <Heading level={3}>開打</Heading>
+        <p className="text-body text-ink-secondary">
+          選一台伺服器，網站會在它沒開時自動啟動、載入兩隊名單與這張地圖；玩家在這頁按「進入遊戲」就會分到自己的隊伍。
+        </p>
+        {session?.status === "failed" && session.error && (
+          <p role="alert" className="text-body text-destructive">{`上一次開打失敗：${session.error}`}</p>
+        )}
+        <ServerStartForm matchId={match.id} servers={servers ?? []} />
+      </div>
+    );
+  }
+  if (onServer && session) {
+    return (
+      <div className="flex flex-col gap-3">
+        <Heading level={3}>伺服器進度</Heading>
+        <SessionSteps session={session} />
+      </div>
+    );
+  }
+  return null;
+}
+
+const ON_SERVER: readonly ManagedMatch["status"][] = ["server_starting", "server_ready", "in_game"];
+
+/**
+ * The creating member's management area below the match room: the group invite codes, the manual
+ * score, and the steps that undo something. The main step of each status sits in the room
+ * (StageActions). Destructive steps need a ticked box; the backend still checks every step.
+ */
+export function MatchManage({ match }: { match: ManagedMatch }) {
   const players = match.entries.flatMap((entry) => entry.players);
   const options = players.map((player) => ({ value: player.playerId, label: player.name }));
   const groups = match.entries.filter((entry) => entry.isGroup);
@@ -148,13 +267,9 @@ export function MatchManage({
   const removable = match.status === "lobby" && options.length > 0;
   const vetoing = match.status === "veto_active" || match.status === "veto_complete";
   const unconfirmable = match.status === "teams_confirmed";
-  const onServer = ["server_starting", "server_ready", "in_game"].includes(match.status);
+  const onServer = ON_SERVER.includes(match.status);
   const scoreable = match.status === "veto_complete" || onServer || match.status === "completed";
-  const session = match.serverSession;
   const veto = match.veto;
-  const banOptions = (veto?.maps ?? [])
-    .filter((map) => !map.bannedBy)
-    .map((map) => ({ value: map.key, label: map.name }));
   const leftColumn = removable || unlockable || vetoing || unconfirmable || onServer;
 
   return (
@@ -170,59 +285,6 @@ export function MatchManage({
               </li>
             ))}
           </ul>
-        </div>
-      )}
-
-      {match.status === "lobby" && (
-        <div className="flex flex-col gap-6">
-          <p className="text-body text-ink-secondary">名單恰好 10 人時才能鎖定；鎖定後就不能再報名或退出。</p>
-          <div className="flex flex-wrap items-start gap-4">
-            <LockButton matchId={match.id} />
-            {match.party && <ImportPartyButton matchId={match.id} />}
-          </div>
-        </div>
-      )}
-
-      {match.status === "roster_locked" && <GenerateTeamsButton matchId={match.id} />}
-
-      {match.status === "team_draft" && match.candidates && match.candidates.length > 0 && (
-        <TeamDraft match={match} candidates={match.candidates} candidate={candidate} />
-      )}
-
-      {match.status === "teams_confirmed" && (
-        <div className="flex flex-col gap-4">
-          <Heading level={3}>開始 Ban 圖</Heading>
-          <VetoStartForm matchId={match.id} />
-        </div>
-      )}
-
-      {match.status === "veto_active" && veto?.step && (
-        <div className="flex flex-col gap-4">
-          <Heading level={3}>{`代 ${veto.turn} 隊 Ban`}</Heading>
-          <p className="text-body text-ink-secondary">
-            輪到的隊伍需要協助時，可以替他們 Ban 指定的地圖，或隨機 Ban 一張；時間到系統也會自動隨機 Ban。
-          </p>
-          <ManagerBanForm matchId={match.id} step={veto.step} maps={banOptions} />
-        </div>
-      )}
-
-      {match.status === "veto_complete" && (
-        <div className="flex flex-col gap-4">
-          <Heading level={3}>開打</Heading>
-          <p className="text-body text-ink-secondary">
-            選一台伺服器，網站會在它沒開時自動啟動、載入兩隊名單與這張地圖；玩家在這頁按「進入遊戲」就會分到自己的隊伍。
-          </p>
-          {session?.status === "failed" && session.error && (
-            <p role="alert" className="text-body text-destructive">{`上一次開打失敗：${session.error}`}</p>
-          )}
-          <ServerStartForm matchId={match.id} servers={servers ?? []} />
-        </div>
-      )}
-
-      {onServer && session && (
-        <div className="flex flex-col gap-3">
-          <Heading level={3}>伺服器進度</Heading>
-          <SessionSteps session={session} />
         </div>
       )}
 
@@ -299,7 +361,7 @@ function TeamDraft({
   const selected = candidateIndex(candidate, candidates.length);
   const chosen = candidates[selected];
   const ratingOf = new Map(
-    candidates.flatMap((c) => [...c.teamA.players, ...c.teamB.players]).map((p) => [p.playerId, p.rating]),
+    candidates.flatMap((c) => [...c.teamA.players, ...c.teamB.players]).map((p) => [p.playerId, p.rating ?? 0]),
   );
   const groupNumber = new Map(
     match.entries.filter((entry) => entry.isGroup).map((entry, i) => [entry.id, `小隊 ${i + 1}`]),
@@ -324,13 +386,7 @@ function TeamDraft({
           分隊候選
         </Heading>
         <p className="text-body text-ink-secondary">依每位玩家目前的評分計算，不會拆開小隊；總分差越小越平均。</p>
-        <Spotlight>
-          <ol className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            {candidates.map((c, i) => (
-              <CandidateCard key={i} candidate={c} index={i} selected={i === selected} matchId={match.id} />
-            ))}
-          </ol>
-        </Spotlight>
+        <CandidateList matchId={match.id} candidates={candidates} selected={selected} selectable />
       </div>
       <div className="flex flex-col gap-4">
         <Heading level={3} id="confirm-teams-title">

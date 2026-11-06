@@ -9,10 +9,8 @@ import { Heading } from "@/components/brand/typography";
 import { JoinGroupForm, LeaveButton, SignUpButtons } from "@/components/match/match-forms";
 import { MatchInviteFriends } from "@/components/match/match-invite-friends";
 import { MatchManage } from "@/components/match/match-manage";
-import { MatchRoster } from "@/components/match/match-roster";
-import { MatchServerPanel } from "@/components/match/match-server-panel";
+import { MatchRoom } from "@/components/match/match-room";
 import { MatchStatusLabel } from "@/components/match/match-status";
-import { VetoPanel } from "@/components/match/veto-panel";
 import { SteamLoginLink } from "@/components/player/steam-login-link";
 import { fetchManagedMatch, fetchMatchFriends, fetchMatchServers, fetchViewerMatch } from "@/lib/player-actor";
 import { fetchMatchDetail } from "@/lib/public-content-client";
@@ -49,7 +47,6 @@ function SignUp({ match }: { match: ViewerMatch }) {
       </div>
     );
   }
-  if (match.status !== "lobby") return <p className="text-body text-ink-secondary">名單已鎖定，不再開放報名。</p>;
   return (
     <div className="flex flex-col gap-6">
       <SignUpButtons matchId={match.id} />
@@ -59,8 +56,9 @@ function SignUp({ match }: { match: ViewerMatch }) {
 }
 
 /**
- * A match: who is in it (grouped by sign-up, or the two teams once confirmed). Signed-in viewers
- * see ratings and their own sign-up; the member who created it also gets the management area.
+ * A match: sign-up while it is open, then the match room (the roster, or the two teams around what
+ * happens now) and, for the member who created it, the management area. Signed-in viewers see
+ * ratings and their own sign-up.
  */
 export default async function MatchPage({ params, searchParams }: PageProps<"/matches/[id]">) {
   const { id } = await params;
@@ -100,7 +98,7 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
         </header>
       </Section>
 
-      {match.status !== "cancelled" && (
+      {match.status === "lobby" && (
         <Section spacing="tight" labelledBy="signup-title" ruled>
           <EditorialGrid className="gap-y-6">
             <div className="col-span-4 md:col-span-8 lg:col-span-4">
@@ -111,7 +109,7 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
             <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
               {viewerMatch ? (
                 <SignUp match={viewerMatch} />
-              ) : match.status === "lobby" ? (
+              ) : (
                 <div className="flex flex-col gap-4">
                   <p className="text-body text-ink-secondary">
                     以 Steam 登入就能報名；會員請先登入，並在會員頁綁定 Steam。
@@ -121,8 +119,6 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
                     <TextLink href="/member/login">會員登入</TextLink>
                   </div>
                 </div>
-              ) : (
-                <p className="text-body text-ink-secondary">名單已鎖定，不再開放報名。</p>
               )}
             </div>
           </EditorialGrid>
@@ -144,60 +140,25 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
         </Section>
       )}
 
-      <Section spacing="tight" labelledBy="roster-title" ruled>
-        <EditorialGrid className="gap-y-6">
-          <div className="col-span-4 flex flex-col gap-2 md:col-span-8 lg:col-span-4">
-            <Heading level={2} id="roster-title">
-              {match.teams ? "隊伍" : "名單"}
-            </Heading>
-            {!viewerMatch && <MetaLabel>登入後可看到每位玩家的評分</MetaLabel>}
-          </div>
-          <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
-            {match.status === "cancelled" && <p className="mb-6 text-lead text-ink">這場已取消。</p>}
-            <MatchRoster match={shown} />
-          </div>
-        </EditorialGrid>
+      <Section spacing="tight" labelledBy="room-title" ruled>
+        <div className="mb-8 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+          <Heading level={2} id="room-title">
+            比賽室
+          </Heading>
+          {!viewerMatch && <MetaLabel>登入後可看到每位玩家的評分</MetaLabel>}
+        </div>
+        <MatchRoom
+          match={shown}
+          managed={managed}
+          canBan={viewerMatch?.viewer.canBan ?? false}
+          connect={viewerMatch?.viewer.connect ?? managed?.connect ?? null}
+          stats={viewerMatch?.stats ?? managed?.stats ?? null}
+          captainOf={viewerMatch?.viewer.captainOf ?? null}
+          signedIn={viewerMatch !== null || managed !== null}
+          candidate={candidate}
+          servers={servers}
+        />
       </Section>
-
-      {match.veto && (
-        <Section spacing="tight" labelledBy="veto-title" ruled>
-          <EditorialGrid className="gap-y-6">
-            <div className="col-span-4 md:col-span-8 lg:col-span-4">
-              <Heading level={2} id="veto-title">
-                Ban 圖
-              </Heading>
-            </div>
-            <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
-              <VetoPanel
-                matchId={match.id}
-                status={match.status}
-                veto={match.veto}
-                canBan={viewerMatch?.viewer.canBan ?? false}
-              />
-            </div>
-          </EditorialGrid>
-        </Section>
-      )}
-
-      {match.server && (
-        <Section spacing="tight" labelledBy="server-title" ruled>
-          <EditorialGrid className="gap-y-6">
-            <div className="col-span-4 md:col-span-8 lg:col-span-4">
-              <Heading level={2} id="server-title">
-                比賽
-              </Heading>
-            </div>
-            <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
-              <MatchServerPanel
-                status={match.status}
-                server={match.server}
-                connect={viewerMatch?.viewer.connect ?? managed?.connect ?? null}
-                stats={viewerMatch?.stats ?? managed?.stats ?? null}
-              />
-            </div>
-          </EditorialGrid>
-        </Section>
-      )}
 
       {managed && (
         <Section spacing="tight" labelledBy="manage-title" ruled>
@@ -208,7 +169,7 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
               </Heading>
             </div>
             <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
-              <MatchManage match={managed} candidate={candidate} servers={servers} />
+              <MatchManage match={managed} />
             </div>
           </EditorialGrid>
         </Section>

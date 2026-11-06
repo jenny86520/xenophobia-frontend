@@ -190,6 +190,33 @@ export async function removePlayerAction(
 // ---- The map veto ----
 
 /** The captain whose turn it is bans a map; `step` is the step their page showed. */
+/** A captain renames their own team; empty goes back to A 隊 / B 隊 (the backend checks the name). */
+export async function teamNameAction(matchId: string, _: MatchActionState, form: FormData): Promise<MatchActionState> {
+  const result = await asPlayer(
+    matchId,
+    "/team-name",
+    { method: "POST", body: JSON.stringify({ name: String(form.get("name") ?? "") }) },
+    "隊名已更新。",
+  );
+  return keepValues(result, form);
+}
+
+/** A manager renames either team. */
+export async function managerTeamNameAction(
+  matchId: string,
+  team: "A" | "B",
+  _: MatchActionState,
+  form: FormData,
+): Promise<MatchActionState> {
+  const result = await asManager(
+    matchId,
+    "/team-name",
+    { method: "POST", body: JSON.stringify({ team, name: String(form.get("name") ?? "") }) },
+    () => "隊名已更新。",
+  );
+  return keepValues(result, form);
+}
+
 export async function captainBanAction(matchId: string, step: number, mapKey: string): Promise<MatchActionState> {
   return asPlayer(matchId, "/veto/bans", { method: "POST", body: JSON.stringify({ step, mapKey }) }, "已 Ban。");
 }
@@ -302,6 +329,9 @@ export async function confirmTeamsAction(
         captainA: String(form.get("captainA") ?? ""),
         captainB: String(form.get("captainB") ?? ""),
         allowSplit: form.get("allowSplit") === "on",
+        // Empty means the default A 隊 / B 隊; the backend trims and checks the names.
+        teamAName: String(form.get("teamAName") ?? ""),
+        teamBName: String(form.get("teamBName") ?? ""),
       }),
     },
     () => "隊伍已確認。",

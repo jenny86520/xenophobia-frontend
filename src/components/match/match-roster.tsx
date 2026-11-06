@@ -23,43 +23,13 @@ function PlayerLine({ player, showRating }: { player: MatchPlayer; showRating: b
 }
 
 /**
- * The roster grouped by sign-up (groups first labelled with their size, solo players after), or,
- * once the teams are confirmed, the two teams with captains, totals and the difference. Ratings
+ * The roster grouped by sign-up (groups first labelled with their size, solo players after), shown
+ * in the match room until the teams are confirmed (then the room shows the two teams). Ratings
  * only appear in the signed-in view (the public view has none).
  */
 export function MatchRoster({ match }: { match: MatchDetail }) {
   const players = match.entries.flatMap((entry) => entry.players);
   const showRating = players.some((player) => player.rating !== undefined);
-  const byId = new Map(players.map((player) => [player.playerId, player]));
-
-  if (match.teams) {
-    const { teams } = match;
-    return (
-      <div className="flex flex-col gap-8">
-        <p className="text-lead text-ink">
-          總分差 <span className="font-mono tabular-nums">{teams.difference}</span>
-        </p>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {(["A", "B"] as const).map((side) => (
-            <section key={side} aria-labelledby={`team-${side}-title`} className="flex flex-col gap-3">
-              <Heading level={3} id={`team-${side}-title`}>
-                {side} 隊
-              </Heading>
-              <p className="font-mono text-label text-ink-secondary tabular-nums">
-                總分 {teams[side].total}・平均 {teams[side].average}
-              </p>
-              <ul className="border-t border-line">
-                {teams[side].playerIds.map((id) => {
-                  const player = byId.get(id);
-                  return player ? <PlayerLine key={id} player={player} showRating={showRating} /> : null;
-                })}
-              </ul>
-            </section>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   if (players.length === 0) {
     return <p className="text-body text-ink-secondary">目前還沒有人報名。</p>;

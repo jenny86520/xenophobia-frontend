@@ -1,11 +1,9 @@
 import { Gamepad2 } from "lucide-react";
 import { ctaPrimaryClasses } from "@/components/brand/cta-link";
 import { MetaLabel } from "@/components/brand/meta-label";
-import { Heading } from "@/components/brand/typography";
-import type { MatchConnect, MatchPlayerStats, MatchServer, MatchStatus } from "@/types/match";
-import { MatchAutoRefresh } from "./veto-live";
+import type { MatchConnect, MatchServer, MatchStatus } from "@/types/match";
 
-/** Statuses in which the server moves on its own, so the page refreshes itself. */
+/** Statuses in which the server moves on its own, so the match room refreshes itself. */
 export const SERVER_LIVE_STATUSES: readonly MatchStatus[] = ["server_starting", "server_ready", "in_game"];
 
 const STATUS_TEXT: Partial<Record<MatchStatus, string>> = {
@@ -15,21 +13,28 @@ const STATUS_TEXT: Partial<Record<MatchStatus, string>> = {
   completed: "比賽已結束。",
 };
 
-function Score({ server, completed }: { server: MatchServer; completed: boolean }) {
+function Score({
+  server,
+  completed,
+  teamNames,
+}: {
+  server: MatchServer;
+  completed: boolean;
+  teamNames: { A: string; B: string };
+}) {
   if (server.scoreA === null || server.scoreB === null) return null;
-  const result = !completed
-    ? null
-    : server.winner
-      ? `${server.winner} 隊獲勝`
-      : "平手";
+  const result = !completed ? null : server.winner ? `${teamNames[server.winner]}獲勝` : "平手";
   return (
     <div className="flex flex-col gap-2">
-      <p className="flex items-baseline gap-4 text-ink" aria-label={`A 隊 ${server.scoreA} 比 B 隊 ${server.scoreB}`}>
-        <span className="text-body text-ink-secondary">A 隊</span>
+      <p
+        className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-ink"
+        aria-label={`${teamNames.A} ${server.scoreA} 比 ${teamNames.B} ${server.scoreB}`}
+      >
+        <span className="text-body text-ink-secondary">{teamNames.A}</span>
         <span className="font-mono text-h1 tabular-nums">
           {server.scoreA} : {server.scoreB}
         </span>
-        <span className="text-body text-ink-secondary">B 隊</span>
+        <span className="text-body text-ink-secondary">{teamNames.B}</span>
       </p>
       {result && (
         <p className="text-lead text-ink">
@@ -65,72 +70,28 @@ function Connect({ connect }: { connect: MatchConnect }) {
   );
 }
 
-function StatsTable({ stats, team }: { stats: MatchPlayerStats[]; team: "A" | "B" }) {
-  const rows = stats.filter((row) => row.team === team);
-  if (rows.length === 0) return null;
-  return (
-    <table className="w-full text-body">
-      <caption className="mb-2 text-left font-mono text-label text-ink-secondary">{`${team} 隊`}</caption>
-      <thead>
-        <tr className="border-b border-line text-left text-caption text-ink-muted">
-          <th scope="col" className="py-2 font-normal">
-            玩家
-          </th>
-          <th scope="col" className="py-2 text-right font-normal">
-            <abbr title="擊殺">K</abbr>
-          </th>
-          <th scope="col" className="py-2 text-right font-normal">
-            <abbr title="死亡">D</abbr>
-          </th>
-          <th scope="col" className="py-2 text-right font-normal">
-            <abbr title="助攻">A</abbr>
-          </th>
-          <th scope="col" className="py-2 text-right font-normal">
-            <abbr title="每回合平均傷害">ADR</abbr>
-          </th>
-          <th scope="col" className="py-2 text-right font-normal">
-            爆頭率
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.playerId} className="border-b border-line text-ink">
-            <th scope="row" className="py-2 text-left font-normal">
-              {row.name}
-            </th>
-            <td className="py-2 text-right font-mono tabular-nums">{row.kills}</td>
-            <td className="py-2 text-right font-mono tabular-nums">{row.deaths}</td>
-            <td className="py-2 text-right font-mono tabular-nums">{row.assists}</td>
-            <td className="py-2 text-right font-mono tabular-nums">{row.adr}</td>
-            <td className="py-2 text-right font-mono tabular-nums">{`${row.headshotPercent}%`}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
 /**
- * The match on its game server for everyone: what is happening, the server, the live or final
- * score. The match's players and managers also get how to join; signed-in people see each
- * player's stats (null = not signed in). Refreshes itself while the server moves on its own.
+ * The match on its game server, in the middle of the match room: what is happening, the server, the
+ * live or final score by team name. The match's players and managers also get how to join. Each
+ * player's numbers sit beside them in the team columns (signed-in viewers only).
  */
 export function MatchServerPanel({
   status,
   server,
   connect,
-  stats,
+  teamNames,
+  signedIn,
 }: {
   status: MatchStatus;
   server: MatchServer;
   connect: MatchConnect | null;
-  stats: MatchPlayerStats[] | null;
+  teamNames: { A: string; B: string };
+  /** false for visitors, who are told to sign in for the players' numbers. */
+  signedIn: boolean;
 }) {
   const completed = status === "completed";
   return (
-    <div className="flex flex-col gap-8">
-      <MatchAutoRefresh active={SERVER_LIVE_STATUSES.includes(status)} />
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         {STATUS_TEXT[status] && (
           <p role="status" className="text-body text-ink">
@@ -139,19 +100,13 @@ export function MatchServerPanel({
         )}
         {server.serverName && <MetaLabel>{`伺服器：${server.serverName}`}</MetaLabel>}
       </div>
-      <Score server={server} completed={completed} />
+      <Score server={server} completed={completed} teamNames={teamNames} />
       {connect && <Connect connect={connect} />}
-      {stats === null ? (
-        (status === "in_game" || completed) && <MetaLabel>登入後可看到每位玩家的數據</MetaLabel>
-      ) : stats.length > 0 ? (
-        <div className="flex flex-col gap-6">
-          <Heading level={3}>玩家數據</Heading>
-          <StatsTable stats={stats} team="A" />
-          <StatsTable stats={stats} team="B" />
-        </div>
-      ) : (
-        completed &&
-        server.resultSource === "manual" && <p className="text-body text-ink-secondary">手動輸入比分的場次沒有玩家數據。</p>
+      {!signedIn && (status === "in_game" || completed) && server.resultSource !== "manual" && (
+        <MetaLabel>登入後可看到每位玩家的數據</MetaLabel>
+      )}
+      {completed && server.resultSource === "manual" && (
+        <p className="text-body text-ink-secondary">手動輸入比分的場次沒有玩家數據。</p>
       )}
     </div>
   );

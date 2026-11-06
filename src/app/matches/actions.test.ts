@@ -27,6 +27,8 @@ import {
   serverAbortAction,
   serverStartAction,
   confirmTeamsAction,
+  managerTeamNameAction,
+  teamNameAction,
   createMatchAction,
   importPartyAction,
   inviteFriendAction,
@@ -160,7 +162,7 @@ describe("managing", () => {
     expect(back.message).toBe("已退回分隊，請重新選擇候選並確認。");
   });
 
-  it("sends the chosen teams, captains and the split permission", async () => {
+  it("sends the chosen teams, captains, the split permission and the team names", async () => {
     respond(200);
     await confirmTeamsAction(
       "m1",
@@ -172,6 +174,8 @@ describe("managing", () => {
         captainA: "p1",
         captainB: "p2",
         allowSplit: "on",
+        teamAName: "紅龍",
+        teamBName: "",
       }),
     );
     expect(sentBody()).toEqual({
@@ -180,6 +184,8 @@ describe("managing", () => {
       captainA: "p1",
       captainB: "p2",
       allowSplit: true,
+      teamAName: "紅龍",
+      teamBName: "",
     });
   });
 
@@ -198,6 +204,26 @@ describe("managing", () => {
       fields: { allowSplit: "這樣分隊會拆開同一小隊，請確認允許拆開小隊" },
       values: { "team-p1": "B", "team-p2": "A", captainA: "p2", captainB: "p1" },
     });
+  });
+});
+
+describe("team names", () => {
+  it("sends a captain's new name for their own team", async () => {
+    cookies.xpa_player = "guest-jwt";
+    respond(200);
+    await expect(teamNameAction("m1", {}, form({ name: "紅龍" }))).resolves.toMatchObject({ ok: true });
+    expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/team-name");
+    expect(sentBody()).toEqual({ name: "紅龍" });
+    expect(sentToken()).toBe("Bearer guest-jwt");
+  });
+
+  it("sends a manager's name for either team, and keeps what was typed when refused", async () => {
+    cookies.xpa_member = "member-jwt";
+    respond(400, { message: "兩隊的隊名不能相同", fields: { name: "兩隊的隊名不能相同" } });
+    const result = await managerTeamNameAction("m1", "B", {}, form({ name: "alpha" }));
+    expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/manage/team-name");
+    expect(sentBody()).toEqual({ team: "B", name: "alpha" });
+    expect(result).toMatchObject({ ok: false, fields: { name: "兩隊的隊名不能相同" }, values: { name: "alpha" } });
   });
 });
 

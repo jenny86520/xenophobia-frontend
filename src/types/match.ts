@@ -26,7 +26,15 @@ export type MatchVeto = {
   stepSeconds: number;
   startedAt: string;
   /** imageUrl: the map's image when the veto started (backend path, see mediaUrl), or null. */
-  maps: { key: string; name: string; imageUrl: string | null; bannedBy: "A" | "B" | null; step: number | null }[];
+  maps: {
+    key: string;
+    name: string;
+    imageUrl: string | null;
+    bannedBy: "A" | "B" | null;
+    step: number | null;
+    /** Each team's wins on this map (the team's players added up), for the radar. */
+    wins: { A: number; B: number };
+  }[];
   bans: {
     step: number;
     team: "A" | "B";
@@ -136,6 +144,8 @@ export type MatchEntry = {
 };
 
 export type ConfirmedTeam = {
+  /** What the manager named the team, else A 隊 / B 隊 (the backend applies the default). */
+  name: string;
   playerIds: string[];
   captainId: string | null;
   total: number;
@@ -151,6 +161,10 @@ export type MatchDetail = MatchSummary & {
   veto: MatchVeto | null;
   /** From the start on a server on: its name and the live or final score. */
   server: MatchServer | null;
+  /** While the teams are drafted: the candidates, for everyone to follow (only managers choose). */
+  candidates: TeamCandidate[] | null;
+  /** Whether the team names can change now (confirmed teams, before the start on a server). */
+  teamNamesOpen: boolean;
 };
 
 export type ViewerMatch = MatchDetail & {
@@ -162,6 +176,8 @@ export type ViewerMatch = MatchDetail & {
     canManage: boolean;
     /** The viewer is the captain of the team whose turn it is to ban. */
     canBan: boolean;
+    /** The team the viewer captains: they may rename it while `teamNamesOpen`. */
+    captainOf: "A" | "B" | null;
     /** How to join, for this match's players and its creator while it waits or runs. */
     connect: MatchConnect | null;
   };
@@ -172,7 +188,8 @@ export type CandidateSide = {
   playerIds: string[];
   total: number;
   average: number;
-  players: { playerId: string; name: string; rating: number }[];
+  /** `rating` is left out for visitors (they still get the totals). */
+  players: { playerId: string; name: string; rating?: number }[];
   suggestedCaptain: string;
 };
 
@@ -181,7 +198,6 @@ export type TeamCandidate = { teamA: CandidateSide; teamB: CandidateSide; differ
 export type ManagedMatch = MatchDetail & {
   createdBy: string;
   createdByMemberId: string | null;
-  candidates: TeamCandidate[] | null;
   stats: MatchPlayerStats[];
   connect: MatchConnect | null;
   serverSession: MatchServerSession | null;

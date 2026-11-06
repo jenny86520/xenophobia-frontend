@@ -1392,9 +1392,13 @@
  * signal-red light on the card's border (::after, masked to a 1px ring) and a fainter one inside
  * (::before). Without JavaScript or on touch nothing is drawn.
  */
-[data-spotlight] {
-  position: relative;
-  isolation: isolate;
+/* In the components layer so a utility can still place a card (the veto's map cards sit
+   `absolute` around the radar); unlayered, this would beat every utility. */
+@layer components {
+  [data-spotlight] {
+    position: relative;
+    isolation: isolate;
+  }
 }
 [data-spotlight]::before,
 [data-spotlight]::after {
