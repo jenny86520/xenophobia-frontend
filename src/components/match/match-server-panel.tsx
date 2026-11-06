@@ -10,7 +10,7 @@ export const SERVER_LIVE_STATUSES: readonly MatchStatus[] = ["server_starting", 
 
 const STATUS_TEXT: Partial<Record<MatchStatus, string>> = {
   server_starting: "正在準備伺服器，可能需要幾分鐘（伺服器開機時會先檢查更新）。",
-  server_ready: "伺服器已就緒：進入遊戲後會自動分到自己的隊伍，第一回合刀戰，全員在聊天輸入 !ready 就開始。",
+  server_ready: "伺服器已就緒：進入遊戲後會自動分到自己的隊伍，十人都進來後約 10 秒自動開始刀戰，刀戰贏的一方在聊天輸入 !stay 或 !switch 選邊。",
   in_game: "比賽進行中。",
   completed: "比賽已結束。",
 };
@@ -44,11 +44,13 @@ function Score({ server, completed }: { server: MatchServer; completed: boolean 
 function Connect({ connect }: { connect: MatchConnect }) {
   return (
     <div className="flex flex-col gap-3">
-      {/* A plain link: steam:// opens the game, which next/link cannot do. */}
+      {/* A plain link: steam:// opens the game, which next/link cannot do. It joins only while CS2
+          is running: a closed CS2 starts but stays in the menu (tested 2026-11-06), hence the hint. */}
       <a href={connect.url} className={ctaPrimaryClasses("default", "self-start")}>
         <Gamepad2 aria-hidden="true" className="size-5" />
         進入遊戲
       </a>
+      <p className="text-body text-ink">請先開啟 CS2，進到主選單後再按「進入遊戲」；遊戲沒開時按只會打開遊戲、不會連線。</p>
       <p className="text-caption text-ink-muted">
         沒有反應時，在遊戲主控台輸入
         <span className="mx-1 font-mono text-ink">{`connect ${connect.address}; password ${connect.password}`}</span>

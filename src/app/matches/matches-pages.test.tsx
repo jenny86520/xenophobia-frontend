@@ -647,6 +647,7 @@ describe("/matches/[id] on the game server", () => {
       "steam://connect/cs.example.com:27015/pw123",
     );
     expect(panel).toHaveTextContent("connect cs.example.com:27015; password pw123");
+    expect(panel).toHaveTextContent("請先開啟 CS2，進到主選單後再按「進入遊戲」");
   });
 
   it("shows the result and each team's stats once completed", async () => {
