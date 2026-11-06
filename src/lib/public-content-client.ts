@@ -11,7 +11,7 @@ import type {
 import type { AboutContent } from "@/types/about";
 import type { LegalDocument, LegalKey } from "@/types/legal";
 import type { Legends } from "@/types/legends";
-import type { MatchDetail, MatchList } from "@/types/match";
+import type { CompletedMatch, MatchDetail, MatchList } from "@/types/match";
 
 export type {
   NextParty,
@@ -126,6 +126,12 @@ export const fetchMatches = cache(
 export const fetchMatchDetail = cache(
   (id: string): Promise<MatchDetail | null> =>
     getJson<MatchDetail>(`/api/matches/${encodeURIComponent(id)}`, { asMember: true }),
+);
+
+/** The newest finished scrims for the game page: results only, never ratings. */
+export const fetchRecentScrims = cache(
+  (): Promise<CompletedMatch[]> =>
+    getRequiredJson<CompletedMatch[]>("/api/games/cs2/matches", { asMember: true }),
 );
 
 /** The Legends boards and the overall ranking, computed by the backend on each request. */

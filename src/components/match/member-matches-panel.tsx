@@ -2,11 +2,24 @@ import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { TextLink } from "@/components/brand/text-link";
 import { MemberTabPanel } from "@/components/member/member-tabs";
 import type { MemberMatches } from "@/types/match";
+import { Heading } from "@/components/brand/typography";
+import { signedPoints } from "@/utils/rating";
 import { MatchRow } from "./match-row";
+import { RatingHistoryList } from "./rating-history";
+
+/** Beside a match: the member's team and, once rated, their change ("A 隊・隊長・評分 +28"). */
+function noteOf(match: MemberMatches["items"][number]): string | undefined {
+  const parts = [
+    match.team && `${match.team} 隊${match.isCaptain ? "・隊長" : ""}`,
+    match.ratingChange && `評分 ${signedPoints(match.ratingChange.delta)}`,
+  ].filter(Boolean);
+  return parts.length > 0 ? parts.join("・") : undefined;
+}
 
 /**
  * The member page's 內戰場次 tab: the member's rating in the left column under the heading, the
- * matches they are on and a way to all matches on the right.
+ * matches they are on (with their change once rated), admins' adjustments, and ways to all matches
+ * and the rating ladder on the right.
  */
 export function MemberMatchesPanel({ matches }: { matches: MemberMatches }) {
   return (
@@ -36,18 +49,31 @@ export function MemberMatchesPanel({ matches }: { matches: MemberMatches }) {
           ) : (
             <ul aria-label="參加的內戰場次" className="border-b border-line">
               {matches.items.map((match) => (
-                <MatchRow
-                  key={match.id}
-                  match={match}
-                  note={match.team ? `${match.team} 隊${match.isCaptain ? "・隊長" : ""}` : undefined}
-                />
+                <MatchRow key={match.id} match={match} note={noteOf(match)} />
               ))}
             </ul>
           )}
+          {matches.adjustments.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <Heading level={3}>管理員調整</Heading>
+              <RatingHistoryList
+                label="管理員調整"
+                changes={matches.adjustments.map((a) => ({
+                  ...a,
+                  kind: "manual" as const,
+                  teamPart: null,
+                  personalPart: null,
+                  note: null,
+                  match: null,
+                }))}
+              />
+            </div>
+          )}
         </>
       )}
-      <p className="text-body">
+      <p className="flex flex-wrap gap-6 text-body">
         <TextLink href="/matches">查看所有內戰場次</TextLink>
+        <TextLink href="/games/cs2">評分排行</TextLink>
       </p>
     </MemberTabPanel>
   );

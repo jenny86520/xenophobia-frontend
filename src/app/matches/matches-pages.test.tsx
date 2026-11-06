@@ -5,7 +5,7 @@ import NewMatchPage from "./new/page";
 import { fetchManagedMatch, fetchMatchFriends, fetchMatchServers, fetchViewerMatch } from "@/lib/player-actor";
 import { fetchMatchDetail, fetchMatches, fetchPartyList } from "@/lib/public-content-client";
 import { fetchMemberProfile } from "@/lib/member-session";
-import type { ManagedMatch, MatchDetail, MatchVeto, ViewerMatch } from "@/types/match";
+import type { ManagedMatch, MatchDetail, MatchPlayer, MatchVeto, ViewerMatch } from "@/types/match";
 
 const NOT_FOUND = new Error("NEXT_NOT_FOUND");
 jest.mock("next/navigation", () => ({
@@ -398,6 +398,53 @@ describe("/matches/[id]", () => {
     const manage = screen.getByRole("region", { name: "管理" });
     expect(within(manage).getByRole("heading", { name: "解除鎖定" })).toBeInTheDocument();
     expect(within(manage).getByRole("heading", { name: "取消場次" })).toBeInTheDocument();
+  });
+});
+
+describe("/matches/[id] rating changes", () => {
+  const done = (withChanges: boolean): MatchDetail => {
+    const match = teamed({
+      ...base,
+      status: "completed",
+      server: {
+        serverName: null,
+        scoreA: 13,
+        scoreB: 9,
+        winner: "A",
+        resultSource: "manual",
+        liveAt: null,
+        completedAt: "2026-11-07T12:00:00.000Z",
+      },
+    });
+    if (!withChanges) return match;
+    const changeOf: Record<string, MatchPlayer["ratingChange"]> = {
+      a: { delta: 28, teamPart: 25, personalPart: 3, note: null },
+      b: { delta: -25, teamPart: -25, personalPart: 0, note: "no-stats" },
+    };
+    return {
+      ...match,
+      entries: match.entries.map((entry) => ({
+        ...entry,
+        players: entry.players.map((p) => (changeOf[p.playerId] ? { ...p, ratingChange: changeOf[p.playerId] } : p)),
+      })),
+    };
+  };
+
+  it("shows signed-in people each player's change in the match", async () => {
+    (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer({}, done(true)));
+    await renderMatch();
+    const teamA = screen.getByRole("region", { name: "A 隊" });
+    expect(within(teamA).getByText("阿強").closest("li")).toHaveTextContent("評分+28（勝負 +25・個人 +3）");
+    const teamB = screen.getByRole("region", { name: "B 隊" });
+    expect(within(teamB).getByText("小明").closest("li")).toHaveTextContent("評分−25（勝負 −25・沒有個人數據）");
+    expect(within(teamB).getByText("訪客C").closest("li")).not.toHaveTextContent("評分");
+  });
+
+  it("shows visitors the result without anyone's change", async () => {
+    (fetchMatchDetail as jest.Mock).mockResolvedValue(done(false));
+    const { container } = await renderMatch();
+    expect(screen.getByRole("region", { name: "比賽" })).toHaveTextContent("A 隊獲勝");
+    expect(container.querySelector("[data-rating-change]")).toBeNull();
   });
 });
 

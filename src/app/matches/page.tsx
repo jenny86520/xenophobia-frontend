@@ -3,6 +3,7 @@ import { CtaLink } from "@/components/brand/cta-link";
 import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { PageHeader } from "@/components/brand/page-header";
 import { Section } from "@/components/brand/section";
+import { TextLink } from "@/components/brand/text-link";
 import { MatchRow } from "@/components/match/match-row";
 import { fetchMemberProfile } from "@/lib/member-session";
 import { fetchMatches } from "@/lib/public-content-client";
@@ -23,7 +24,12 @@ export default async function MatchesPage() {
           eyebrow="MATCHES / CS2"
           title="內戰場次"
           description="Counter-Strike 2 專用的十人內戰：會員綁定 Steam、或以 Steam 登入的訪客都能報名，可以單人或用邀請碼組小隊；湊滿十人後依評分分成兩隊。"
-          actions={member?.canCreateMatch ? <CtaLink href="/matches/new" label="建立場次" /> : undefined}
+          actions={
+            <>
+              {member?.canCreateMatch && <CtaLink href="/matches/new" label="建立場次" />}
+              <TextLink href="/games/cs2">評分排行</TextLink>
+            </>
+          }
         />
       </Section>
 

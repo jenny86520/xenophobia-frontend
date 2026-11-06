@@ -8,8 +8,10 @@ import type {
   MatchPlayer,
   MatchPlayerStats,
   MatchStatus,
+  RatingChange,
   ScrimServerOption,
 } from "@/types/match";
+import { ratingBreakdown, signedPoints } from "@/utils/rating";
 import { TeamNameForm } from "./match-forms";
 import { CandidateList, StageActions } from "./match-manage";
 import { MatchRoster } from "./match-roster";
@@ -28,6 +30,19 @@ function StatsLine({ stats }: { stats: MatchPlayerStats }) {
       {`${stats.kills} / ${stats.deaths} / ${stats.assists}`}
       <span className="sr-only">（擊殺／死亡／助攻）</span>
       {`・ADR ${stats.adr}・爆頭 ${stats.headshotPercent}%`}
+    </span>
+  );
+}
+
+/** A player's change in this rated match: the points first, then where they came from. */
+function RatingChangeLine({ change }: { change: RatingChange }) {
+  return (
+    <span className="flex flex-wrap items-baseline gap-x-2 text-caption text-ink-secondary" data-rating-change>
+      <span>
+        評分
+        <span className="ml-1 font-mono text-label text-ink tabular-nums">{signedPoints(change.delta)}</span>
+      </span>
+      <span>（{ratingBreakdown(change)}）</span>
     </span>
   );
 }
@@ -88,6 +103,7 @@ function TeamColumn({
                 )}
               </span>
               {stats && <StatsLine stats={stats} />}
+              {player.ratingChange && <RatingChangeLine change={player.ratingChange} />}
             </li>
           );
         })}

@@ -6,7 +6,8 @@ import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
 import { PlayerNicknameForm } from "@/components/player/player-nickname-form";
 import { SteamLoginLink } from "@/components/player/steam-login-link";
-import { fetchGuestPlayer } from "@/lib/player-session";
+import { RatingHistoryList } from "@/components/match/rating-history";
+import { fetchGuestPlayer, fetchGuestRatings } from "@/lib/player-session";
 import { playerLogoutAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -61,6 +62,7 @@ export default async function PlayerPage() {
     );
   }
 
+  const ratings = await fetchGuestRatings();
   const details = [
     { label: "暱稱", value: player.nickname },
     { label: "Steam 名稱", value: player.steamName ?? "—" },
@@ -95,7 +97,17 @@ export default async function PlayerPage() {
         <p className="mt-6 flex flex-wrap gap-6 text-body text-ink-secondary">
           <TextLink href={player.profileUrl}>Steam 個人頁</TextLink>
           <TextLink href="/matches">內戰場次</TextLink>
+          <TextLink href="/games/cs2">評分排行</TextLink>
         </p>
+      </Section>
+
+      <Section spacing="tight" labelledBy="player-ratings-title" ruled>
+        <div className="flex flex-col gap-6">
+          <Heading level={2} id="player-ratings-title">
+            評分紀錄
+          </Heading>
+          <RatingHistoryList label="評分紀錄" changes={ratings?.changes ?? []} />
+        </div>
       </Section>
 
       <Section spacing="tight" labelledBy="player-nickname-title" ruled>

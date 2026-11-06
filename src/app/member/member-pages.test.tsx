@@ -362,8 +362,10 @@ describe("/member", () => {
           createdBy: "小華",
           team: "A",
           isCaptain: true,
+          ratingChange: { delta: 28, teamPart: 25, personalPart: 3, note: null },
         },
       ],
+      adjustments: [{ before: 1206, after: 1234, delta: 28, at: "2026-11-07T04:00:00.000Z" }],
     });
     render(await MemberPage(memberProps("matches")));
 
@@ -373,14 +375,17 @@ describe("/member", () => {
     expect(heading.parentElement).toContainElement(within(panel).getByText("1234"));
     const row = within(panel).getByRole("link", { name: /週五晚場/ });
     expect(row).toHaveAttribute("href", "/matches/m1");
-    expect(within(row).getByText("A 隊・隊長")).toBeInTheDocument();
+    expect(within(row).getByText("A 隊・隊長・評分 +28")).toBeInTheDocument();
     expect(within(row).getByText("小華・2026/10/25 08:00")).toBeInTheDocument();
     expect(within(panel).getByRole("link", { name: "查看所有內戰場次" })).toHaveAttribute("href", "/matches");
+    expect(within(panel).getByRole("link", { name: "評分排行" })).toHaveAttribute("href", "/games/cs2");
+    // Admins' adjustments are listed apart.
+    expect(within(panel).getByRole("list", { name: "管理員調整" })).toHaveTextContent("+281206 → 1234");
   });
 
   it("asks a member without Steam to link it before scrims", async () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
-    (fetchMemberMatches as jest.Mock).mockResolvedValue({ steamLinked: false, rating: null, items: [] });
+    (fetchMemberMatches as jest.Mock).mockResolvedValue({ steamLinked: false, rating: null, items: [], adjustments: [] });
     render(await MemberPage(memberProps("matches")));
 
     const panel = screen.getByRole("region", { name: "內戰場次" });

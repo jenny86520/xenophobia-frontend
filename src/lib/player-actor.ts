@@ -1,7 +1,7 @@
 import { memberFetch, memberToken } from "@/lib/member-session";
 import { playerToken } from "@/lib/player-session";
 import type { MatchFriends } from "@/types/friends";
-import type { ManagedMatch, ScrimServerOption, ViewerMatch } from "@/types/match";
+import type { LadderEntry, ManagedMatch, ScrimServerOption, ViewerMatch } from "@/types/match";
 
 /**
  * Who takes part in a match from this browser: the signed-in member first (their linked Steam
@@ -62,6 +62,20 @@ export async function fetchMatchServers(id: string): Promise<ScrimServerOption[]
  * The signed-in member's friends and what they can send them for this match (the 邀請好友 block),
  * or null for guests, visitors or a refused token. Only members have friends.
  */
+/**
+ * The rating ladder for whoever is signed in (member or Steam guest); null for visitors or a refused
+ * token, who are told to sign in instead.
+ */
+export async function fetchScrimLadder(): Promise<LadderEntry[] | null> {
+  const actor = await playerActor();
+  if (!actor) return null;
+  const path = "/api/games/cs2/ladder";
+  const response = await actorFetch(path, {}, actor);
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
+  return (await response.json()) as LadderEntry[];
+}
+
 export async function fetchMatchFriends(id: string): Promise<MatchFriends | null> {
   const actor = await playerActor();
   if (actor?.kind !== "member") return null;

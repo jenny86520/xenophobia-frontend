@@ -138,7 +138,7 @@ async function tabContent(tab: MemberTab, profile: MemberProfile) {
   }
 
   if (tab === "matches") {
-    const matches = (await fetchMemberMatches()) ?? { steamLinked: false, rating: null, items: [] };
+    const matches = (await fetchMemberMatches()) ?? { steamLinked: false, rating: null, items: [], adjustments: [] };
     return <MemberMatchesPanel matches={matches} />;
   }
 

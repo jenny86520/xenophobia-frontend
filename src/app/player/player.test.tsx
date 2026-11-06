@@ -1,11 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import type { GuestPlayer } from "@/types/player";
 
 const fetchGuestPlayer = jest.fn();
+const fetchGuestRatings = jest.fn();
 const playerFetch = jest.fn();
 const clearPlayerToken = jest.fn();
 jest.mock("@/lib/player-session", () => ({
   fetchGuestPlayer: () => fetchGuestPlayer(),
+  fetchGuestRatings: () => fetchGuestRatings(),
   playerFetch: (...args: unknown[]) => playerFetch(...args),
   clearPlayerToken: () => clearPlayerToken(),
 }));
@@ -76,6 +78,52 @@ describe("/player", () => {
     expect(screen.getByLabelText("暱稱")).toHaveValue("阿強");
     expect(screen.getByRole("button", { name: "登出" })).toBeInTheDocument();
     expect(screen.getByText(/綁定同一個 Steam 帳號，訪客期間的紀錄會一併歸到會員帳號/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "評分排行" })).toHaveAttribute("href", "/games/cs2");
+  });
+
+  it("lists the guest's rating changes, each match linked and admins' adjustments named", async () => {
+    fetchGuestPlayer.mockResolvedValue(guest);
+    fetchGuestRatings.mockResolvedValue({
+      rating: 1103,
+      changes: [
+        {
+          kind: "manual",
+          before: 1028,
+          after: 1103,
+          delta: 75,
+          teamPart: null,
+          personalPart: null,
+          note: null,
+          at: "2026-11-07T04:00:00.000Z",
+          match: null,
+        },
+        {
+          kind: "match",
+          before: 1000,
+          after: 1028,
+          delta: 28,
+          teamPart: 25,
+          personalPart: 3,
+          note: null,
+          at: "2026-11-06T13:00:00.000Z",
+          match: { id: "m1", title: "週五晚場" },
+        },
+      ],
+    });
+    render(await PlayerPage());
+    const history = screen.getByRole("list", { name: "評分紀錄" });
+    const [manual, match] = within(history).getAllByRole("listitem");
+    expect(manual).toHaveTextContent("管理員調整");
+    expect(manual).toHaveTextContent("+751028 → 1103");
+    expect(within(match).getByRole("link", { name: "週五晚場" })).toHaveAttribute("href", "/matches/m1");
+    expect(match).toHaveTextContent("勝負 +25・個人 +3");
+  });
+
+  it("says when there is nothing rated yet", async () => {
+    fetchGuestPlayer.mockResolvedValue(guest);
+    fetchGuestRatings.mockResolvedValue({ rating: 1000, changes: [] });
+    render(await PlayerPage());
+    expect(screen.getByText(/還沒有評分變動/)).toBeInTheDocument();
   });
 });
 

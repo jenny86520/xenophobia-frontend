@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { memberCookieOptions, memberFetch } from "@/lib/member-session";
+import type { RatingHistory } from "@/types/match";
 import type { GuestPlayer } from "@/types/player";
 
 /**
@@ -32,6 +33,15 @@ export async function playerFetch(path: string, init: RequestInit = {}): Promise
  * deleted, or now linked to a member). Pages cannot write cookies, so a stale one is cleared by the
  * next Server Action.
  */
+/** The guest's rating and its changes; null when not signed in as a guest. */
+export async function fetchGuestRatings(): Promise<RatingHistory | null> {
+  if (!(await playerToken())) return null;
+  const response = await playerFetch("/api/player/me/ratings");
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(`Failed to load the ratings: HTTP ${response.status}`);
+  return (await response.json()) as RatingHistory;
+}
+
 export async function fetchGuestPlayer(): Promise<GuestPlayer | null> {
   if (!(await playerToken())) return null;
   const response = await playerFetch("/api/player/me");

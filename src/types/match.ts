@@ -131,6 +131,17 @@ export type MatchPlayer = {
   joinedAt: string;
   /** Only for signed-in viewers: the confirmed snapshot once the teams are confirmed. */
   rating?: number;
+  /** Only for signed-in viewers, once the match is rated: this match's change. */
+  ratingChange?: RatingChange;
+};
+
+/** One player's change in one rated match: the team result plus the personal part. */
+export type RatingChange = {
+  delta: number;
+  teamPart: number;
+  personalPart: number;
+  /** "no-stats" when there was nothing to compare (a manual result, or no stats for the player). */
+  note: string | null;
 };
 
 export type MatchEntry = {
@@ -208,7 +219,48 @@ export type MemberMatches = {
   /** false until the member links Steam (no player, so no rating or matches). */
   steamLinked: boolean;
   rating: number | null;
-  items: (MatchSummary & { team: "A" | "B" | null; isCaptain: boolean })[];
+  items: (MatchSummary & { team: "A" | "B" | null; isCaptain: boolean; ratingChange: RatingChange | null })[];
+  /** Admins' adjustments of the member's rating, newest first. */
+  adjustments: { before: number; after: number; delta: number; at: string }[];
+};
+
+/** A guest's own rating history: GET /api/player/me/ratings. */
+export type RatingHistory = {
+  rating: number;
+  changes: {
+    kind: "match" | "manual";
+    before: number;
+    after: number;
+    delta: number;
+    teamPart: number | null;
+    personalPart: number | null;
+    note: string | null;
+    at: string;
+    match: { id: string; title: string } | null;
+  }[];
+};
+
+/** A finished match on the game page (results only): GET /api/games/cs2/matches. */
+export type CompletedMatch = {
+  id: string;
+  title: string;
+  party: { id: string; title: string } | null;
+  mapName: string | null;
+  teams: { A: string; B: string };
+  scoreA: number | null;
+  scoreB: number | null;
+  winner: "A" | "B" | null;
+  completedAt: string | null;
+};
+
+/** One line of the rating ladder (signed-in people only): GET /api/games/cs2/ladder. */
+export type LadderEntry = {
+  place: number;
+  playerId: string;
+  name: string;
+  rating: number;
+  matches: number;
+  wins: number;
 };
 
 export type MatchList = { items: MatchSummary[]; total: number; page: number; pageSize: number };
