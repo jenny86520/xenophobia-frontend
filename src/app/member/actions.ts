@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearMemberToken, memberFetch, setMemberToken } from "@/lib/member-session";
-import type { MemberActionState } from "@/types/member";
+import type { CheckInResult, MemberActionState } from "@/types/member";
 import { submissionGame } from "@/utils/video-upload";
 
 /**
@@ -110,6 +110,25 @@ export async function updateNicknameAction(_: MemberActionState, form: FormData)
   if (!response.ok) return errorState(response, "儲存失敗，請稍後再試");
   revalidatePath("/member");
   return { ok: true, message: "暱稱已更新。" };
+}
+
+/** Today's check-in; the message names what the backend credited. */
+export async function checkInAction(): Promise<MemberActionState> {
+  let response: Response;
+  try {
+    response = await memberFetch("/api/member/check-ins", { method: "POST" });
+  } catch {
+    return UNREACHABLE;
+  }
+  if (response.status === 401) return signInAgain();
+  if (!response.ok) return errorState(response, "簽到失敗，請稍後再試");
+  const { awarded, campaign } = (await response.json()) as CheckInResult;
+  revalidatePath("/member");
+  const bonus =
+    awarded.streakBonus > 0
+      ? `連續簽到滿 ${campaign?.requiredDays ?? ""} 天，另外獲得 ${awarded.streakBonus} 點連續簽到獎勵。`
+      : "";
+  return { ok: true, message: `簽到成功，獲得 ${awarded.checkin} 點。${bonus}` };
 }
 
 /** Agrees to the documents at the versions the member was shown; the backend refuses stale ones. */

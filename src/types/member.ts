@@ -160,3 +160,37 @@ export type MemberActionState = {
   /** What was submitted, so a form React resets after the action can show it again. */
   values?: Record<string, string>;
 };
+
+/** The streak campaign running today and the member's run in it. */
+export type PointCampaignProgress = {
+  id: string;
+  title: string;
+  /** Taiwan date, YYYY-MM-DD. */
+  endDate: string;
+  requiredDays: number;
+  streak: number;
+};
+
+export type PointEntry = {
+  id: string;
+  /** Positive = credited, negative = spent. */
+  amount: number;
+  /** Ledger kind code (checkin, streak_bonus, …); the site names it. */
+  kind: string;
+  createdAt: string;
+};
+
+/** GET /api/member/points. */
+export type MemberPoints = {
+  balance: number;
+  checkedInToday: boolean;
+  campaign: PointCampaignProgress | null;
+  entries: { items: PointEntry[]; total: number; page: number; pageSize: number };
+};
+
+/** POST /api/member/check-ins. */
+export type CheckInResult = {
+  awarded: { checkin: number; streakBonus: number };
+  balance: number;
+  campaign: PointCampaignProgress | null;
+};

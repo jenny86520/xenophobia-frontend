@@ -16,6 +16,7 @@ import {
   acceptLegalAction,
   acceptMatchInviteAction,
   answerFriendRequestAction,
+  checkInAction,
   dismissMatchInviteAction,
   removeFriendAction,
   sendFriendRequestAction,
@@ -410,3 +411,37 @@ describe("updateFriendNoteAction", () => {
     });
   });
 });
+
+describe("checkInAction", () => {
+  it("checks in, names the point and refreshes the member page", async () => {
+    respond(201, { awarded: { checkin: 1, streakBonus: 0 }, balance: 6, campaign: null });
+    const state = await checkInAction();
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/member\/check-ins$/);
+    expect(init.method).toBe("POST");
+    expect(state).toEqual({ ok: true, message: "簽到成功，獲得 1 點。" });
+    expect(mockRevalidate).toHaveBeenCalledWith("/member");
+  });
+
+  it("names the streak bonus", async () => {
+    respond(201, {
+      awarded: { checkin: 1, streakBonus: 1 },
+      balance: 12,
+      campaign: { id: "c1", title: "十一月全勤", endDate: "2026-11-30", requiredDays: 10, streak: 10 },
+    });
+    await expect(checkInAction()).resolves.toEqual({
+      ok: true,
+      message: "簽到成功，獲得 1 點。連續簽到滿 10 天，另外獲得 1 點連續簽到獎勵。",
+    });
+  });
+
+  it("shows the backend's refusal, and sends a lost session to login", async () => {
+    respond(409, { message: "今天已經簽到過了" });
+    await expect(checkInAction()).resolves.toMatchObject({ ok: false, message: "今天已經簽到過了" });
+    expect(mockRevalidate).not.toHaveBeenCalled();
+
+    respond(401, {});
+    await expect(checkInAction()).rejects.toThrow("REDIRECT /member/login");
+  });
+});
+

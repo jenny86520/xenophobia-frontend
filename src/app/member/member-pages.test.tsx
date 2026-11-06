@@ -4,6 +4,7 @@ import {
   fetchMemberFriendSummary,
   fetchMemberLegalChanges,
   fetchMemberMatches,
+  fetchMemberPoints,
   fetchMemberProfile,
   fetchMemberVideoSubmissions,
 } from "@/lib/member-session";
@@ -19,6 +20,7 @@ jest.mock("@/lib/member-session", () => ({
   fetchMemberProfile: jest.fn(),
   fetchMemberVideoSubmissions: jest.fn(),
   fetchMemberMatches: jest.fn(),
+  fetchMemberPoints: jest.fn(),
   fetchMemberFriends: jest.fn(),
   fetchMemberFriendSummary: jest.fn(),
   fetchMemberLegalChanges: jest.fn(),
@@ -34,6 +36,7 @@ jest.mock("./actions", () => ({
   setPasswordAction: jest.fn(),
   updateNicknameAction: jest.fn(),
   acceptLegalAction: jest.fn(),
+  checkInAction: jest.fn(),
   registrationAction: jest.fn(),
   submitYoutubeVideoAction: jest.fn(),
   sendFriendRequestAction: jest.fn(),
@@ -249,6 +252,7 @@ describe("/member", () => {
       ["內戰場次", "/member?tab=matches"],
       ["好友", "/member?tab=friends"],
       ["投稿影片", "/member?tab=videos"],
+      ["點數", "/member?tab=points"],
     ]);
     expect(within(tabs).getByRole("link", { name: "個人資料" })).toHaveAttribute("aria-current", "page");
     expect(within(tabs).getByRole("link", { name: "投稿影片" })).not.toHaveAttribute("aria-current");
@@ -502,6 +506,75 @@ describe("/member", () => {
         expect(screen.getByText(text)).toBeInTheDocument();
       }
       expect(screen.getByText(/目前沒有好友/)).toBeInTheDocument();
+    });
+  });
+
+  describe("點數 tab", () => {
+    const points = (overrides: Record<string, unknown> = {}) => ({
+      balance: 7,
+      checkedInToday: false,
+      campaign: { id: "c1", title: "十一月全勤", endDate: "2026-11-30", requiredDays: 10, streak: 6 },
+      entries: {
+        items: [
+          // 04:00Z is 12:00 in Taiwan.
+          { id: "e2", amount: 1, kind: "streak_bonus", createdAt: "2026-11-06T04:00:00.000Z" },
+          { id: "e1", amount: 1, kind: "checkin", createdAt: "2026-11-06T04:00:00.000Z" },
+          { id: "e0", amount: -3, kind: "ice_create", createdAt: "2026-11-05T04:00:00.000Z" },
+        ],
+        total: 3,
+        page: 1,
+        pageSize: 20,
+      },
+      ...overrides,
+    });
+
+    it("shows the balance, the check-in button, the campaign run and the entries", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberPoints as jest.Mock).mockResolvedValue(points());
+      render(await MemberPage(memberProps("points")));
+
+      expect(screen.getByRole("link", { name: "點數" })).toHaveAttribute("aria-current", "page");
+      expect(fetchMemberPoints).toHaveBeenCalledWith(1);
+      expect(screen.getByText("7")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "簽到" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "十一月全勤" })).toBeInTheDocument();
+      expect(screen.getByText("連續 6 / 10 天")).toBeInTheDocument();
+      expect(screen.getByRole("progressbar", { name: "連續 6 / 10 天" })).toHaveAttribute("value", "6");
+
+      const rows = within(screen.getByRole("region", { name: "點數紀錄" })).getAllByRole("listitem");
+      expect(rows.map((row) => row.textContent)).toEqual([
+        "連續簽到獎勵2026/11/06 12:00+1",
+        "每日簽到2026/11/06 12:00+1",
+        // A kind the site does not know yet shows its code.
+        "ice_create2026/11/05 12:00−3",
+      ]);
+    });
+
+    it("says today is done and leaves out the campaign when none is running", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberPoints as jest.Mock).mockResolvedValue(points({ checkedInToday: true, campaign: null }));
+      render(await MemberPage(memberProps("points")));
+
+      expect(screen.getByText("今天已簽到")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "簽到" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+    });
+
+    it("pages the entries", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberPoints as jest.Mock).mockResolvedValue(
+        points({ entries: { items: [], total: 45, page: 2, pageSize: 20 } }),
+      );
+      render(
+        await MemberPage({
+          searchParams: Promise.resolve({ tab: "points", page: "2" }),
+          params: Promise.resolve({}),
+        } as unknown as PageProps<"/member">),
+      );
+
+      expect(fetchMemberPoints).toHaveBeenCalledWith(2);
+      expect(screen.getByRole("link", { name: "較新的紀錄" })).toHaveAttribute("href", "/member?tab=points");
+      expect(screen.getByRole("link", { name: "較早的紀錄" })).toHaveAttribute("href", "/member?tab=points&page=3");
     });
   });
 

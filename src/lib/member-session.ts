@@ -6,6 +6,7 @@ import type { FriendProfile, FriendsOverview } from "@/types/friends";
 import type { MemberMatches } from "@/types/match";
 import type {
   LegalConsentChanges,
+  MemberPoints,
   MemberProfile,
   MemberRegistrationView,
   MemberVideoSubmissions,
@@ -74,6 +75,17 @@ export async function fetchMemberVideoSubmissions(): Promise<MemberVideoSubmissi
   if (response.status === 401) return null;
   if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
   return (await response.json()) as MemberVideoSubmissions;
+}
+
+/** The member's balance, today's check-in, the running streak campaign and one page of entries; null when not signed in. */
+export async function fetchMemberPoints(page = 1): Promise<MemberPoints | null> {
+  const token = await memberToken();
+  if (!token) return null;
+  const path = `/api/member/points?page=${page}`;
+  const response = await memberFetch(path, {}, token);
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
+  return (await response.json()) as MemberPoints;
 }
 
 /** The member's own scrims and rating, or null when not signed in. */

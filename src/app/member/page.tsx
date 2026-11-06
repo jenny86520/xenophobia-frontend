@@ -9,6 +9,7 @@ import { MemberMatchesPanel } from "@/components/match/member-matches-panel";
 import { MemberTabPanel, MemberTabs } from "@/components/member/member-tabs";
 import { MemberFriendsPanel } from "@/components/member/member-friends-panel";
 import { LegalConsentPanel } from "@/components/member/legal-consent-panel";
+import { MemberPointsPanel } from "@/components/member/member-points-panel";
 import { MemberVideosPanel } from "@/components/member/member-videos-panel";
 import { MemberSteam } from "@/components/player/member-steam";
 import {
@@ -16,6 +17,7 @@ import {
   fetchMemberFriendSummary,
   fetchMemberLegalChanges,
   fetchMemberMatches,
+  fetchMemberPoints,
   fetchMemberProfile,
   fetchMemberVideoSubmissions,
 } from "@/lib/member-session";
@@ -27,12 +29,12 @@ import { logoutAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Member",
-  description: "XenoPhobiA 會員頁：個人資料、參加的活動、內戰場次、好友與投稿影片。",
+  description: "XenoPhobiA 會員頁：個人資料、參加的活動、內戰場次、好友、投稿影片與點數。",
 };
 
 /**
  * Members-only: the nickname, sign-out and Steam row, then tabs (?tab=) for the profile (details and
- * nickname form, the default), joined parties, scrims, friends and video submissions; everyone else sees how to become a member. Only the open tab's data is fetched.
+ * nickname form, the default), joined parties, scrims, friends, video submissions and points; everyone else sees how to become a member. Only the open tab's data is fetched.
  * While the member must agree to renewed terms, the consent panel (with what changed) replaces the tabs.
  */
 export default async function MemberPage({ searchParams }: PageProps<"/member">) {
@@ -88,7 +90,7 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
         ) : (
           <>
             <MemberTabs current={tab} counts={{ friends: await fetchMemberFriendSummary() }} />
-            {await tabContent(tab, profile)}
+            {await tabContent(tab, profile, query.page)}
           </>
         )}
       </Section>
@@ -97,7 +99,7 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
 }
 
 /** The open tab's content; only that tab's data is fetched. */
-async function tabContent(tab: MemberTab, profile: MemberProfile) {
+async function tabContent(tab: MemberTab, profile: MemberProfile, page: string | string[] | undefined) {
   if (tab === "profile") {
     const details = [
       { label: "會員編號", value: profile.memberCode ?? "—" },
@@ -140,6 +142,17 @@ async function tabContent(tab: MemberTab, profile: MemberProfile) {
   if (tab === "matches") {
     const matches = (await fetchMemberMatches()) ?? { steamLinked: false, rating: null, items: [], adjustments: [] };
     return <MemberMatchesPanel matches={matches} />;
+  }
+
+  if (tab === "points") {
+    const pageNumber = typeof page === "string" && /^[1-9]\d*$/.test(page) ? Number(page) : 1;
+    const points = (await fetchMemberPoints(pageNumber)) ?? {
+      balance: 0,
+      checkedInToday: false,
+      campaign: null,
+      entries: { items: [], total: 0, page: 1, pageSize: 20 },
+    };
+    return <MemberPointsPanel points={points} />;
   }
 
   if (tab === "videos") {

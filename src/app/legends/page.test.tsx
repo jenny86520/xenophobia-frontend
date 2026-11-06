@@ -148,4 +148,38 @@ describe("LegendsPage", () => {
 
     expect(screen.getByRole("region", { name: "傳奇總榜" })).toHaveTextContent("還沒有會員上榜");
   });
+
+  it("explains the two points boards, the points one marked as not counting", async () => {
+    await renderPage({
+      ...legends,
+      boards: [
+        {
+          code: "points-earned",
+          title: "交易常客",
+          metric: "累積獲得點數",
+          unit: "點",
+          countsTowardOverall: false,
+          entries: [{ rank: 1, nickname: "阿明", value: 40 }],
+        },
+        {
+          code: "checkin-streak",
+          title: "全勤之王",
+          metric: "最長連續簽到",
+          unit: "天",
+          countsTowardOverall: true,
+          entries: [{ rank: 1, nickname: "小美", value: 21 }],
+        },
+      ],
+    });
+
+    const points = screen.getByRole("region", { name: "交易常客" });
+    expect(points).toHaveTextContent("累積獲得點數・單位：點");
+    expect(points).toHaveTextContent("不計入總排行");
+    expect(document.getElementById("legend-rules-points-earned")).toHaveTextContent("花掉的點數不會扣除");
+
+    const streak = screen.getByRole("region", { name: "全勤之王" });
+    expect(streak).not.toHaveTextContent("不計入總排行");
+    expect(within(screen.getByRole("list", { name: "全勤之王" })).getByText("21 天")).toBeInTheDocument();
+    expect(document.getElementById("legend-rules-checkin-streak")).toHaveTextContent("只有漏簽一天才重新計算");
+  });
 });

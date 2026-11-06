@@ -5,6 +5,7 @@ describe("parseMemberTab", () => {
     expect(parseMemberTab("videos")).toBe("videos");
     expect(parseMemberTab("parties")).toBe("parties");
     expect(parseMemberTab("friends")).toBe("friends");
+    expect(parseMemberTab("points")).toBe("points");
     expect(parseMemberTab(undefined)).toBe("profile");
     expect(parseMemberTab("abc")).toBe("profile");
     expect(parseMemberTab(["videos", "parties"])).toBe("profile");
@@ -16,5 +17,6 @@ describe("memberTabHref", () => {
     expect(memberTabHref("profile")).toBe("/member");
     expect(memberTabHref("parties")).toBe("/member?tab=parties");
     expect(memberTabHref("videos")).toBe("/member?tab=videos");
+    expect(memberTabHref("points")).toBe("/member?tab=points");
   });
 });
