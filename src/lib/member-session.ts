@@ -3,6 +3,7 @@ import { cache } from "react";
 import { forwardedForHeader } from "@/lib/forwarded-for";
 import { backendBaseUrl } from "@/lib/public-content-client";
 import type { FriendProfile, FriendsOverview } from "@/types/friends";
+import type { IceAlbumPage, IceCreamHistory, MemberIceCreams } from "@/types/ice-cream";
 import type { MemberMatches } from "@/types/match";
 import type {
   LegalConsentChanges,
@@ -88,6 +89,34 @@ export async function fetchMemberPoints(page = 1): Promise<MemberPoints | null> 
   return (await response.json()) as MemberPoints;
 }
 
+/** Calls a members-only GET; null when signed out or the token is refused (and on 404). */
+async function memberGetJson<T>(path: string): Promise<T | null> {
+  const token = await memberToken();
+  if (!token) return null;
+  const response = await memberFetch(path, {}, token);
+  if (response.status === 401 || response.status === 404) return null;
+  if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
+  return (await response.json()) as T;
+}
+
+/** The member's tokens, gifts waiting for them and redemptions asked of them; null when signed out. */
+export function fetchMemberIceCreams(): Promise<MemberIceCreams | null> {
+  return memberGetJson<MemberIceCreams>("/api/member/ice-creams");
+}
+
+/** Tokens per album page: three or four full rows of cards. */
+const ICE_ALBUM_PAGE_SIZE = 12;
+
+/** One page of the growth record's album (members only); null when signed out. */
+export function fetchIceCreamAlbum(page = 1): Promise<IceAlbumPage | null> {
+  return memberGetJson<IceAlbumPage>(`/api/ice-creams?page=${page}&pageSize=${ICE_ALBUM_PAGE_SIZE}`);
+}
+
+/** One token's whole life (members only); null when signed out or unknown. */
+export function fetchIceCream(id: string): Promise<IceCreamHistory | null> {
+  return memberGetJson<IceCreamHistory>(`/api/ice-creams/${encodeURIComponent(id)}`);
+}
+
 /** The member's own scrims and rating, or null when not signed in. */
 export async function fetchMemberMatches(): Promise<MemberMatches | null> {
   const token = await memberToken();
@@ -147,19 +176,25 @@ export async function fetchMemberFriends(): Promise<FriendsOverview | null> {
   return (await response.json()) as FriendsOverview;
 }
 
+/** What waits for the member: everything (the header badge) and per member-page tab. */
+export type PendingSummary = { pending: number; friends: number; iceCreams: number };
+
+const NOTHING_PENDING: PendingSummary = { pending: 0, friends: 0, iceCreams: 0 };
+
 /**
- * How many friend requests and scrim invites wait for the member (the header badge). Never throws:
- * no session or a backend failure is 0, so the layout always renders. Cached per request (the layout
- * and the member page both read it).
+ * What waits for the member, counted by the backend: `pending` for the header, `friends` (friend
+ * requests and scrim invites) and `iceCreams` (gifts, redemption requests, new tokens) for the tabs.
+ * Never throws: no session or a backend failure is all 0, so the layout always renders. Cached per
+ * request (the layout and the member page both read it).
  */
-export const fetchMemberFriendSummary = cache(async (): Promise<number> => {
+export const fetchMemberPendingSummary = cache(async (): Promise<PendingSummary> => {
   try {
     const token = await memberToken();
-    if (!token) return 0;
+    if (!token) return NOTHING_PENDING;
     const response = await memberFetch("/api/member/friends/summary", {}, token);
-    if (!response.ok) return 0;
-    return ((await response.json()) as { pending: number }).pending;
+    if (!response.ok) return NOTHING_PENDING;
+    return (await response.json()) as PendingSummary;
   } catch {
-    return 0;
+    return NOTHING_PENDING;
   }
 });

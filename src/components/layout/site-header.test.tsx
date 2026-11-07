@@ -17,6 +17,14 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "About" })).not.toHaveAttribute("aria-current");
   });
 
+  it("marks Shop on the point shop", () => {
+    mockPathname.mockReturnValue("/shop");
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
+
+    expect(screen.getByRole("link", { name: "Shop" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Legends" })).not.toHaveAttribute("aria-current");
+  });
+
   it("labels the primary navigation in English, marked as English for screen readers", () => {
     render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
 
@@ -25,6 +33,7 @@ describe("SiteHeader", () => {
     expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
       ["Party", "/party"],
       ["Legends", "/legends"],
+      ["Shop", "/shop"],
       ["About", "/about"],
       ["Member", "/member"],
     ]);

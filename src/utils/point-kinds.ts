@@ -2,6 +2,10 @@
 const POINT_KIND_LABELS: Record<string, string> = {
   checkin: "每日簽到",
   streak_bonus: "連續簽到獎勵",
+  ice_create: "建立冰炫風",
+  ice_redeem_paid: "兌換冰炫風付出",
+  ice_redeem_received: "兌換冰炫風收到",
+  manual_grant: "管理員補發",
 };
 
 export function pointKindLabel(kind: string): string {

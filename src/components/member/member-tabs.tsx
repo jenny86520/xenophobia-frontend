@@ -18,7 +18,7 @@ export function MemberTabs({
   counts = {},
 }: {
   current: MemberTab;
-  /** Items waiting in a tab (the 好友 tab's requests and invites); 0 or missing shows nothing. */
+  /** Items waiting in a tab (好友: requests and invites; 冰炫風: gifts, requests, new tokens); 0 shows nothing. */
   counts?: Partial<Record<MemberTab, number>>;
 }) {
   return (

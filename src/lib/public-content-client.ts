@@ -12,6 +12,7 @@ import type { AboutContent } from "@/types/about";
 import type { LegalDocument, LegalKey } from "@/types/legal";
 import type { Legends } from "@/types/legends";
 import type { CompletedMatch, MatchDetail, MatchList } from "@/types/match";
+import type { Shop } from "@/types/ice-cream";
 
 export type {
   NextParty,
@@ -141,3 +142,9 @@ export const fetchLegends = cache((): Promise<Legends> => getRequiredJson<Legend
 export const fetchLegalDocument = cache(
   (key: LegalKey): Promise<LegalDocument | null> => getJson<LegalDocument>(`/api/legal/${key}`),
 );
+
+/** The point shop; with the member's token it also says which limited periods they claimed. */
+export const fetchShop = cache(
+  (): Promise<Shop> => getRequiredJson<Shop>("/api/shop", { asMember: true }),
+);
+

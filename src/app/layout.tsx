@@ -4,7 +4,7 @@ import { LegalDialog } from "@/components/legal/legal-dialog";
 import { BackToTop } from "@/components/layout/back-to-top";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { fetchMemberFriendSummary } from "@/lib/member-session";
+import { fetchMemberPendingSummary } from "@/lib/member-session";
 import { fetchAboutContent, fetchLegalDocument } from "@/lib/public-content-client";
 // Read on the server only (this layout is a Server Component), so package.json never reaches the client bundle.
 import { version } from "../../package.json";
@@ -47,14 +47,15 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Header and footer must not take the whole site down with the backend; pages that
   // need this data fetch it themselves (React.cache de-duplicates) and surface errors.
-  const [about, privacy, terms, memberPending] = await Promise.all([
+  const [about, privacy, terms, pending] = await Promise.all([
     fetchAboutContent().catch(() => null),
     // The footer's legal dialogs say "cannot load" on failure instead of breaking the page.
     fetchLegalDocument("privacy").catch(() => null),
     fetchLegalDocument("terms").catch(() => null),
-    // Friend requests and scrim invites for the Member badge; 0 when signed out or on failure.
-    fetchMemberFriendSummary(),
+    // Everything waiting for the member, for the Member badge; 0 when signed out or on failure.
+    fetchMemberPendingSummary(),
   ]);
+  const memberPending = pending.pending;
   const profile = about?.teamProfile;
   const brandName = profile?.name || "XenoPhobiA";
   const cta =

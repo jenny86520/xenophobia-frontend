@@ -1,4 +1,5 @@
 import type { MatchStatus } from "@/types/match";
+import type { HeldIceCream } from "@/types/ice-cream";
 
 /** Another member as friends see them: never account, contact or Steam details. */
 export type FriendPerson = {
@@ -23,6 +24,8 @@ export type FriendProfile = {
   rating: number | null;
   /** The viewer's own private note. */
   note: string | null;
+  /** The ice cream tokens the friend holds now. */
+  iceCreams: HeldIceCream[];
 };
 
 export type FriendRequest = { id: string; member: FriendPerson; createdAt: string };

@@ -1,4 +1,4 @@
-import { Crown, Info, PartyPopper, UserRound } from "lucide-react";
+import { Crown, Info, PartyPopper, Store, UserRound } from "lucide-react";
 
 /**
  * Primary navigation. Kept outside the "use client" NavLinks module so Server Components can
@@ -8,6 +8,7 @@ import { Crown, Info, PartyPopper, UserRound } from "lucide-react";
 export const NAV_ITEMS = [
   { href: "/party", label: "Party", lang: "en", icon: PartyPopper },
   { href: "/legends", label: "Legends", lang: "en", icon: Crown },
+  { href: "/shop", label: "Shop", lang: "en", icon: Store },
   { href: "/about", label: "About", lang: "en", icon: Info },
   { href: "/member", label: "Member", lang: "en", icon: UserRound },
 ] as const;

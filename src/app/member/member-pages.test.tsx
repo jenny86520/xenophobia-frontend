@@ -1,7 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import {
   fetchMemberFriends,
-  fetchMemberFriendSummary,
+  fetchMemberPendingSummary,
+  fetchMemberIceCreams,
   fetchMemberLegalChanges,
   fetchMemberMatches,
   fetchMemberPoints,
@@ -11,6 +12,7 @@ import {
 import type { FriendsOverview } from "@/types/friends";
 import { fetchAboutContent } from "@/lib/public-content-client";
 import type { MemberProfile, MemberVideoSubmissions } from "@/types/member";
+import { markIceCreamsSeenAction } from "./actions";
 import MemberPage from "./page";
 import MemberLoginPage from "./login/page";
 import MemberRegisterPage from "./register/page";
@@ -21,8 +23,9 @@ jest.mock("@/lib/member-session", () => ({
   fetchMemberVideoSubmissions: jest.fn(),
   fetchMemberMatches: jest.fn(),
   fetchMemberPoints: jest.fn(),
+  fetchMemberIceCreams: jest.fn(),
   fetchMemberFriends: jest.fn(),
-  fetchMemberFriendSummary: jest.fn(),
+  fetchMemberPendingSummary: jest.fn(),
   fetchMemberLegalChanges: jest.fn(),
 }));
 jest.mock("@/lib/public-content-client", () => ({ fetchAboutContent: jest.fn() }));
@@ -37,6 +40,12 @@ jest.mock("./actions", () => ({
   updateNicknameAction: jest.fn(),
   acceptLegalAction: jest.fn(),
   checkInAction: jest.fn(),
+  createIceCreamAction: jest.fn(),
+  giftIceCreamAction: jest.fn(),
+  deleteIceCreamAction: jest.fn(),
+  iceCreamStepAction: jest.fn(),
+  redeemIceCreamAction: jest.fn(),
+  markIceCreamsSeenAction: jest.fn(),
   registrationAction: jest.fn(),
   submitYoutubeVideoAction: jest.fn(),
   sendFriendRequestAction: jest.fn(),
@@ -92,7 +101,7 @@ const submissions = (overrides: Partial<MemberVideoSubmissions> = {}): MemberVid
 beforeEach(() => {
   jest.clearAllMocks();
   (fetchAboutContent as jest.Mock).mockResolvedValue({ games: [{ id: "g1", name: "CS2", summary: "", videos: [] }] });
-  (fetchMemberFriendSummary as jest.Mock).mockResolvedValue(0);
+  (fetchMemberPendingSummary as jest.Mock).mockResolvedValue({ pending: 0, friends: 0, iceCreams: 0 });
 });
 
 const profile: MemberProfile = {
@@ -188,7 +197,7 @@ describe("/member", () => {
 
     expect(screen.queryByRole("navigation", { name: "會員專區" })).not.toBeInTheDocument();
     expect(fetchMemberFriends).not.toHaveBeenCalled();
-    expect(fetchMemberFriendSummary).not.toHaveBeenCalled();
+    expect(fetchMemberPendingSummary).not.toHaveBeenCalled();
   });
 
   it("still lets the member read the full text and agree when the changes cannot be loaded", async () => {
@@ -253,6 +262,7 @@ describe("/member", () => {
       ["好友", "/member?tab=friends"],
       ["投稿影片", "/member?tab=videos"],
       ["點數", "/member?tab=points"],
+      ["冰炫風", "/member?tab=ice-creams"],
     ]);
     expect(within(tabs).getByRole("link", { name: "個人資料" })).toHaveAttribute("aria-current", "page");
     expect(within(tabs).getByRole("link", { name: "投稿影片" })).not.toHaveAttribute("aria-current");
@@ -389,7 +399,12 @@ describe("/member", () => {
 
   it("asks a member without Steam to link it before scrims", async () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
-    (fetchMemberMatches as jest.Mock).mockResolvedValue({ steamLinked: false, rating: null, items: [], adjustments: [] });
+    (fetchMemberMatches as jest.Mock).mockResolvedValue({
+      steamLinked: false,
+      rating: null,
+      items: [],
+      adjustments: [],
+    });
     render(await MemberPage(memberProps("matches")));
 
     const panel = screen.getByRole("region", { name: "內戰場次" });
@@ -447,12 +462,14 @@ describe("/member", () => {
     it("lists the friends first, then the member's number, the add form, invites and requests beside them", async () => {
       (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
       (fetchMemberFriends as jest.Mock).mockResolvedValue(overview);
-      (fetchMemberFriendSummary as jest.Mock).mockResolvedValue(3);
+      (fetchMemberPendingSummary as jest.Mock).mockResolvedValue({ pending: 5, friends: 3, iceCreams: 2 });
       render(await MemberPage(memberProps("friends")));
 
+      // Each tab counts only its own items (the header shows all 5).
       const tab = screen.getByRole("link", { name: /好友/ });
       expect(tab).toHaveAttribute("aria-current", "page");
       expect(tab).toHaveTextContent("（3 件待處理）");
+      expect(screen.getByRole("link", { name: /冰炫風/ })).toHaveTextContent("（2 件待處理）");
 
       const panel = screen.getByRole("region", { name: "好友" });
       expect(within(panel).getByText("XPA-0001")).toBeInTheDocument();
@@ -461,7 +478,7 @@ describe("/member", () => {
         within(panel)
           .getAllByRole("heading", { level: 3 })
           .map((h) => h.textContent),
-      // 好友清單 is for screen readers only (no visible title or count).
+        // 好友清單 is for screen readers only (no visible title or count).
       ).toEqual(["好友清單", "內戰場次邀請2", "收到的好友邀請1", "送出的好友邀請"]);
 
       const invites = screen.getByRole("list", { name: /內戰場次邀請/ });
@@ -519,7 +536,7 @@ describe("/member", () => {
           // 04:00Z is 12:00 in Taiwan.
           { id: "e2", amount: 1, kind: "streak_bonus", createdAt: "2026-11-06T04:00:00.000Z" },
           { id: "e1", amount: 1, kind: "checkin", createdAt: "2026-11-06T04:00:00.000Z" },
-          { id: "e0", amount: -3, kind: "ice_create", createdAt: "2026-11-05T04:00:00.000Z" },
+          { id: "e0", amount: -3, kind: "future_kind", createdAt: "2026-11-05T04:00:00.000Z" },
         ],
         total: 3,
         page: 1,
@@ -546,7 +563,7 @@ describe("/member", () => {
         "連續簽到獎勵2026/11/06 12:00+1",
         "每日簽到2026/11/06 12:00+1",
         // A kind the site does not know yet shows its code.
-        "ice_create2026/11/05 12:00−3",
+        "future_kind2026/11/05 12:00−3",
       ]);
     });
 
@@ -575,6 +592,157 @@ describe("/member", () => {
       expect(fetchMemberPoints).toHaveBeenCalledWith(2);
       expect(screen.getByRole("link", { name: "較新的紀錄" })).toHaveAttribute("href", "/member?tab=points");
       expect(screen.getByRole("link", { name: "較早的紀錄" })).toHaveAttribute("href", "/member?tab=points&page=3");
+    });
+  });
+
+  describe("冰炫風 tab", () => {
+    const token = (serial: number, overrides: Record<string, unknown> = {}) => ({
+      id: `i${serial}`,
+      serial,
+      origin: "member",
+      status: "held",
+      issuer: { nickname: "小明" },
+      holder: { nickname: "小明" },
+      giftTo: null,
+      giftExpiresAt: null,
+      createdAt: "2026-11-06T04:00:00.000Z",
+      endedAt: null,
+      actions: [],
+      isNew: false,
+      events: [
+        {
+          id: `e${serial}`,
+          serial,
+          iceCreamId: `i${serial}`,
+          type: "created",
+          actor: { nickname: "小明" },
+          target: null,
+          note: "",
+          createdAt: "2026-11-06T04:00:00.000Z",
+        },
+      ],
+      ...overrides,
+    });
+    const iceCreams = (overrides: Record<string, unknown> = {}) => ({
+      issuing: { active: 2, limit: 10 },
+      balance: 5,
+      createCost: 3,
+      create: { allowed: true, reason: null },
+      held: [
+        token(12, { actions: ["gift", "delete"] }),
+        token(3, { issuer: { nickname: "管理員" }, actions: ["gift", "requestRedeem"] }),
+        token(14, {
+          status: "gifting",
+          giftTo: { nickname: "小華" },
+          // 04:00Z is 12:00 in Taiwan.
+          giftExpiresAt: "2026-11-08T04:00:00.000Z",
+        }),
+      ],
+      incoming: [
+        token(20, { issuer: { nickname: "小華" }, holder: { nickname: "小華" }, actions: ["accept", "decline"] }),
+      ],
+      redeemRequests: [token(9, { holder: { nickname: "小美" }, status: "redeeming", actions: ["redeem"] })],
+      friends: [{ memberId: "hua", nickname: "小華" }],
+      ...overrides,
+    });
+
+    it("shows issuing, held tokens with their actions, gifts to accept and redemptions to complete", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberIceCreams as jest.Mock).mockResolvedValue(iceCreams());
+      render(await MemberPage(memberProps("ice-creams")));
+
+      expect(screen.getByRole("link", { name: "冰炫風" })).toHaveAttribute("aria-current", "page");
+      expect(screen.getByText("已發出 2 / 10 支")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "建立冰炫風（3 點）" })).toBeInTheDocument();
+
+      const held = screen.getByRole("list", { name: "我的冰庫裡的冰炫風" });
+      const cards = Array.from(held.children) as HTMLElement[];
+      expect(cards[0]).toHaveTextContent("冰炫風 #12小明 發行在你手上");
+      // Giving and deleting open dialogs; the forms live inside them.
+      expect(within(cards[0]).getByRole("button", { name: "贈送" })).toHaveAttribute("popovertarget", "ice-gift-i12");
+      const gift = within(cards[0]).getByRole("dialog", { name: "贈送冰炫風 #12" });
+      expect(within(gift).getByRole("form", { name: "把冰炫風 #12送給好友" })).toBeInTheDocument();
+      expect(within(gift).getByRole("option", { name: "小華" })).toBeInTheDocument();
+      expect(within(cards[0]).getByRole("button", { name: "刪除" })).toHaveAttribute("popovertarget", "ice-delete-i12");
+      expect(
+        within(within(cards[0]).getByRole("dialog", { name: "刪除冰炫風 #12" })).getByLabelText(
+          "確認刪除冰炫風 #12（點數不退）",
+        ),
+      ).toBeInTheDocument();
+      expect(within(cards[0]).queryByRole("button", { name: "兌換" })).not.toBeInTheDocument();
+      // Redeeming asks again, naming the issuer.
+      expect(within(cards[1]).getByText("管理員 發行")).toBeInTheDocument();
+      expect(within(cards[1]).getByRole("button", { name: "兌換" })).toHaveAttribute("popovertarget", "ice-redeem-i3");
+      const redeem = within(cards[1]).getByRole("dialog", { name: "兌換冰炫風 #3" });
+      expect(redeem).toHaveTextContent("要向「管理員」申請兌換冰炫風 #3嗎？");
+      expect(within(redeem).getByRole("button", { name: "確認申請" })).toBeInTheDocument();
+      expect(cards[2]).toHaveTextContent("贈送中：正飛去「小華」那裡");
+      expect(cards[2]).toHaveTextContent("2026/11/08 12:00 前沒被收下就會飛回來");
+      // Every card carries the hidden ice cream icon.
+      expect(cards[0].querySelector("svg")).toHaveAttribute("aria-hidden", "true");
+
+      // Clicking a held card (not its buttons) opens the token's life.
+      expect(within(cards[0]).getByRole("button", { name: /冰炫風 #12/ })).toHaveAttribute(
+        "popovertarget",
+        "ice-detail-i12",
+      );
+      expect(within(cards[0]).getByRole("dialog", { name: "冰炫風 #12" })).toHaveTextContent("小明 建立了這支冰炫風");
+
+      // The right column is cards too, in a lighter voice.
+      const incoming = within(screen.getByRole("region", { name: "有人塞冰給你" })).getByRole("list", {
+        name: "等你收下的冰炫風",
+      });
+      const present = Array.from(incoming.children)[0] as HTMLElement;
+      expect(present).toHaveTextContent("「小華」塞給你的");
+      expect(within(present).getByRole("button", { name: /冰炫風 #20/ })).toHaveAttribute(
+        "popovertarget",
+        "ice-detail-i20",
+      );
+      expect(within(present).getByRole("button", { name: "收下" })).toBeInTheDocument();
+      expect(within(present).getByRole("button", { name: "退回去" })).toBeInTheDocument();
+      const requests = within(screen.getByRole("region", { name: "有人來討冰了" })).getByRole("list", {
+        name: "等你兌現的冰炫風",
+      });
+      expect(requests).toHaveTextContent("「小美」拿著它來討了");
+      expect(within(requests).getByRole("button", { name: "給 3 點" })).toBeInTheDocument();
+      expect(within(requests).getByRole("button", { name: "請吃一支" })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "冰炫風成長史冊" })).toHaveAttribute("href", "/ice-creams");
+      expect(screen.getByRole("link", { name: "點數商店" })).toHaveAttribute("href", "/shop");
+      // Nothing new, so nothing is marked as seen.
+      expect(screen.queryByText("新")).not.toBeInTheDocument();
+      expect(markIceCreamsSeenAction).not.toHaveBeenCalled();
+    });
+
+    it("marks tokens from the admins as new and tells the backend they were seen", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberIceCreams as jest.Mock).mockResolvedValue(
+        iceCreams({ held: [token(3, { issuer: { nickname: "管理員" }, isNew: true }), token(12)] }),
+      );
+      render(await MemberPage(memberProps("ice-creams")));
+
+      const rows = Array.from(screen.getByRole("list", { name: "我的冰庫裡的冰炫風" }).children) as HTMLElement[];
+      expect(within(rows[0]).getByText("新")).toBeInTheDocument();
+      expect(within(rows[1]).queryByText("新")).not.toBeInTheDocument();
+      expect(markIceCreamsSeenAction).toHaveBeenCalledTimes(1);
+    });
+
+    it("explains empty blocks and why a token cannot be issued", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberIceCreams as jest.Mock).mockResolvedValue(
+        iceCreams({
+          held: [],
+          incoming: [],
+          redeemRequests: [],
+          create: { allowed: false, reason: "點數不足，建立冰炫風需要 3 點" },
+        }),
+      );
+      render(await MemberPage(memberProps("ice-creams")));
+
+      expect(screen.getByText("點數不足，建立冰炫風需要 3 點")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /建立冰炫風/ })).not.toBeInTheDocument();
+      expect(screen.getByText("冰庫空空的，自己發一支，或等朋友塞冰給你。")).toBeInTheDocument();
+      expect(screen.getByText("還沒有人塞冰炫風給你，先去多交幾個朋友吧。")).toBeInTheDocument();
+      expect(screen.getByText("目前沒人來討冰，荷包很安全。")).toBeInTheDocument();
     });
   });
 

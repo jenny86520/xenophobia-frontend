@@ -9,17 +9,20 @@ import { MemberMatchesPanel } from "@/components/match/member-matches-panel";
 import { MemberTabPanel, MemberTabs } from "@/components/member/member-tabs";
 import { MemberFriendsPanel } from "@/components/member/member-friends-panel";
 import { LegalConsentPanel } from "@/components/member/legal-consent-panel";
+import { MemberIceCreamsPanel } from "@/components/member/member-ice-creams-panel";
 import { MemberPointsPanel } from "@/components/member/member-points-panel";
 import { MemberVideosPanel } from "@/components/member/member-videos-panel";
 import { MemberSteam } from "@/components/player/member-steam";
 import {
   fetchMemberFriends,
-  fetchMemberFriendSummary,
+  fetchMemberIceCreams,
   fetchMemberLegalChanges,
   fetchMemberMatches,
+  fetchMemberPendingSummary,
   fetchMemberPoints,
   fetchMemberProfile,
   fetchMemberVideoSubmissions,
+  type PendingSummary,
 } from "@/lib/member-session";
 import { fetchAboutContent } from "@/lib/public-content-client";
 import type { MemberProfile } from "@/types/member";
@@ -29,14 +32,19 @@ import { logoutAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Member",
-  description: "XenoPhobiA 會員頁：個人資料、參加的活動、內戰場次、好友、投稿影片與點數。",
+  description: "XenoPhobiA 會員頁：個人資料、參加的活動、內戰場次、好友、投稿影片、點數與冰炫風。",
 };
 
 /**
  * Members-only: the nickname, sign-out and Steam row, then tabs (?tab=) for the profile (details and
- * nickname form, the default), joined parties, scrims, friends, video submissions and points; everyone else sees how to become a member. Only the open tab's data is fetched.
+ * nickname form, the default), joined parties, scrims, friends, video submissions, points and ice creams; everyone else sees how to become a member. Only the open tab's data is fetched.
  * While the member must agree to renewed terms, the consent panel (with what changed) replaces the tabs.
  */
+/** Each tab shows only its own waiting items; the header shows them all. */
+function tabCounts(summary: PendingSummary): Partial<Record<MemberTab, number>> {
+  return { friends: summary.friends, "ice-creams": summary.iceCreams };
+}
+
 export default async function MemberPage({ searchParams }: PageProps<"/member">) {
   const profile = await fetchMemberProfile();
 
@@ -89,7 +97,7 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
           <LegalConsentPanel consent={profile.legalConsent} changes={await fetchMemberLegalChanges()} />
         ) : (
           <>
-            <MemberTabs current={tab} counts={{ friends: await fetchMemberFriendSummary() }} />
+            <MemberTabs current={tab} counts={tabCounts(await fetchMemberPendingSummary())} />
             {await tabContent(tab, profile, query.page)}
           </>
         )}
@@ -153,6 +161,20 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: string |
       entries: { items: [], total: 0, page: 1, pageSize: 20 },
     };
     return <MemberPointsPanel points={points} />;
+  }
+
+  if (tab === "ice-creams") {
+    const iceCreams = (await fetchMemberIceCreams()) ?? {
+      issuing: { active: 0, limit: 10 },
+      balance: 0,
+      createCost: 3,
+      create: { allowed: false, reason: null },
+      held: [],
+      incoming: [],
+      redeemRequests: [],
+      friends: [],
+    };
+    return <MemberIceCreamsPanel iceCreams={iceCreams} />;
   }
 
   if (tab === "videos") {

@@ -5,8 +5,11 @@ import { PageHeader } from "@/components/brand/page-header";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
+import { IceCreamIcon } from "@/components/brand/ice-cream-icon";
 import { FriendNoteForm } from "@/components/member/friend-forms";
-import { fetchMemberFriendProfile, fetchMemberProfile } from "@/lib/member-session";
+import { IceCreamCard, IceCreamDetailCard, IceCreamGrid } from "@/components/ice-cream/ice-cream-card";
+import { ICE_STATUS_TEXT } from "@/utils/ice-cream-events";
+import { fetchIceCream, fetchMemberFriendProfile, fetchMemberProfile } from "@/lib/member-session";
 
 export const metadata: Metadata = {
   title: "Friend",
@@ -69,6 +72,9 @@ export default async function FriendPage({ params }: PageProps<"/member/friends/
     );
   }
 
+  // Each token's life for its dialog; one that cannot be read just shows its card without one.
+  const histories = await Promise.all(friend.iceCreams.map((ice) => fetchIceCream(ice.id).catch(() => null)));
+
   const details = [
     { label: "會員編號", value: friend.memberCode ?? "—" },
     { label: "Discord ID", value: friend.discordId || "—" },
@@ -111,6 +117,36 @@ export default async function FriendPage({ params }: PageProps<"/member/friends/
             </div>
           )}
         </dl>
+      </Section>
+
+      <Section spacing="tight" labelledBy="friend-ice-title">
+        <Heading level={2} id="friend-ice-title">
+          <span className="inline-flex items-center gap-3">
+            <IceCreamIcon className="size-6" />
+            冰炫風
+          </span>
+        </Heading>
+        {friend.iceCreams.length === 0 ? (
+          <p className="mt-6 text-body text-ink-secondary">目前沒有冰炫風。</p>
+        ) : (
+          <IceCreamGrid label={`${friend.nickname}的冰炫風`} className="mt-6">
+            {friend.iceCreams.map((ice, index) => {
+              const history = histories[index];
+              return history ? (
+                <IceCreamDetailCard key={ice.id} history={history} />
+              ) : (
+                <IceCreamCard
+                  key={ice.id}
+                  cover={{
+                    serial: ice.serial,
+                    issuer: ice.issuer,
+                    state: `${friend.nickname}・${ICE_STATUS_TEXT[ice.status]}`,
+                  }}
+                />
+              );
+            })}
+          </IceCreamGrid>
+        )}
       </Section>
 
       <Section spacing="tight" labelledBy="note-title">

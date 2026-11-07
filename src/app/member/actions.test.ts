@@ -17,6 +17,13 @@ import {
   acceptMatchInviteAction,
   answerFriendRequestAction,
   checkInAction,
+  claimIceCampaignAction,
+  createIceCreamAction,
+  deleteIceCreamAction,
+  giftIceCreamAction,
+  iceCreamStepAction,
+  markIceCreamsSeenAction,
+  redeemIceCreamAction,
   dismissMatchInviteAction,
   removeFriendAction,
   sendFriendRequestAction,
@@ -442,6 +449,78 @@ describe("checkInAction", () => {
 
     respond(401, {});
     await expect(checkInAction()).rejects.toThrow("REDIRECT /member/login");
+  });
+});
+
+describe("ice cream actions", () => {
+  const token = { serial: 12, giftTo: { nickname: "小華" } };
+  const call = () => (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+
+  it("issues a token and refreshes the layout (the header count)", async () => {
+    respond(201, token);
+    await expect(createIceCreamAction()).resolves.toEqual({
+      ok: true,
+      message: "已建立冰炫風 #12，可以送給好友了。",
+    });
+    expect(call()[0]).toMatch(/\/api\/member\/ice-creams$/);
+    expect(mockRevalidate).toHaveBeenCalledWith("/");
+    // Acting on the tab also counts as having seen it (for browsers without JavaScript).
+    expect((global.fetch as jest.Mock).mock.calls[1][0]).toMatch(/\/api\/member\/ice-creams\/seen$/);
+  });
+
+  it("marks the tab as seen without refreshing, and ignores a failure", async () => {
+    respond(204, {});
+    await expect(markIceCreamsSeenAction()).resolves.toBeUndefined();
+    expect(call()[0]).toMatch(/\/api\/member\/ice-creams\/seen$/);
+    expect(call()[1].method).toBe("POST");
+    expect(mockRevalidate).not.toHaveBeenCalled();
+
+    (global.fetch as jest.Mock).mockRejectedValueOnce(new Error("down"));
+    await expect(markIceCreamsSeenAction()).resolves.toBeUndefined();
+  });
+
+  it("gives a token to the chosen friend", async () => {
+    respond(201, token);
+    const state = await giftIceCreamAction("i1", {}, form({ memberId: "hua" }));
+    expect(call()[0]).toMatch(/\/api\/member\/ice-creams\/i1\/gift$/);
+    expect(sentBody()).toEqual({ memberId: "hua" });
+    expect(state.message).toBe("已送給「小華」，等對方接收（24 小時內）。");
+  });
+
+  it("runs each step on its own path and method", async () => {
+    respond(201, token);
+    await iceCreamStepAction("i1", "cancelRedeem");
+    expect(call()[0]).toMatch(/\/i1\/redeem-request$/);
+    expect(call()[1].method).toBe("DELETE");
+
+    respond(201, token);
+    await expect(redeemIceCreamAction("i1", "points")).resolves.toMatchObject({ ok: true });
+    expect(sentBody()).toEqual({ method: "points" });
+  });
+
+  it("shows the backend's refusal, needs the box ticked to delete, and handles a lost session", async () => {
+    respond(409, { message: "這支冰炫風已經退回" });
+    await expect(iceCreamStepAction("i1", "accept")).resolves.toEqual({
+      ok: false,
+      message: "這支冰炫風已經退回",
+      fields: undefined,
+    });
+
+    respond(200, token);
+    await expect(deleteIceCreamAction("i1", {}, form({}))).resolves.toMatchObject({ fields: { confirm: "請先勾選確認" } });
+    expect(global.fetch).not.toHaveBeenCalled();
+
+    respond(401, {});
+    await expect(createIceCreamAction()).rejects.toThrow("REDIRECT /member/login");
+    respond(428, {});
+    await expect(createIceCreamAction()).rejects.toThrow("REDIRECT /member");
+  });
+
+  it("claims a limited token and refreshes the shop", async () => {
+    respond(201, token);
+    await expect(claimIceCampaignAction("c1")).resolves.toMatchObject({ ok: true });
+    expect(call()[0]).toMatch(/\/api\/member\/ice-campaigns\/c1\/claim$/);
+    expect(mockRevalidate).toHaveBeenCalledWith("/shop");
   });
 });
 

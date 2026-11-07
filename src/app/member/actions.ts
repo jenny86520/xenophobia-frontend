@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearMemberToken, memberFetch, setMemberToken } from "@/lib/member-session";
+import type { IceCream } from "@/types/ice-cream";
 import type { CheckInResult, MemberActionState } from "@/types/member";
+import { iceCreamName } from "@/utils/ice-cream-events";
 import { submissionGame } from "@/utils/video-upload";
 
 /**
@@ -333,4 +335,118 @@ export async function dismissMatchInviteAction(inviteId: string): Promise<Member
   if (!response.ok) return errorState(response, "操作失敗，請重新整理後再試");
   refreshFriends();
   return { ok: true, message: "已略過這個邀請。" };
+}
+
+// ---- Ice cream tokens ----
+
+/** Gifts and redemption requests change the header count, so the whole layout is refreshed. */
+async function iceCreamRequest(
+  path: string,
+  init: RequestInit,
+  fallback: string,
+): Promise<MemberActionState | IceCream> {
+  const sent = await friendRequest(path, init);
+  if ("state" in sent) return sent.state;
+  if (!sent.response.ok) return errorState(sent.response, fallback);
+  // Acting on the tab means it was seen, which also covers browsers without JavaScript.
+  await markIceCreamsSeenAction();
+  refreshFriends();
+  return (await sent.response.json()) as IceCream;
+}
+
+const isState = (result: MemberActionState | IceCream): result is MemberActionState => !("serial" in result);
+
+/**
+ * The member has the 冰炫風 tab on screen: tokens the admins gave them stop counting as new. Called
+ * by MarkIceCreamsSeen after mount, best effort (a failure just leaves the count for next time).
+ * Nothing is revalidated, so the 「新」 marks stay on this screen; the counts drop on the next page.
+ */
+export async function markIceCreamsSeenAction(): Promise<void> {
+  try {
+    await memberFetch("/api/member/ice-creams/seen", { method: "POST" });
+  } catch {
+    // Unreachable backend: try again the next time the tab opens.
+  }
+}
+
+/** Issues a token for 3 points. */
+export async function createIceCreamAction(): Promise<MemberActionState> {
+  const result = await iceCreamRequest("/api/member/ice-creams", { method: "POST" }, "建立失敗，請稍後再試");
+  if (isState(result)) return result;
+  return { ok: true, message: `已建立${iceCreamName(result.serial)}，可以送給好友了。` };
+}
+
+/** Gives a held token to the friend chosen in the form; the token id is bound. */
+export async function giftIceCreamAction(id: string, _: MemberActionState, form: FormData): Promise<MemberActionState> {
+  const result = await iceCreamRequest(
+    `/api/member/ice-creams/${encodeURIComponent(id)}/gift`,
+    { method: "POST", body: JSON.stringify({ memberId: text(form, "memberId") }) },
+    "送出失敗，請稍後再試",
+  );
+  if (isState(result)) return result;
+  return { ok: true, message: `已送給「${result.giftTo?.nickname ?? ""}」，等對方接收（24 小時內）。` };
+}
+
+const ICE_STEPS = {
+  accept: { path: "accept", method: "POST", done: "已收下這支冰炫風。" },
+  decline: { path: "decline", method: "POST", done: "已退回。" },
+  requestRedeem: { path: "redeem-request", method: "POST", done: "已申請兌換，等發行人處理。" },
+  cancelRedeem: { path: "redeem-request", method: "DELETE", done: "已撤回兌換申請。" },
+} as const;
+
+/** Accept, decline, ask to redeem or withdraw that request; token id and step are bound. */
+export async function iceCreamStepAction(id: string, step: keyof typeof ICE_STEPS): Promise<MemberActionState> {
+  const { path, method, done } = ICE_STEPS[step];
+  const result = await iceCreamRequest(
+    `/api/member/ice-creams/${encodeURIComponent(id)}/${path}`,
+    { method },
+    "操作失敗，請重新整理後再試",
+  );
+  return isState(result) ? result : { ok: true, message: done };
+}
+
+/** The issuer completes a redemption: 3 points to the holder, or a physical McFlurry. */
+export async function redeemIceCreamAction(id: string, method: "points" | "physical"): Promise<MemberActionState> {
+  const result = await iceCreamRequest(
+    `/api/member/ice-creams/${encodeURIComponent(id)}/redeem`,
+    { method: "POST", body: JSON.stringify({ method }) },
+    "兌換失敗，請稍後再試",
+  );
+  if (isState(result)) return result;
+  return {
+    ok: true,
+    message:
+      method === "points"
+        ? `已給 3 點，${iceCreamName(result.serial)}功成身退。`
+        : `${iceCreamName(result.serial)}功成身退。`,
+  };
+}
+
+/** The issuer deletes a token they hold, once the box is ticked (no refund). */
+export async function deleteIceCreamAction(
+  id: string,
+  _: MemberActionState,
+  form: FormData,
+): Promise<MemberActionState> {
+  if (form.get("confirm") !== "on") {
+    return { ok: false, message: "請先勾選確認", fields: { confirm: "請先勾選確認" } };
+  }
+  const result = await iceCreamRequest(
+    `/api/member/ice-creams/${encodeURIComponent(id)}`,
+    { method: "DELETE" },
+    "刪除失敗，請稍後再試",
+  );
+  return isState(result) ? result : { ok: true, message: `已刪除${iceCreamName(result.serial)}。` };
+}
+
+/** Claims the free token of a limited period in the point shop; the period id is bound. */
+export async function claimIceCampaignAction(campaignId: string): Promise<MemberActionState> {
+  const result = await iceCreamRequest(
+    `/api/member/ice-campaigns/${encodeURIComponent(campaignId)}/claim`,
+    { method: "POST" },
+    "兌換失敗，請稍後再試",
+  );
+  if (isState(result)) return result;
+  revalidatePath("/shop");
+  return { ok: true, message: `已兌換${iceCreamName(result.serial)}，在會員頁的冰炫風分頁可以看到。` };
 }

@@ -67,6 +67,9 @@ export function MemberPointsPanel({ points }: { points: MemberPoints }) {
           <CheckInForm checkedInToday={points.checkedInToday} />
           <p className="text-caption text-ink-secondary">每天（台灣時間）可以簽到一次，每次獲得 1 點。</p>
           {points.campaign && <CampaignProgress campaign={points.campaign} />}
+          <p className="text-body">
+            <TextLink href="/shop">點數商店</TextLink>：看看點數活動與限定商品。
+          </p>
         </>
       }
       side={
