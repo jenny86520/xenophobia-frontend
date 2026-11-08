@@ -5,6 +5,9 @@ import type { Legends } from "@/types/legends";
 import type { UpcomingPartyResponse } from "@/types/party";
 import HomePage from "./page";
 
+/** Matches a link by its text: jsdom spaces the name around the `<wbr>` contact values carry, browsers do not. */
+const textIs = (text: string) => (_: string, element: Element) => element.textContent === text;
+
 jest.mock("@/lib/public-content-client", () => ({
   fetchAboutContent: jest.fn(),
   fetchUpcomingParty: jest.fn(),
@@ -266,7 +269,7 @@ describe("HomePage", () => {
         .getAllByRole("term")
         .map((dt) => dt.textContent),
     ).toEqual(["Email", "Discord"]);
-    expect(within(closing).getByRole("link", { name: "team@x.team" })).toHaveAttribute("href", "mailto:team@x.team");
+    expect(within(closing).getByRole("link", { name: textIs("team@x.team") })).toHaveAttribute("href", "mailto:team@x.team");
     expect(within(closing).getByRole("img", { name: "XenoPhobiA LOGO" })).toBeInTheDocument();
     expect(container.querySelector('[data-placeholder="brand.closing-statement"]')).toBeNull();
     expect(container.querySelector('[data-placeholder="brand.vector-logo"]')).toBeNull();

@@ -1,5 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import type { AboutContent } from "@/types/about";
+
+/** Matches a link by its text: jsdom spaces the name around the `<wbr>` contact values carry, browsers do not. */
+const textIs = (text: string) => (_: string, element: Element) => element.textContent === text;
 import { SiteFooter } from "./site-footer";
 
 const about = (
@@ -53,7 +56,10 @@ describe("SiteFooter", () => {
 
     expect(container.querySelector('[data-placeholder="contact.social"]')).not.toBeNull();
     expect(screen.getByText("待提供：社群連結")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "team@x.team" })).toHaveAttribute("href", "mailto:team@x.team");
+    const email = screen.getByRole("link", { name: textIs("team@x.team") });
+    expect(email).toHaveAttribute("href", "mailto:team@x.team");
+    // It may only wrap after @ and the dot; the text itself stays whole.
+    expect(email.querySelectorAll("wbr")).toHaveLength(2);
   });
 
   it("lists social links in order with the platform icon and name, opening in a new tab", () => {

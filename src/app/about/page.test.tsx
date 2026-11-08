@@ -3,6 +3,9 @@ import type { AboutContent } from "@/types/about";
 import { fetchAboutContent } from "@/lib/public-content-client";
 import AboutPage from "./page";
 
+/** Matches a link by its text: jsdom spaces the name around the `<wbr>` contact values carry, browsers do not. */
+const textIs = (text: string) => (_: string, element: Element) => element.textContent === text;
+
 jest.mock("@/lib/public-content-client", () => ({
   fetchAboutContent: jest.fn(),
 }));
@@ -108,7 +111,7 @@ describe("AboutPage", () => {
 
     expect(screen.getByText("待提供：里程碑")).toBeInTheDocument();
     expect(screen.getByText("Mission text.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "team@x.team" })).toHaveAttribute("href", "mailto:team@x.team");
+    expect(screen.getByRole("link", { name: textIs("team@x.team") })).toHaveAttribute("href", "mailto:team@x.team");
     expect(screen.getByText("社群互動")).toBeInTheDocument();
   });
 

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type DisplayProps = {
@@ -6,12 +6,13 @@ type DisplayProps = {
   className?: string;
   as?: "h1" | "p" | "span" | "div";
   id?: string;
+  style?: CSSProperties;
 };
 
 /** Display: the wordmark / giant statement size (Geist, uppercase, tight). */
-export function Display({ children, className, as: Tag = "p", id }: DisplayProps) {
+export function Display({ children, className, as: Tag = "p", id, style }: DisplayProps) {
   return (
-    <Tag id={id} className={cn("font-sans text-display uppercase", className)}>
+    <Tag id={id} style={style} className={cn("font-sans text-display uppercase", className)}>
       {children}
     </Tag>
   );

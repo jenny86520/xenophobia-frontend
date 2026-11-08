@@ -17,3 +17,12 @@ export function contactHref(contact: ContactInfo): string | null {
       return null;
   }
 }
+
+/**
+ * A contact value cut right after each `@` and `.`, the only places it should wrap
+ * (`xpagchannel@` / `gmail.com`, never `xpagchannel@gmail.co` / `m`). Joining the parts
+ * gives the value back unchanged.
+ */
+export function splitAfterSeparators(value: string): string[] {
+  return value.split(/(?<=[@.])/).filter(Boolean);
+}

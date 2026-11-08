@@ -4,6 +4,7 @@ import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
 import { SocialIcon, socialLinkName } from "@/components/brand/social-icon";
+import { BreakableValue } from "@/components/contact/breakable-value";
 import { LegalLinks } from "@/components/legal/legal-links";
 import { TextLink } from "@/components/brand/text-link";
 import type { AboutContent, ContactInfo } from "@/types/about";
@@ -23,11 +24,13 @@ function ContactLine({ contact }: { contact: ContactInfo }) {
     <li className="flex flex-col">
       <MetaLabel>{contact.label}</MetaLabel>
       {href ? (
-        <TextLink href={href} className="break-all text-ink-secondary hover:text-ink">
-          {contact.value}
+        <TextLink href={href} className="text-ink-secondary [overflow-wrap:anywhere] hover:text-ink">
+          <BreakableValue value={contact.value} />
         </TextLink>
       ) : (
-        <span className="break-all text-ink-secondary">{contact.value}</span>
+        <span className="text-ink-secondary [overflow-wrap:anywhere]">
+          <BreakableValue value={contact.value} />
+        </span>
       )}
     </li>
   );

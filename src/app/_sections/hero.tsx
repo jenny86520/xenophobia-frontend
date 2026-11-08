@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { BrandName } from "@/components/brand/brand-name";
 import { Container } from "@/components/brand/container";
 import { CtaLink } from "@/components/brand/cta-link";
@@ -56,9 +57,18 @@ export function Hero({ profile, nextParty }: HeroProps) {
           {mmdd && <MetaLabel>Next / {mmdd}</MetaLabel>}
         </div>
 
-        {/* Centered, sized to always fit the container (14vw, capped at 13rem). The size is set
-            per breakpoint so the base text-display line-height/tracking/weight stay intact. */}
-        <Display as="h1" id="hero-title" className="hero-parallax mt-8 text-center whitespace-nowrap max-lg:text-[min(14vw,13rem)] lg:text-[min(14vw,13rem)]">
+        {/* Centered and sized by the name's length (--hero-chars) so it always fits the container:
+            14vw (capped at 13rem) fits the ten letters of the default name, so a longer name shares
+            the same 140vw among its characters. It never goes below 2.5rem (6rem, the Display minimum,
+            from lg); a name that still does not fit wraps between words (text-balance), and
+            overflow-wrap is the last resort for one long word. The size is set per breakpoint so the
+            base text-display line-height/tracking/weight stay intact. */}
+        <Display
+          as="h1"
+          id="hero-title"
+          style={{ "--hero-chars": Array.from(profile.name).length } as CSSProperties}
+          className="hero-parallax mt-8 text-center text-balance [overflow-wrap:anywhere] max-lg:text-[length:max(2.5rem,min(13rem,calc(140vw/max(var(--hero-chars),10))))] lg:text-[length:max(6rem,min(13rem,calc(140vw/max(var(--hero-chars),10))))]"
+        >
           <BrandName name={profile.name} />
         </Display>
 
