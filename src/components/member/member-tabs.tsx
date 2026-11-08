@@ -85,6 +85,8 @@ type MemberTabColumnsProps = {
   id: string;
   eyebrow: string;
   title: string;
+  /** Beside the heading, e.g. the feature's 「怎麼玩？」 guide button. */
+  titleAside?: ReactNode;
   /** The main (left) column. */
   main: ReactNode;
   /** The right column, divided by a rule from 1024px. */
@@ -95,14 +97,17 @@ type MemberTabColumnsProps = {
  * A tab with its heading on top and two columns below from 1024px (main 7, side 5); below that they
  * stack in that order. Used by the 好友 and 投稿影片 tabs.
  */
-export function MemberTabColumns({ id, eyebrow, title, main, side }: MemberTabColumnsProps) {
+export function MemberTabColumns({ id, eyebrow, title, titleAside, main, side }: MemberTabColumnsProps) {
   return (
     <section aria-labelledby={id}>
       <div className="mb-10 flex flex-col gap-4">
         <Eyebrow>{eyebrow}</Eyebrow>
-        <Heading level={2} id={id}>
-          {title}
-        </Heading>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <Heading level={2} id={id}>
+            {title}
+          </Heading>
+          {titleAside}
+        </div>
       </div>
       <EditorialGrid className="gap-y-12">
         <div className="col-span-4 flex flex-col gap-8 md:col-span-8 lg:col-span-7">{main}</div>

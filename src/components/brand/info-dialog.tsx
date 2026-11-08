@@ -9,6 +9,8 @@ type InfoDialogProps = {
   title: string;
   /** Shows this text beside the ⓘ, for a dialog people should notice; the button is then named by it. */
   label?: string;
+  /** `wide` for longer content such as a guide with a video. */
+  size?: "info" | "wide";
   children: ReactNode;
 };
 
@@ -17,7 +19,7 @@ type InfoDialogProps = {
  * dialogs: no JavaScript needed, Esc or a click outside closes it, the close button takes focus.
  * Keeps details such as counting rules out of the page while leaving them one click away.
  */
-export function InfoDialog({ id, title, label, children }: InfoDialogProps) {
+export function InfoDialog({ id, title, label, size = "info", children }: InfoDialogProps) {
   return (
     <>
       {label ? (
@@ -39,7 +41,7 @@ export function InfoDialog({ id, title, label, children }: InfoDialogProps) {
           <Info aria-hidden="true" className="size-5" />
         </button>
       )}
-      <PopoverDialog id={id} title={title}>
+      <PopoverDialog id={id} title={title} size={size}>
         {children}
       </PopoverDialog>
     </>

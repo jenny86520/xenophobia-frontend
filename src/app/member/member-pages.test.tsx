@@ -10,7 +10,7 @@ import {
   fetchMemberVideoSubmissions,
 } from "@/lib/member-session";
 import type { FriendsOverview } from "@/types/friends";
-import { fetchAboutContent } from "@/lib/public-content-client";
+import { fetchAboutContent, fetchGuide } from "@/lib/public-content-client";
 import type { MemberProfile, MemberVideoSubmissions } from "@/types/member";
 import { markIceCreamsSeenAction } from "./actions";
 import MemberPage from "./page";
@@ -28,7 +28,10 @@ jest.mock("@/lib/member-session", () => ({
   fetchMemberPendingSummary: jest.fn(),
   fetchMemberLegalChanges: jest.fn(),
 }));
-jest.mock("@/lib/public-content-client", () => ({ fetchAboutContent: jest.fn() }));
+jest.mock("@/lib/public-content-client", () => ({
+  fetchAboutContent: jest.fn(),
+  fetchGuide: jest.fn().mockResolvedValue(null),
+}));
 jest.mock("next/navigation", () => ({ useRouter: () => ({ refresh: jest.fn(), push: jest.fn() }) }));
 // The forms call Server Actions; the pages only need them to exist.
 jest.mock("./actions", () => ({
@@ -557,6 +560,9 @@ describe("/member", () => {
       expect(screen.getByRole("heading", { name: "十一月全勤" })).toBeInTheDocument();
       expect(screen.getByText("連續 6 / 10 天")).toBeInTheDocument();
       expect(screen.getByRole("progressbar", { name: "連續 6 / 10 天" })).toHaveAttribute("value", "6");
+      // The check-in guide is not published here, so there is no 「怎麼玩？」.
+      expect(fetchGuide).toHaveBeenCalledWith("checkin");
+      expect(screen.queryByRole("button", { name: "怎麼玩？" })).not.toBeInTheDocument();
 
       const rows = within(screen.getByRole("region", { name: "點數紀錄" })).getAllByRole("listitem");
       expect(rows.map((row) => row.textContent)).toEqual([
@@ -565,6 +571,23 @@ describe("/member", () => {
         // A kind the site does not know yet shows its code.
         "future_kind2026/11/05 12:00−3",
       ]);
+    });
+
+    it("puts the check-in guide's 「怎麼玩？」 beside the heading once it is published", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberPoints as jest.Mock).mockResolvedValue(points());
+      (fetchGuide as jest.Mock).mockResolvedValueOnce({
+        ref: "checkin",
+        title: "每日簽到",
+        content: "每天按一次。",
+        imageUrl: null,
+        imageAlt: "每日簽到",
+        video: null,
+      });
+      render(await MemberPage(memberProps("points")));
+
+      const heading = screen.getByRole("heading", { level: 2, name: "點數" });
+      expect(within(heading.parentElement as HTMLElement).getByRole("button", { name: "怎麼玩？" })).toBeInTheDocument();
     });
 
     it("says today is done and leaves out the campaign when none is running", async () => {

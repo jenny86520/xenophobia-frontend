@@ -24,7 +24,7 @@ import {
   fetchMemberVideoSubmissions,
   type PendingSummary,
 } from "@/lib/member-session";
-import { fetchAboutContent } from "@/lib/public-content-client";
+import { fetchAboutContent, fetchGuide } from "@/lib/public-content-client";
 import type { MemberProfile } from "@/types/member";
 import { parseMemberTab, type MemberTab } from "@/utils/member-tabs";
 import { formatPartyTime, formatSubPartyRange } from "@/utils/party-time";
@@ -154,17 +154,20 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: string |
 
   if (tab === "points") {
     const pageNumber = typeof page === "string" && /^[1-9]\d*$/.test(page) ? Number(page) : 1;
-    const points = (await fetchMemberPoints(pageNumber)) ?? {
+    // The tab's 「怎麼玩？」 guide; a failure only hides the button.
+    const [found, guide] = await Promise.all([fetchMemberPoints(pageNumber), fetchGuide("checkin").catch(() => null)]);
+    const points = found ?? {
       balance: 0,
       checkedInToday: false,
       campaign: null,
       entries: { items: [], total: 0, page: 1, pageSize: 20 },
     };
-    return <MemberPointsPanel points={points} />;
+    return <MemberPointsPanel points={points} guide={guide} />;
   }
 
   if (tab === "ice-creams") {
-    const iceCreams = (await fetchMemberIceCreams()) ?? {
+    const [found, guide] = await Promise.all([fetchMemberIceCreams(), fetchGuide("ice-cream").catch(() => null)]);
+    const iceCreams = found ?? {
       issuing: { active: 0, limit: 10 },
       balance: 0,
       createCost: 3,
@@ -174,7 +177,7 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: string |
       redeemRequests: [],
       friends: [],
     };
-    return <MemberIceCreamsPanel iceCreams={iceCreams} />;
+    return <MemberIceCreamsPanel iceCreams={iceCreams} guide={guide} />;
   }
 
   if (tab === "videos") {

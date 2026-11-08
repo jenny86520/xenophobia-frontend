@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { iceCreamStepAction, redeemIceCreamAction } from "@/app/member/actions";
 import { MetaLabel } from "@/components/brand/meta-label";
+import { GuideButton } from "@/components/guide/guide-button";
 import { PopoverDialog } from "@/components/brand/popover-dialog";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
@@ -10,6 +11,7 @@ import {
   IceCreamDetailDialog,
   IceCreamGrid,
 } from "@/components/ice-cream/ice-cream-card";
+import type { Guide } from "@/types/guide";
 import type { IceCream, MemberIceCream, MemberIceCreams } from "@/types/ice-cream";
 import { formatTaipeiDateTime } from "@/utils/datetime";
 import { ICE_STATUS_TEXT, iceCreamName } from "@/utils/ice-cream-events";
@@ -181,7 +183,13 @@ function HeldCard({ ice, friends }: { ice: MemberIceCream; friends: MemberIceCre
  * redemptions asked of them (as issuer) on the right, with links to the growth record and the shop.
  * Every rule (limit, points, who may do what) is the backend's.
  */
-export function MemberIceCreamsPanel({ iceCreams }: { iceCreams: MemberIceCreams }) {
+export function MemberIceCreamsPanel({
+  iceCreams,
+  guide = null,
+}: {
+  iceCreams: MemberIceCreams;
+  guide?: Guide | null;
+}) {
   const { issuing, balance, createCost, create } = iceCreams;
   return (
     <>
@@ -190,6 +198,7 @@ export function MemberIceCreamsPanel({ iceCreams }: { iceCreams: MemberIceCreams
         id="ice-creams-title"
         eyebrow="Ice cream"
         title="冰炫風"
+        titleAside={<GuideButton guide={guide} />}
         main={
           <>
             <div className="flex flex-col gap-3">

@@ -15,6 +15,7 @@ describe("NavLinks as headings (the full-screen menu)", () => {
       "Shop",
       "About",
       "News",
+      "Guide",
       "Member",
     ]);
     const heading = screen.getByText("Info");
@@ -34,6 +35,7 @@ describe("flatNavLinks", () => {
       "/shop",
       "/about",
       "/news",
+      "/guide",
       "/member",
     ]);
   });

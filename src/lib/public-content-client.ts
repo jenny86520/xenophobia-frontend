@@ -14,6 +14,7 @@ import type { Legends } from "@/types/legends";
 import type { CompletedMatch, MatchDetail, MatchList } from "@/types/match";
 import type { Shop } from "@/types/ice-cream";
 import type { NewsCategory, NewsItem, NewsPage } from "@/types/news";
+import type { Guide, GuideSummary } from "@/types/guide";
 
 export type {
   NextParty,
@@ -163,4 +164,12 @@ export const fetchNewsList = cache((category: NewsCategory | null, page: number)
 export const fetchNews = cache(
   (id: string): Promise<NewsItem | null> =>
     getJson<NewsItem>(`/api/news/${encodeURIComponent(id)}`, { asMember: true }),
+);
+
+/** Published guides for /guide, fixed ones first. */
+export const fetchGuides = cache((): Promise<GuideSummary[]> => getRequiredJson<GuideSummary[]>("/api/guides"));
+
+/** One published guide; `null` when it does not exist or is not published. */
+export const fetchGuide = cache(
+  (ref: string): Promise<Guide | null> => getJson<Guide>(`/api/guides/${encodeURIComponent(ref)}`),
 );

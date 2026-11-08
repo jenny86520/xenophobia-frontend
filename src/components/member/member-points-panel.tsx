@@ -1,6 +1,8 @@
 import { MetaLabel } from "@/components/brand/meta-label";
+import { GuideButton } from "@/components/guide/guide-button";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
+import type { Guide } from "@/types/guide";
 import type { MemberPoints, PointCampaignProgress } from "@/types/member";
 import { formatTaipeiDateTime } from "@/utils/datetime";
 import { memberTabHref } from "@/utils/member-tabs";
@@ -51,13 +53,14 @@ function EntryPages({ page, pageSize, total }: MemberPoints["entries"]) {
  * The 點數 tab: the balance, today's check-in and the running campaign's progress on the left, the
  * member's ledger (newest first) on the right. Every number comes from the backend.
  */
-export function MemberPointsPanel({ points }: { points: MemberPoints }) {
+export function MemberPointsPanel({ points, guide = null }: { points: MemberPoints; guide?: Guide | null }) {
   const { entries } = points;
   return (
     <MemberTabColumns
       id="points-title"
       eyebrow="Points"
       title="點數"
+      titleAside={<GuideButton guide={guide} />}
       main={
         <>
           <div className="flex flex-col gap-1">

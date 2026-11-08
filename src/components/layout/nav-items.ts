@@ -1,4 +1,14 @@
-import { Crown, Info, Newspaper, PartyPopper, Store, UserRound, UsersRound, type LucideIcon } from "lucide-react";
+import {
+  BookOpen,
+  Crown,
+  Info,
+  Newspaper,
+  PartyPopper,
+  Store,
+  UserRound,
+  UsersRound,
+  type LucideIcon,
+} from "lucide-react";
 
 /** Which waiting count a link shows: Member's pending items, or News's unread messages. */
 export type NavCount = "pending" | "news";
@@ -41,6 +51,7 @@ export const NAV_ITEMS: readonly (NavLink | NavGroup)[] = [
     items: [
       { kind: "link", href: "/about", label: "About", lang: "en", icon: UsersRound },
       { kind: "link", href: "/news", label: "News", lang: "en", icon: Newspaper, count: "news" },
+      { kind: "link", href: "/guide", label: "Guide", lang: "en", icon: BookOpen },
     ],
   },
   { kind: "link", href: "/member", label: "Member", lang: "en", icon: UserRound, count: "pending" },

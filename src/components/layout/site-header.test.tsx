@@ -36,19 +36,20 @@ describe("SiteHeader", () => {
       ["Shop", "/shop"],
       ["About", "/about"],
       ["News", "/news"],
+      ["Guide", "/guide"],
       ["Member", "/member"],
     ]);
     links.forEach((a) => expect(a).toHaveAttribute("lang", "en"));
   });
 
-  it("puts About and News behind an Info button that opens a popover", () => {
+  it("puts About, News and Guide behind an Info button that opens a popover", () => {
     render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
 
     const nav = screen.getByRole("navigation", { name: "主要導覽" });
     const info = within(nav).getByRole("button", { name: "Info" });
     const menu = document.getElementById(info.getAttribute("popovertarget") ?? "");
     expect(menu).toHaveAttribute("popover", "auto");
-    expect(within(menu!).getAllByRole("link").map((a) => a.textContent)).toEqual(["About", "News"]);
+    expect(within(menu!).getAllByRole("link").map((a) => a.textContent)).toEqual(["About", "News", "Guide"]);
     expect(info.querySelector("[lang=en]")).toHaveTextContent("Info");
     expect(info).not.toHaveAttribute("data-current");
   });
