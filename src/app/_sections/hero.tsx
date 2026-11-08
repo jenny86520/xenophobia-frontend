@@ -8,7 +8,7 @@ import { MetaLabel } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
 import { Display } from "@/components/brand/typography";
 import { Countdown } from "@/components/party/countdown";
-import { TIME_UNDECIDED } from "@/utils/party-time";
+import { UNDECIDED } from "@/utils/party-time";
 import type { TeamProfile } from "@/types/about";
 import type { NextParty } from "@/types/party";
 
@@ -103,7 +103,7 @@ export function Hero({ profile, nextParty }: HeroProps) {
                 <MetaLabel>{nextParty.startTime ? "Countdown" : "Next"}</MetaLabel>
               </span>
               {/* Without a time there is nothing to count down to: the date in the countdown's place
-                  (short, so it fits like the countdown) with 時間待定 on a smaller line under it. */}
+                  (short, so it fits like the countdown) with 待定 on a smaller line under it. */}
               {nextParty.startTime ? (
                 <Countdown
                   startDate={nextParty.startDate}
@@ -115,7 +115,7 @@ export function Hero({ profile, nextParty }: HeroProps) {
                   <span className="font-mono text-h2 leading-none tracking-tight whitespace-nowrap text-ink tabular-nums">
                     {mmdd}
                   </span>
-                  <span className="text-body text-ink-secondary">{TIME_UNDECIDED}</span>
+                  <span className="text-body text-ink-secondary">{UNDECIDED}</span>
                 </p>
               )}
               <Link

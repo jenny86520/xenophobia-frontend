@@ -227,15 +227,17 @@ describe("HomePage", () => {
     expect(screen.getByRole("link", { name: /Night of Strategy/ })).toHaveAttribute("href", "/party/p0");
   });
 
-  it("shows the date and 時間待定 instead of a countdown when the next party has no time yet", async () => {
+  it("shows the date and 待定 instead of a countdown when the next party has no time yet", async () => {
     await renderHome({ nextParty: { ...upcoming.nextParty!, startTime: "" } });
 
     expect(screen.queryByText("Countdown")).toBeNull();
-    // The hero keeps the short date in the countdown's place, with 時間待定 on its own line.
+    // The hero keeps the short date in the countdown's place, with 待定 on its own line.
     const hero = screen.getByRole("region", { name: /XenoPhobiA|XPA/ });
-    expect(within(hero).getByText("時間待定")).toBeInTheDocument();
+    expect(within(hero).getByText("待定")).toBeInTheDocument();
     expect(within(hero).getAllByText("10/05").length).toBeGreaterThan(0);
     expect(within(hero).queryByText("2099-10-05（時間待定）")).toBeNull();
+    // The events section's When row says 待定 too.
+    expect(screen.getByText("2099-10-05（待定）")).toBeInTheDocument();
   });
 
   it("has no inline back-to-top text link (the floating button lives in the layout)", async () => {

@@ -9,15 +9,18 @@ import { formatSubPartyTime } from "./datetime";
 export const UNDECIDED = "待定";
 export const TIME_UNDECIDED = "時間待定";
 
-/** "2026-11-01 19:00", "2026-11-01 19:00 – 23:00", "2026-11-01 22:00 – 2026-11-02 02:00", "2026-11-01（時間待定）" or "待定". */
-export function formatPartyTime(party: PartySchedule): string {
+/**
+ * "2026-11-01 19:00", "2026-11-01 19:00 – 23:00", "2026-11-01 22:00 – 2026-11-02 02:00", "2026-11-01（時間待定）" or "待定".
+ * `timeUndecided` replaces 時間待定 (the home page says 待定).
+ */
+export function formatPartyTime(party: PartySchedule, timeUndecided = TIME_UNDECIDED): string {
   if (!party.startDate) return UNDECIDED;
-  const start = party.startTime ? `${party.startDate} ${party.startTime}` : `${party.startDate}（${TIME_UNDECIDED}）`;
+  const start = party.startTime ? `${party.startDate} ${party.startTime}` : `${party.startDate}（${timeUndecided}）`;
   if (!party.endDate) return start;
   if (party.endDate === party.startDate) {
     return party.startTime && party.endTime ? `${start} – ${party.endTime}` : start;
   }
-  const end = party.endTime ? `${party.endDate} ${party.endTime}` : `${party.endDate}（${TIME_UNDECIDED}）`;
+  const end = party.endTime ? `${party.endDate} ${party.endTime}` : `${party.endDate}（${timeUndecided}）`;
   return `${start} – ${end}`;
 }
 

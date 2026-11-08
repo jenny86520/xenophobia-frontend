@@ -23,6 +23,12 @@ describe("formatPartyTime", () => {
     );
     expect(formatPartyTime(party("", ""))).toBe("待定");
   });
+
+  it("can say 待定 instead of 時間待定", () => {
+    expect(formatPartyTime(party("2026-11-01", "", "2026-11-03", ""), "待定")).toBe(
+      "2026-11-01（待定） – 2026-11-03（待定）",
+    );
+  });
 });
 
 describe("formatPartyTimeOfDay", () => {
