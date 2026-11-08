@@ -1628,6 +1628,46 @@
   }
 }
 
+/*
+ * Check-in stamp (StampCard on the member 點數 tab, spec 品牌特效：蓋章). Today's seal comes down
+ * from about 1.6x and a sharper tilt onto its slot in one move, no overshoot; on the day the card
+ * is full the bonus 「+1」 lands just after. CheckInPanel sets data-stamp-armed once JavaScript runs
+ * and data-just-checked-in after a successful check-in in that mount, so a reload, a revisit or a
+ * page without JavaScript never replays it: the seal is simply there.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  [data-stamp-armed][data-just-checked-in] [data-stamp-today][data-stamped] .stamp-mark {
+    animation: xpa-stamp 320ms cubic-bezier(0.55, 0, 0.9, 0.5) both;
+  }
+  [data-stamp-armed][data-just-checked-in] [data-stamp-today][data-stamped] .stamp-bonus {
+    animation: xpa-stamp-bonus 240ms ease-out 260ms both;
+  }
+}
+
+@keyframes xpa-stamp {
+  from {
+    opacity: 0;
+    scale: 1.6;
+    rotate: -18deg;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    rotate: -6deg;
+  }
+}
+
+@keyframes xpa-stamp-bonus {
+  from {
+    opacity: 0;
+    scale: 1.6;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
 /* Visitors who prefer reduced motion get (near-)instant transitions and animations. */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -24,3 +24,14 @@ export function parseMemberTab(value: string | string[] | undefined): MemberTab 
 export function memberTabHref(tab: MemberTab): string {
   return tab === MEMBER_TABS[0].value ? "/member" : `/member?tab=${tab}`;
 }
+
+/**
+ * A 點數 tab URL that keeps both of its pagers: `page` (the ledger) and `card` (a long stamp card).
+ * Page 1 and an unset card are left out, so the defaults stay plain ?tab=points.
+ */
+export function pointsTabHref({ page, card }: { page?: number; card?: number }): string {
+  const params = new URLSearchParams({ tab: "points" });
+  if (page !== undefined && page > 1) params.set("page", String(page));
+  if (card !== undefined) params.set("card", String(card));
+  return `/member?${params}`;
+}

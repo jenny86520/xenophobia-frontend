@@ -548,18 +548,19 @@ describe("/member", () => {
       ...overrides,
     });
 
-    it("shows the balance, the check-in button, the campaign run and the entries", async () => {
+    it("shows the balance, the check-in button, the campaign's stamp card and the entries", async () => {
       (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
       (fetchMemberPoints as jest.Mock).mockResolvedValue(points());
       render(await MemberPage(memberProps("points")));
 
       expect(screen.getByRole("link", { name: "點數" })).toHaveAttribute("aria-current", "page");
       expect(fetchMemberPoints).toHaveBeenCalledWith(1);
-      expect(screen.getByText("7")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "簽到" })).toBeInTheDocument();
+      expect(screen.getByText("7", { selector: "p" })).toHaveTextContent("7點");
+      expect(screen.getByRole("button", { name: "簽到 +1" })).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: "十一月全勤" })).toBeInTheDocument();
-      expect(screen.getByText("連續 6 / 10 天")).toBeInTheDocument();
-      expect(screen.getByRole("progressbar", { name: "連續 6 / 10 天" })).toHaveAttribute("value", "6");
+      expect(screen.getByText("6 / 10 天・再 4 天 +1")).toBeInTheDocument();
+      expect(document.querySelectorAll("#stamp-card li[data-stamped]")).toHaveLength(6);
+      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
       // The check-in guide is not published here, so there is no 「怎麼玩？」.
       expect(fetchGuide).toHaveBeenCalledWith("checkin");
       expect(screen.queryByRole("button", { name: "怎麼玩？" })).not.toBeInTheDocument();
@@ -596,8 +597,8 @@ describe("/member", () => {
       render(await MemberPage(memberProps("points")));
 
       expect(screen.getByText("今天已簽到")).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "簽到" })).not.toBeInTheDocument();
-      expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "簽到 +1" })).not.toBeInTheDocument();
+      expect(document.querySelector("#stamp-card")).toBeNull();
     });
 
     it("pages the entries", async () => {
@@ -615,6 +616,26 @@ describe("/member", () => {
       expect(fetchMemberPoints).toHaveBeenCalledWith(2);
       expect(screen.getByRole("link", { name: "較新的紀錄" })).toHaveAttribute("href", "/member?tab=points");
       expect(screen.getByRole("link", { name: "較早的紀錄" })).toHaveAttribute("href", "/member?tab=points&page=3");
+    });
+
+    it("opens the stamp card named by ?card= and ignores one that is not a number", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      const long = { id: "c1", title: "全年全勤", endDate: "2026-12-31", requiredDays: 60, streak: 23 };
+      (fetchMemberPoints as jest.Mock).mockResolvedValue(points({ campaign: long }));
+      const open = async (card: string) =>
+        render(
+          await MemberPage({
+            searchParams: Promise.resolve({ tab: "points", card }),
+            params: Promise.resolve({}),
+          } as unknown as PageProps<"/member">),
+        );
+
+      const first = await open("2");
+      expect(screen.getByRole("navigation", { name: "集點卡分頁" })).toHaveTextContent("第 2 / 6 張");
+      first.unmount();
+
+      await open("abc");
+      expect(screen.getByRole("navigation", { name: "集點卡分頁" })).toHaveTextContent("第 3 / 6 張");
     });
   });
 

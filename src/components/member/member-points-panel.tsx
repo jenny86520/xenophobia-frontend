@@ -1,3 +1,5 @@
+import { Store } from "lucide-react";
+import { InfoDialog } from "@/components/brand/info-dialog";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { GuideButton } from "@/components/guide/guide-button";
 import { TextLink } from "@/components/brand/text-link";
@@ -5,39 +7,54 @@ import { Heading } from "@/components/brand/typography";
 import type { Guide } from "@/types/guide";
 import type { MemberPoints, PointCampaignProgress } from "@/types/member";
 import { formatTaipeiDateTime } from "@/utils/datetime";
-import { memberTabHref } from "@/utils/member-tabs";
+import { pointsTabHref } from "@/utils/member-tabs";
 import { formatPointAmount, pointKindLabel } from "@/utils/point-kinds";
-import { CheckInForm } from "./check-in-form";
+import { CheckInPanel } from "./check-in-panel";
 import { MemberTabColumns } from "./member-tabs";
+import { StampCard } from "./stamp-card";
 
-/** The running campaign: name, end and the run as text, plus a bar that repeats it. */
-function CampaignProgress({ campaign }: { campaign: PointCampaignProgress }) {
-  const label = `連續 ${campaign.streak} / ${campaign.requiredDays} 天`;
+/** The running campaign: name and end, the rules behind an ⓘ, and the stamp card. */
+function CampaignCard({
+  campaign,
+  checkedInToday,
+  requestedCard,
+  ledgerPage,
+}: {
+  campaign: PointCampaignProgress;
+  checkedInToday: boolean;
+  requestedCard?: number;
+  ledgerPage: number;
+}) {
   return (
-    <section aria-labelledby="campaign-title" className="flex flex-col gap-3 border-t border-line pt-6">
+    <section aria-labelledby="campaign-title" className="flex flex-col gap-4 border-t border-line pt-8">
       <MetaLabel>簽到活動・{campaign.endDate.replaceAll("-", "/")} 結束</MetaLabel>
-      <Heading level={3} id="campaign-title">
-        {campaign.title}
-      </Heading>
-      <p className="text-body text-ink-secondary">
-        活動期間連續簽到滿 {campaign.requiredDays} 天，另外獲得 1 點，然後重新計算；漏簽一天也會重新計算。
-      </p>
-      <p className="font-mono text-lead text-ink">{label}</p>
-      <progress
-        value={campaign.streak}
-        max={campaign.requiredDays}
-        aria-label={label}
-        className="h-2 w-full overflow-hidden rounded-sm [&::-moz-progress-bar]:bg-signal [&::-webkit-progress-bar]:bg-surface-elevated [&::-webkit-progress-value]:bg-signal"
+      <div className="flex items-center gap-2">
+        <Heading level={3} id="campaign-title">
+          {campaign.title}
+        </Heading>
+        <InfoDialog id="campaign-rules" title="簽到規則">
+          <p>每天（台灣時間）可以簽到一次，每次獲得 1 點。</p>
+          <p>
+            活動期間連續簽到滿 {campaign.requiredDays} 天，另外獲得 1 點，然後重新計算；漏簽一天也會重新計算。
+          </p>
+        </InfoDialog>
+      </div>
+      <StampCard
+        streak={campaign.streak}
+        requiredDays={campaign.requiredDays}
+        checkedInToday={checkedInToday}
+        requestedCard={requestedCard}
+        ledgerPage={ledgerPage}
       />
     </section>
   );
 }
 
-/** Links to the newer and older pages of entries (?tab=points&page=N). */
-function EntryPages({ page, pageSize, total }: MemberPoints["entries"]) {
+/** Links to the newer and older pages of entries (?tab=points&page=N), keeping the stamp card's ?card=. */
+function EntryPages({ page, pageSize, total, card }: MemberPoints["entries"] & { card?: number }) {
   const pages = Math.ceil(total / pageSize);
   if (pages <= 1) return null;
-  const href = (target: number) => (target === 1 ? memberTabHref("points") : `/member?tab=points&page=${target}`);
+  const href = (target: number) => pointsTabHref({ page: target, card });
   return (
     <nav aria-label="點數紀錄分頁" className="flex items-center justify-between gap-4 text-body">
       {page > 1 ? <TextLink href={href(page - 1)}>較新的紀錄</TextLink> : <span />}
@@ -50,10 +67,19 @@ function EntryPages({ page, pageSize, total }: MemberPoints["entries"]) {
 }
 
 /**
- * The 點數 tab: the balance, today's check-in and the running campaign's progress on the left, the
- * member's ledger (newest first) on the right. Every number comes from the backend.
+ * The 點數 tab: the balance with today's check-in and the running campaign's stamp card on the left,
+ * the member's ledger (newest first) on the right. Every number comes from the backend.
  */
-export function MemberPointsPanel({ points, guide = null }: { points: MemberPoints; guide?: Guide | null }) {
+export function MemberPointsPanel({
+  points,
+  guide = null,
+  card,
+}: {
+  points: MemberPoints;
+  guide?: Guide | null;
+  /** `?card=` for a long campaign's stamp card. */
+  card?: number;
+}) {
   const { entries } = points;
   return (
     <MemberTabColumns
@@ -63,15 +89,32 @@ export function MemberPointsPanel({ points, guide = null }: { points: MemberPoin
       titleAside={<GuideButton guide={guide} />}
       main={
         <>
-          <div className="flex flex-col gap-1">
-            <MetaLabel>目前點數</MetaLabel>
-            <p className="font-mono text-display text-ink">{points.balance}</p>
-          </div>
-          <CheckInForm checkedInToday={points.checkedInToday} />
-          <p className="text-caption text-ink-secondary">每天（台灣時間）可以簽到一次，每次獲得 1 點。</p>
-          {points.campaign && <CampaignProgress campaign={points.campaign} />}
+          <CheckInPanel
+            checkedInToday={points.checkedInToday}
+            balance={
+              <div className="flex flex-col gap-1">
+                <MetaLabel>目前點數</MetaLabel>
+                <p className="font-mono text-h1 text-ink">
+                  {points.balance}
+                  <span className="ml-2 font-sans text-lead text-ink-secondary">點</span>
+                </p>
+              </div>
+            }
+            campaign={
+              points.campaign && (
+                <CampaignCard
+                  campaign={points.campaign}
+                  checkedInToday={points.checkedInToday}
+                  requestedCard={card}
+                  ledgerPage={entries.page}
+                />
+              )
+            }
+          />
           <p className="text-body">
-            <TextLink href="/shop">點數商店</TextLink>：看看點數活動與限定商品。
+            <TextLink href="/shop" icon={Store}>
+              點數商店
+            </TextLink>
           </p>
         </>
       }
@@ -95,7 +138,7 @@ export function MemberPointsPanel({ points, guide = null }: { points: MemberPoin
               ))}
             </ol>
           )}
-          <EntryPages {...entries} />
+          <EntryPages {...entries} card={card} />
         </section>
       }
     />

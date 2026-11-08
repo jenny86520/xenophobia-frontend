@@ -98,7 +98,7 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
         ) : (
           <>
             <MemberTabs current={tab} counts={tabCounts(await fetchMemberPendingSummary())} />
-            {await tabContent(tab, profile, query.page)}
+            {await tabContent(tab, profile, query.page, query.card)}
           </>
         )}
       </Section>
@@ -106,8 +106,15 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
   );
 }
 
+type QueryValue = string | string[] | undefined;
+
+/** A positive whole number from the query (?page=, ?card=), else undefined. */
+function positiveInteger(value: QueryValue): number | undefined {
+  return typeof value === "string" && /^[1-9]\d*$/.test(value) ? Number(value) : undefined;
+}
+
 /** The open tab's content; only that tab's data is fetched. */
-async function tabContent(tab: MemberTab, profile: MemberProfile, page: string | string[] | undefined) {
+async function tabContent(tab: MemberTab, profile: MemberProfile, page: QueryValue, card: QueryValue) {
   if (tab === "profile") {
     const details = [
       { label: "會員編號", value: profile.memberCode ?? "—" },
@@ -153,7 +160,7 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: string |
   }
 
   if (tab === "points") {
-    const pageNumber = typeof page === "string" && /^[1-9]\d*$/.test(page) ? Number(page) : 1;
+    const pageNumber = positiveInteger(page) ?? 1;
     // The tab's 「怎麼玩？」 guide; a failure only hides the button.
     const [found, guide] = await Promise.all([fetchMemberPoints(pageNumber), fetchGuide("checkin").catch(() => null)]);
     const points = found ?? {
@@ -162,7 +169,7 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: string |
       campaign: null,
       entries: { items: [], total: 0, page: 1, pageSize: 20 },
     };
-    return <MemberPointsPanel points={points} guide={guide} />;
+    return <MemberPointsPanel points={points} guide={guide} card={positiveInteger(card)} />;
   }
 
   if (tab === "ice-creams") {
