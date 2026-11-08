@@ -1,4 +1,5 @@
-import { CalendarCheck, Clapperboard, Coins, IceCreamCone, Swords, UserRound, Users } from "lucide-react";
+import { CalendarCheck, Clapperboard, Coins, Swords, UserRound, Users } from "lucide-react";
+import { IceCreamIcon } from "@/components/brand/ice-cream-icon";
 
 /** The member page's tabs, in display order; the first is the default. The icon is decorative. */
 export const MEMBER_TABS = [
@@ -8,7 +9,7 @@ export const MEMBER_TABS = [
   { value: "friends", label: "好友", icon: Users },
   { value: "videos", label: "投稿影片", icon: Clapperboard },
   { value: "points", label: "點數", icon: Coins },
-  { value: "ice-creams", label: "冰炫風", icon: IceCreamCone },
+  { value: "ice-creams", label: "冰炫風", icon: IceCreamIcon },
 ] as const;
 
 export type MemberTab = (typeof MEMBER_TABS)[number]["value"];
