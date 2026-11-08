@@ -30,9 +30,11 @@ export async function acknowledgeNewsAction(formData: FormData): Promise<void> {
 
 /**
  * The member has these messages on screen (/news or a message's page): called by MarkNewsSeen
- * after mount. Nothing is revalidated, so the page does not re-render; the header count drops on
- * the next page.
+ * after mount. The layout is revalidated so the header's unread count drops at once: client
+ * navigation never re-fetches the root layout, so without it the count stayed until a full reload.
+ * MarkNewsSeen stays mounted through the refresh, so this runs once per page.
  */
 export async function markNewsReadAction(ids: string[]): Promise<void> {
   await markRead(ids.slice(0, 50));
+  revalidatePath("/", "layout");
 }
