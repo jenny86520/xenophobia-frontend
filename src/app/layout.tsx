@@ -4,7 +4,8 @@ import { LegalDialog } from "@/components/legal/legal-dialog";
 import { BackToTop } from "@/components/layout/back-to-top";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
-import { fetchMemberPendingSummary } from "@/lib/member-session";
+import { fetchMemberNewsSummary, fetchMemberPendingSummary } from "@/lib/member-session";
+import { NewsReminder } from "@/components/news/news-reminder";
 import { fetchAboutContent, fetchLegalDocument } from "@/lib/public-content-client";
 // Read on the server only (this layout is a Server Component), so package.json never reaches the client bundle.
 import { version } from "../../package.json";
@@ -47,13 +48,15 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Header and footer must not take the whole site down with the backend; pages that
   // need this data fetch it themselves (React.cache de-duplicates) and surface errors.
-  const [about, privacy, terms, pending] = await Promise.all([
+  const [about, privacy, terms, pending, news] = await Promise.all([
     fetchAboutContent().catch(() => null),
     // The footer's legal dialogs say "cannot load" on failure instead of breaking the page.
     fetchLegalDocument("privacy").catch(() => null),
     fetchLegalDocument("terms").catch(() => null),
     // Everything waiting for the member, for the Member badge; 0 when signed out or on failure.
     fetchMemberPendingSummary(),
+    // Unread news for the header and the once-only reminder popup; nothing when signed out or on failure.
+    fetchMemberNewsSummary(),
   ]);
   const memberPending = pending.pending;
   const profile = about?.teamProfile;
@@ -82,7 +85,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         >
           跳到主要內容
         </a>
-        <SiteHeader brandName={brandName} cta={cta} memberPending={memberPending} />
+        <SiteHeader brandName={brandName} cta={cta} memberPending={memberPending} newsUnread={news.unread} />
+        <NewsReminder reminders={news.reminders} />
         <div className="flex flex-1 flex-col">{children}</div>
         <SiteFooter brandName={brandName} about={about} version={version} />
         {/* Opened by the footer (and the sign-up and submission forms) through popoverTarget. */}

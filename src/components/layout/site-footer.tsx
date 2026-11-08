@@ -9,7 +9,7 @@ import { LegalLinks } from "@/components/legal/legal-links";
 import { TextLink } from "@/components/brand/text-link";
 import type { AboutContent, ContactInfo } from "@/types/about";
 import { contactHref } from "@/utils/contact";
-import { HOME_NAV_ITEM, NAV_ITEMS } from "./nav-items";
+import { HOME_NAV_ITEM, flatNavLinks } from "./nav-items";
 
 type SiteFooterProps = {
   brandName: string;
@@ -73,7 +73,7 @@ export function SiteFooter({ brandName, about, version }: SiteFooterProps) {
           <Column title="Index" id="footer-nav" className="col-span-2 md:col-span-2 lg:col-start-6">
             <nav aria-labelledby="footer-nav">
               <ul className="flex flex-col gap-2">
-                {[HOME_NAV_ITEM, ...NAV_ITEMS].map((item) => (
+                {[HOME_NAV_ITEM, ...flatNavLinks()].map((item) => (
                   <li key={item.href}>
                     <TextLink href={item.href} lang={item.lang} className="text-ink-secondary hover:text-ink">
                       {item.label}

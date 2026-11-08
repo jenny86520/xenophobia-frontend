@@ -13,6 +13,7 @@ import type { LegalDocument, LegalKey } from "@/types/legal";
 import type { Legends } from "@/types/legends";
 import type { CompletedMatch, MatchDetail, MatchList } from "@/types/match";
 import type { Shop } from "@/types/ice-cream";
+import type { NewsCategory, NewsItem, NewsPage } from "@/types/news";
 
 export type {
   NextParty,
@@ -148,3 +149,18 @@ export const fetchShop = cache(
   (): Promise<Shop> => getRequiredJson<Shop>("/api/shop", { asMember: true }),
 );
 
+/** Messages per page on /news. */
+export const NEWS_PAGE_SIZE = 10;
+
+/** One page of /news, newest first; with the member's token it includes members-only messages. */
+export const fetchNewsList = cache((category: NewsCategory | null, page: number): Promise<NewsPage> => {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(NEWS_PAGE_SIZE) });
+  if (category) params.set("category", category);
+  return getRequiredJson<NewsPage>(`/api/news?${params.toString()}`, { asMember: true });
+});
+
+/** One message; `null` when it does not exist, is not out yet, or is for members only. */
+export const fetchNews = cache(
+  (id: string): Promise<NewsItem | null> =>
+    getJson<NewsItem>(`/api/news/${encodeURIComponent(id)}`, { asMember: true }),
+);

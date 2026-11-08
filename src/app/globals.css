@@ -833,6 +833,70 @@
   }
 
   /*
+   * A header nav group's links (NavGroupMenu): a native popover, so it sits in the top layer above
+   * the home header's clip-path reveal. Anchored under its button where CSS anchor positioning is
+   * supported, else pinned under the header at the right gutter. Same surface as the dialogs.
+   */
+  .nav-group-menu {
+    inset: auto;
+    top: anchor(bottom);
+    left: anchor(left);
+    margin: 0.5rem 0 0;
+    min-width: 11rem;
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    border: 1px solid var(--xpa-line);
+    border-radius: var(--radius);
+    background-color: var(--xpa-surface-elevated);
+    color: var(--xpa-ink);
+  }
+  .nav-group-menu:popover-open {
+    display: flex;
+  }
+  @supports not (anchor-name: --a) {
+    .nav-group-menu {
+      position: fixed;
+      top: 4.5rem;
+      right: var(--container-gutter);
+      left: auto;
+      margin: 0;
+    }
+  }
+  .nav-group-trigger[data-current] > .link-underline,
+  .nav-group-trigger:hover > .link-underline,
+  .nav-group-trigger:focus-visible > .link-underline {
+    background-size: 100% 1px;
+  }
+  .nav-group-trigger:focus-visible {
+    outline: 3px solid color-mix(in oklab, var(--ring) 50%, transparent);
+    outline-offset: 2px;
+  }
+
+  /*
+   * The news reminder (NewsReminder): an open <dialog> from the server, made modal after
+   * hydration. Centred like the legal dialogs, same surface; only the panel scrolls.
+   */
+  .news-reminder {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    margin: auto;
+    width: min(560px, calc(100vw - 2 * var(--container-gutter)));
+    max-height: 85dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 1.5rem;
+    border: 1px solid var(--xpa-line);
+    border-radius: var(--radius);
+    background-color: var(--xpa-surface-elevated);
+    color: var(--xpa-ink);
+  }
+  .news-reminder::backdrop {
+    background-color: color-mix(in oklch, var(--xpa-background) 80%, transparent);
+  }
+
+  /*
    * Legal dialogs (privacy policy, terms of use): native popovers, so they open and close without
    * JavaScript. Surface, thin rule and 4px radius like other panels; no heavy shadow. Only the body
    * scrolls, so the title and close button stay in view. Colours are tokens only.

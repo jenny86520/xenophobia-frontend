@@ -5,6 +5,7 @@ import { backendBaseUrl } from "@/lib/public-content-client";
 import type { FriendProfile, FriendsOverview } from "@/types/friends";
 import type { IceAlbumPage, IceCreamHistory, MemberIceCreams } from "@/types/ice-cream";
 import type { MemberMatches } from "@/types/match";
+import type { NewsSummary } from "@/types/news";
 import type {
   LegalConsentChanges,
   MemberPoints,
@@ -196,5 +197,24 @@ export const fetchMemberPendingSummary = cache(async (): Promise<PendingSummary>
     return (await response.json()) as PendingSummary;
   } catch {
     return NOTHING_PENDING;
+  }
+});
+
+const NO_NEWS: NewsSummary = { unread: 0, reminders: [] };
+
+/**
+ * The member's unread news count (header) and the messages the reminder popup shows; the backend
+ * leaves the popup empty while the member must agree to new terms. Never throws: no session or a
+ * backend failure means nothing to show. Cached per request.
+ */
+export const fetchMemberNewsSummary = cache(async (): Promise<NewsSummary> => {
+  try {
+    const token = await memberToken();
+    if (!token) return NO_NEWS;
+    const response = await memberFetch("/api/member/news/summary", {}, token);
+    if (!response.ok) return NO_NEWS;
+    return (await response.json()) as NewsSummary;
+  } catch {
+    return NO_NEWS;
   }
 });

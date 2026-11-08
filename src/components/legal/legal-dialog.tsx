@@ -2,10 +2,10 @@ import { X } from "lucide-react";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
+import { PlainText } from "@/components/brand/plain-text";
 import { Heading } from "@/components/brand/typography";
 import type { LegalDocument, LegalKey } from "@/types/legal";
 import { formatTaipeiDate } from "@/utils/datetime";
-import { parseLegalText } from "@/utils/legal-text";
 import { LEGAL_DIALOG_ID } from "./legal-ids";
 
 /** Titles used when the document could not be loaded (the backend sends its own otherwise). */
@@ -54,47 +54,11 @@ export function LegalDialog({ kind, document }: LegalDialogProps) {
         {!document ? (
           <p className="text-body text-ink-secondary">目前無法載入，請稍後再試。</p>
         ) : published ? (
-          <LegalText text={document.content} />
+          <PlainText text={document.content} />
         ) : (
           <Placeholder name={`legal.${kind}`} label={title} />
         )}
       </div>
-    </div>
-  );
-}
-
-/** The admin's plain text laid out as headings, paragraphs and lists; never read as HTML. */
-function LegalText({ text }: { text: string }) {
-  return (
-    <div className="flex max-w-[65ch] flex-col gap-4 text-body text-ink-secondary">
-      {parseLegalText(text).map((block, index) => {
-        if (block.type === "heading") {
-          return (
-            <h3 key={index} className="mt-4 font-heading text-h3 text-ink first:mt-0">
-              {block.text}
-            </h3>
-          );
-        }
-        if (block.type === "list") {
-          return (
-            <ul key={index} className="flex list-disc flex-col gap-1 pl-5 marker:text-signal">
-              {block.items.map((item, itemIndex) => (
-                <li key={itemIndex}>{item}</li>
-              ))}
-            </ul>
-          );
-        }
-        return (
-          <p key={index}>
-            {block.lines.map((line, lineIndex) => (
-              <span key={lineIndex}>
-                {lineIndex > 0 && <br />}
-                {line}
-              </span>
-            ))}
-          </p>
-        );
-      })}
     </div>
   );
 }

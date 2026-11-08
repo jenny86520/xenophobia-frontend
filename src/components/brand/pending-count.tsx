@@ -1,8 +1,9 @@
 /**
- * A small count of items waiting for the member (friend requests and scrim invites): the number for
- * sighted users, 「N 件待處理」 for assistive tech; nothing at 0. CTA colours, measured AA as buttons.
+ * A small count of items waiting for the member (friend requests, scrim invites, unread news): the
+ * number for sighted users, 「（N 件待處理）」 (or another `unit`, e.g. 則未讀) for assistive tech;
+ * nothing at 0. CTA colours, measured AA as buttons.
  */
-export function PendingCount({ count }: { count: number }) {
+export function PendingCount({ count, unit = "件待處理" }: { count: number; unit?: string }) {
   if (count <= 0) return null;
   return (
     <>
@@ -13,7 +14,7 @@ export function PendingCount({ count }: { count: number }) {
         {count}
       </span>
       <span lang="zh-Hant-TW" className="sr-only">
-        （{count} 件待處理）
+        （{count} {unit}）
       </span>
     </>
   );

@@ -35,9 +35,39 @@ describe("SiteHeader", () => {
       ["Legends", "/legends"],
       ["Shop", "/shop"],
       ["About", "/about"],
+      ["News", "/news"],
       ["Member", "/member"],
     ]);
     links.forEach((a) => expect(a).toHaveAttribute("lang", "en"));
+  });
+
+  it("puts About and News behind an Info button that opens a popover", () => {
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
+
+    const nav = screen.getByRole("navigation", { name: "主要導覽" });
+    const info = within(nav).getByRole("button", { name: "Info" });
+    const menu = document.getElementById(info.getAttribute("popovertarget") ?? "");
+    expect(menu).toHaveAttribute("popover", "auto");
+    expect(within(menu!).getAllByRole("link").map((a) => a.textContent)).toEqual(["About", "News"]);
+    expect(info.querySelector("[lang=en]")).toHaveTextContent("Info");
+    expect(info).not.toHaveAttribute("data-current");
+  });
+
+  it("marks the Info button current on a page inside it, and the page's own link", () => {
+    mockPathname.mockReturnValue("/news/abc");
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
+
+    const nav = screen.getByRole("navigation", { name: "主要導覽" });
+    expect(within(nav).getByRole("button", { name: "Info" })).toHaveAttribute("data-current");
+    expect(within(nav).getByRole("link", { name: "News" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("shows unread news beside the Info button and News", () => {
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} newsUnread={2} />);
+
+    const nav = screen.getByRole("navigation", { name: "主要導覽" });
+    expect(within(nav).getByRole("button", { name: /Info/ })).toHaveTextContent("（2 則未讀）");
+    expect(within(nav).getByRole("link", { name: /News/ })).toHaveTextContent("（2 則未讀）");
   });
 
   it("puts a decorative icon before each nav label, underlining only the text", () => {

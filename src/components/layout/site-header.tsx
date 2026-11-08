@@ -12,6 +12,8 @@ type SiteHeaderProps = {
   cta: { label: string; href: string } | null;
   /** Friend requests and scrim invites waiting for the signed-in member (0 when none or signed out). */
   memberPending?: number;
+  /** Messages the signed-in member has not read (0 when none or signed out). */
+  newsUnread?: number;
 };
 
 /**
@@ -20,7 +22,7 @@ type SiteHeaderProps = {
  * the top once the hero scrolls away (a mouse at the top of the hero unrolls it at once); without
  * support for that it stays an ordinary header.
  */
-export function SiteHeader({ brandName, cta, memberPending = 0 }: SiteHeaderProps) {
+export function SiteHeader({ brandName, cta, memberPending = 0, newsUnread = 0 }: SiteHeaderProps) {
   return (
     <header className="site-header border-b border-line-subtle">
       <Container className="flex min-h-16 items-center justify-between gap-6 py-3">
@@ -39,11 +41,12 @@ export function SiteHeader({ brandName, cta, memberPending = 0 }: SiteHeaderProp
               className="gap-8"
               linkClassName="text-body text-ink-secondary hover:text-ink aria-[current=page]:text-ink"
               memberPending={memberPending}
+              newsUnread={newsUnread}
             />
           </nav>
           {cta && <CtaLink href={cta.href} label={cta.label} />}
         </div>
-        <MobileMenu cta={cta} memberPending={memberPending} />
+        <MobileMenu cta={cta} memberPending={memberPending} newsUnread={newsUnread} />
       </Container>
     </header>
   );
