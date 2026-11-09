@@ -110,9 +110,20 @@ describe("LegendsPage", () => {
       "/legends?tab=scrim#board-scrim-cancelled",
       "/legends?tab=other#board-daily-check-in",
     ]);
-    expect(leaders[0]).toHaveTextContent("內戰鐵人參加內戰次數阿明・12 場");
-    expect(leaders[1]).toHaveTextContent("小華、阿強・5 次");
+    expect(leaders[0]).toHaveTextContent("內戰鐵人參加內戰次數12 場阿明");
+    expect(leaders[1]).toHaveTextContent("5 次小華阿強");
     expect(leaders[2]).toHaveTextContent("還沒有會員上榜");
+  });
+
+  it("lists every tied leader on a line of its own under the value", async () => {
+    const names = ["Dragonfly", "YunYing", "Sullyoon", "A5", "allen", "SexyAim", "dongixx"];
+    const tied = names.map((nickname) => ({ rank: 1, nickname, value: 2 }));
+    await renderPage({ ...legends, boards: [{ ...legends.boards[0], entries: tied }] });
+
+    const [row] = within(screen.getByRole("list", { name: "各榜榜首" })).getAllByRole("link");
+    const value = within(row).getByText("2 場");
+    const lines = [...(value.nextElementSibling as HTMLElement).children].map((line) => line.textContent);
+    expect(lines).toEqual(names);
   });
 
   it("shows a category's boards in the backend's order", async () => {

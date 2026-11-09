@@ -7,8 +7,9 @@ import { legendTabHref, tabOf } from "@/utils/legend-tabs";
 import { BOARD_ICONS } from "./legend-board";
 
 /**
- * 各榜榜首: every board in the backend's order with its first place (ties all listed), each row a
- * link to that board on its tab. A board nobody is on says so.
+ * 各榜榜首: every board in the backend's order, each row a link to that board on its tab. The title
+ * and metric sit on the left; on the right the value, then every first place under it, one name per
+ * line, so many ties grow the row downwards instead of squeezing the title. A board nobody is on says so.
  */
 export function LegendLeaders({ boards }: { boards: LegendBoard[] }) {
   if (boards.length === 0) return null;
@@ -25,26 +26,30 @@ export function LegendLeaders({ boards }: { boards: LegendBoard[] }) {
             <li key={board.code} className="list-row relative isolate overflow-hidden border-t border-line">
               <Link
                 href={legendTabHref(tabOf(board.code), board.code)}
-                className="flex items-center gap-4 px-2 py-4 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                className="flex items-start gap-4 px-2 py-4 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
               >
-                <Icon aria-hidden="true" className="size-5 shrink-0 text-signal" />
-                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                <Icon aria-hidden="true" className="mt-1 size-5 shrink-0 text-signal" />
+                <span className="flex min-w-[6em] flex-1 flex-col gap-1">
                   <span className="text-lead text-ink">{board.title}</span>
                   <MetaLabel>{board.metric}</MetaLabel>
                 </span>
-                <span className="min-w-0 text-right text-body">
-                  {leaders.length > 0 ? (
-                    <>
-                      <span className="text-ink">{leaders.map((entry) => entry.nickname).join("、")}</span>
-                      <span className="font-mono text-ink-secondary tabular-nums">
-                        ・{leaders[0].value} {board.unit}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-ink-secondary">還沒有會員上榜</span>
-                  )}
-                </span>
-                <ArrowRight aria-hidden="true" className="list-row-arrow hidden size-5 shrink-0 text-ink-muted md:block" />
+                {leaders.length > 0 ? (
+                  <span className="flex max-w-[50%] min-w-0 flex-col items-end gap-1 text-right">
+                    <span className="font-mono text-body text-ink-secondary tabular-nums">
+                      {leaders[0].value} {board.unit}
+                    </span>
+                    <span className="flex max-w-full flex-col items-end text-body text-ink">
+                      {leaders.map((entry) => (
+                        <span key={entry.nickname} className="max-w-full truncate">
+                          {entry.nickname}
+                        </span>
+                      ))}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-body text-ink-secondary">還沒有會員上榜</span>
+                )}
+                <ArrowRight aria-hidden="true" className="list-row-arrow mt-1 hidden size-5 shrink-0 text-ink-muted md:block" />
               </Link>
             </li>
           );
