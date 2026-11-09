@@ -160,6 +160,19 @@ export const fetchNewsList = cache((category: NewsCategory | null, page: number)
   return getRequiredJson<NewsPage>(`/api/news?${params.toString()}`, { asMember: true });
 });
 
+/** How many 最新消息 the home page lists. */
+export const HOME_NEWS_COUNT = 5;
+
+/**
+ * The newest 最新消息 (never 網站更新) for the home page; a member token adds members-only ones,
+ * like /news. Reading them here does not mark them read.
+ */
+export const fetchHomeNews = cache(async (): Promise<NewsItem[]> => {
+  const params = new URLSearchParams({ category: "news", page: "1", pageSize: String(HOME_NEWS_COUNT) });
+  const page = await getRequiredJson<NewsPage>(`/api/news?${params.toString()}`, { asMember: true });
+  return page.items;
+});
+
 /** One message; `null` when it does not exist, is not out yet, or is for members only. */
 export const fetchNews = cache(
   (id: string): Promise<NewsItem | null> =>

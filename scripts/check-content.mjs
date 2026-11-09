@@ -53,7 +53,7 @@ for (const game of games) {
   if (!game.summary) add(["/", "/about"], `game.${game.id}.summary`, `遊戲短述（${game.name}）`);
   if (!game.videos?.length) add(["/", "/about"], `game.${game.id}.video`, `最新 highlight 影片（${game.name}）`);
 }
-if (milestones.length === 0) add(["/", "/about"], "milestones", "里程碑");
+if (milestones.length === 0) add(["/about"], "milestones", "里程碑");
 if (highlights.length === 0) add(["/about"], "highlights", "網站特色");
 
 for (const entry of STATIC_PLACEHOLDERS) add(entry.pages, entry.name, entry.label);

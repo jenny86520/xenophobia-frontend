@@ -1,6 +1,7 @@
 import {
   backendBaseUrl,
   fetchAboutContent,
+  fetchHomeNews,
   fetchLegalDocument,
   fetchPartyDetail,
   fetchPartyList,
@@ -157,5 +158,25 @@ describe("fetchAboutContent", () => {
   it("throws when the backend fails", async () => {
     mockFetchResponse(500, {});
     await expect(fetchAboutContent()).rejects.toThrow("HTTP 500");
+  });
+});
+
+describe("fetchHomeNews", () => {
+  it("asks for the five newest 最新消息 with the member token and returns the items", async () => {
+    memberCookie = "member-token";
+    mockFetchResponse(200, { items: [{ id: "n1" }], total: 1, page: 1, pageSize: 5 });
+    await expect(fetchHomeNews()).resolves.toEqual([{ id: "n1" }]);
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0];
+    const query = new URL(url).searchParams;
+    expect(new URL(url).pathname).toBe("/api/news");
+    expect(query.get("category")).toBe("news");
+    expect(query.get("page")).toBe("1");
+    expect(query.get("pageSize")).toBe("5");
+    expect(init.headers.Authorization).toBe("Bearer member-token");
+  });
+
+  it("throws when the backend fails", async () => {
+    mockFetchResponse(500, {});
+    await expect(fetchHomeNews()).rejects.toThrow("HTTP 500");
   });
 });

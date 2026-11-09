@@ -1,9 +1,22 @@
 import type { Metadata } from "next";
+import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { InfoDialog } from "@/components/brand/info-dialog";
 import { PageHeader } from "@/components/brand/page-header";
 import { Section } from "@/components/brand/section";
-import { LegendBoard } from "@/components/legends/legend-board";
+import {
+  boardHeadingId,
+  EmptyBoard,
+  LegendBoard,
+  LegendBoardHeader,
+  LegendRows,
+} from "@/components/legends/legend-board";
+import { LegendLeaders } from "@/components/legends/legend-leaders";
+import { LegendPodium } from "@/components/legends/legend-podium";
+import { LegendTabs } from "@/components/legends/legend-tabs";
+import { MEDAL_PLACES } from "@/components/legends/medals";
 import { fetchLegends } from "@/lib/public-content-client";
+import type { Legends } from "@/types/legends";
+import { boardsIn, parseLegendTab, visibleTabs, type LegendTab } from "@/utils/legend-tabs";
 
 export const metadata: Metadata = {
   title: "Legends",
@@ -52,11 +65,57 @@ const BOARD_COPY: Record<string, BoardCopy> = {
 };
 
 /**
- * The Legends page: the overall ranking first, then every board in the order admins set. The
- * backend ranks; this page only lays the places out. Counting rules sit behind ⓘ popovers.
+ * 總排行: the podium for places 1 to 3 (ties share a step), the places after them as rows, and beside
+ * it (below on narrow screens) every board's first place.
  */
-export default async function LegendsPage() {
-  const legends = await fetchLegends();
+function OverallTab({ legends }: { legends: Legends }) {
+  const { title, entries } = legends.overall;
+  const podium = entries.filter((entry) => entry.rank <= MEDAL_PLACES);
+  const rest = entries
+    .filter((entry) => entry.rank > MEDAL_PLACES)
+    .map(({ rank, nickname, points }) => ({ rank, nickname, value: points }));
+  return (
+    <EditorialGrid className="gap-y-16">
+      <section
+        aria-labelledby={boardHeadingId("overall")}
+        className="col-span-4 flex min-w-0 flex-col gap-10 md:col-span-8 lg:col-span-7"
+      >
+        <LegendBoardHeader code="overall" title={title} metric="總排行" unit="分" countsTowardOverall {...OVERALL_COPY} />
+        {entries.length === 0 ? (
+          <EmptyBoard />
+        ) : (
+          <>
+            <LegendPodium title={title} entries={podium} />
+            {rest.length > 0 && <LegendRows label={`${title}第 ${MEDAL_PLACES + 1} 名起`} unit="分" entries={rest} />}
+          </>
+        )}
+      </section>
+      <div className="col-span-4 md:col-span-8 lg:col-span-5 lg:col-start-8">
+        <LegendLeaders boards={legends.boards} />
+      </div>
+    </EditorialGrid>
+  );
+}
+
+/** One category: its boards in the admins' order, side by side on wide screens. */
+function BoardsTab({ tab, legends }: { tab: LegendTab; legends: Legends }) {
+  return (
+    <div className="grid grid-cols-1 gap-x-12 gap-y-16 lg:grid-cols-2 2xl:grid-cols-3">
+      {boardsIn(tab, legends.boards).map((board) => (
+        <LegendBoard key={board.code} {...board} {...BOARD_COPY[board.code]} />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The Legends page, in tabs from `?tab=` (links, so they work without JavaScript): 總排行 first, then
+ * the categories that have boards. The backend ranks, orders and titles everything; this page only
+ * decides which tab a board sits in. Counting rules sit behind ⓘ popovers.
+ */
+export default async function LegendsPage({ searchParams }: PageProps<"/legends">) {
+  const [legends, query] = await Promise.all([fetchLegends(), searchParams]);
+  const tab = parseLegendTab(query.tab, legends.boards);
 
   return (
     <main id="main">
@@ -75,19 +134,10 @@ export default async function LegendsPage() {
           }
         />
       </Section>
-
-      <LegendBoard
-        code="overall"
-        title={legends.overall.title}
-        metric="總排行"
-        unit="分"
-        countsTowardOverall
-        {...OVERALL_COPY}
-        entries={legends.overall.entries.map(({ rank, nickname, points }) => ({ rank, nickname, value: points }))}
-      />
-      {legends.boards.map((board) => (
-        <LegendBoard key={board.code} {...board} {...BOARD_COPY[board.code]} />
-      ))}
+      <Section spacing="tight" className="pt-0">
+        <LegendTabs current={tab} tabs={visibleTabs(legends.boards)} />
+        {tab === "overall" ? <OverallTab legends={legends} /> : <BoardsTab tab={tab} legends={legends} />}
+      </Section>
     </main>
   );
 }

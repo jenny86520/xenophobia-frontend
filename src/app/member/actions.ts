@@ -98,20 +98,19 @@ export async function setPasswordAction(_: MemberActionState, form: FormData): P
   return { ok: true, message: "密碼已設定，現在可以登入。" };
 }
 
-export async function updateNicknameAction(_: MemberActionState, form: FormData): Promise<MemberActionState> {
+/** The member's own 稱呼 and nickname; both are sent, and the backend records only what changed. */
+export async function updateProfileAction(_: MemberActionState, form: FormData): Promise<MemberActionState> {
+  const values = { name: text(form, "name"), nickname: text(form, "nickname") };
   let response: Response;
   try {
-    response = await memberFetch("/api/member/me", {
-      method: "PATCH",
-      body: JSON.stringify({ nickname: text(form, "nickname") }),
-    });
+    response = await memberFetch("/api/member/me", { method: "PATCH", body: JSON.stringify(values) });
   } catch {
-    return UNREACHABLE;
+    return { ...UNREACHABLE, values };
   }
   if (response.status === 401) return signInAgain();
-  if (!response.ok) return errorState(response, "儲存失敗，請稍後再試");
+  if (!response.ok) return { ...(await errorState(response, "儲存失敗，請稍後再試")), values };
   revalidatePath("/member");
-  return { ok: true, message: "暱稱已更新。" };
+  return { ok: true, message: "個人資料已更新。" };
 }
 
 /** Today's check-in; the message names what the backend credited. */

@@ -34,7 +34,7 @@ import {
   setPasswordAction,
   submitYoutubeVideoAction,
   updateFriendNoteAction,
-  updateNicknameAction,
+  updateProfileAction,
 } from "./actions";
 
 function respond(status: number, body: unknown = {}) {
@@ -169,11 +169,22 @@ describe("password and reset", () => {
 });
 
 describe("member actions with a session", () => {
-  it("updates the nickname and refreshes the member page", async () => {
+  it("sends the 稱呼 and nickname together and refreshes the member page", async () => {
     respond(200, {});
-    const state = await updateNicknameAction({}, form({ nickname: "阿明" }));
-    expect(state.ok).toBe(true);
+    const state = await updateProfileAction({}, form({ name: "小明", nickname: "阿明" }));
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/member\/me$/);
+    expect(init.method).toBe("PATCH");
+    expect(JSON.parse(init.body as string)).toEqual({ name: "小明", nickname: "阿明" });
+    expect(state).toEqual({ ok: true, message: "個人資料已更新。" });
     expect(mockRevalidate).toHaveBeenCalledWith("/member");
+  });
+
+  it("returns field errors with what was typed", async () => {
+    respond(400, { message: ["name must be shorter than or equal to 50 characters"], fields: { name: "太長了" } });
+    const state = await updateProfileAction({}, form({ name: "x".repeat(51), nickname: "阿明" }));
+    expect(state).toMatchObject({ ok: false, fields: { name: "太長了" }, values: { name: "x".repeat(51), nickname: "阿明" } });
+    expect(mockRevalidate).not.toHaveBeenCalled();
   });
 
   it("joins a party and refreshes its page", async () => {
@@ -212,7 +223,7 @@ describe("member actions with a session", () => {
 
   it("takes a member who must agree to renewed terms to the member page", async () => {
     respond(428, { statusCode: 428, message: "條款已更新，請先到會員專區閱讀並同意新版條款" });
-    await expect(updateNicknameAction({}, form({ nickname: "阿明" }))).rejects.toThrow("REDIRECT /member");
+    await expect(updateProfileAction({}, form({ nickname: "阿明" }))).rejects.toThrow("REDIRECT /member");
     await expect(registrationAction("p1", "join")).rejects.toThrow("REDIRECT /member");
     expect(cookieStore.delete).not.toHaveBeenCalled();
   });

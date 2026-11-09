@@ -40,7 +40,7 @@ jest.mock("./actions", () => ({
   registerAction: jest.fn(),
   requestResetAction: jest.fn(),
   setPasswordAction: jest.fn(),
-  updateNicknameAction: jest.fn(),
+  updateProfileAction: jest.fn(),
   acceptLegalAction: jest.fn(),
   checkInAction: jest.fn(),
   createIceCreamAction: jest.fn(),
@@ -243,7 +243,7 @@ describe("/member", () => {
     expect(fetchMemberVideoSubmissions).not.toHaveBeenCalled();
   });
 
-  it("opens the 個人資料 tab by default: the details and the nickname form", async () => {
+  it("opens the 個人資料 tab by default: the details and the 稱呼/nickname form", async () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
     render(await MemberPage(memberProps()));
     expect(fetchMemberLegalChanges).not.toHaveBeenCalled();
@@ -253,6 +253,7 @@ describe("/member", () => {
       expect(within(details).getAllByText(value).length).toBeGreaterThan(0);
     }
     expect(within(details).getByLabelText("暱稱")).toHaveValue("小明");
+    expect(within(details).getByLabelText("稱呼")).toHaveValue("王小明");
     const tabs = screen.getByRole("navigation", { name: "會員專區" });
     expect(
       within(tabs)

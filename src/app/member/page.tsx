@@ -4,7 +4,7 @@ import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { PageHeader } from "@/components/brand/page-header";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
-import { NicknameForm } from "@/components/member/member-forms";
+import { ProfileForm } from "@/components/member/member-forms";
 import { MemberMatchesPanel } from "@/components/match/member-matches-panel";
 import { MemberTabPanel, MemberTabs } from "@/components/member/member-tabs";
 import { MemberFriendsPanel } from "@/components/member/member-friends-panel";
@@ -138,7 +138,7 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: QueryVal
             </div>
           ))}
         </dl>
-        <NicknameForm nickname={profile.nickname} />
+        <ProfileForm name={profile.name} nickname={profile.nickname} />
       </MemberTabPanel>
     );
   }

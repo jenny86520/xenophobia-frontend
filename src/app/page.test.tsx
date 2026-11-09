@@ -1,5 +1,11 @@
 import { render, screen, within } from "@testing-library/react";
-import { fetchAboutContent, fetchAllParties, fetchLegends, fetchUpcomingParty } from "@/lib/public-content-client";
+import {
+  fetchAboutContent,
+  fetchAllParties,
+  fetchHomeNews,
+  fetchLegends,
+  fetchUpcomingParty,
+} from "@/lib/public-content-client";
 import type { AboutContent } from "@/types/about";
 import type { Legends } from "@/types/legends";
 import type { UpcomingPartyResponse } from "@/types/party";
@@ -13,6 +19,7 @@ jest.mock("@/lib/public-content-client", () => ({
   fetchUpcomingParty: jest.fn(),
   fetchAllParties: jest.fn(),
   fetchLegends: jest.fn(),
+  fetchHomeNews: jest.fn(),
 }));
 
 const about: AboutContent = {
@@ -91,6 +98,17 @@ async function renderHome(
   (fetchAboutContent as jest.Mock).mockResolvedValue({ ...about, ...aboutOverrides });
   (fetchUpcomingParty as jest.Mock).mockResolvedValue({ ...upcoming, ...overrides });
   (fetchAllParties as jest.Mock).mockResolvedValue([{}, {}, {}]);
+  (fetchHomeNews as jest.Mock).mockResolvedValue([
+    {
+      id: "n1",
+      title: "冬季派對報名開始",
+      content: "",
+      category: "news",
+      version: null,
+      publishAt: "2026-11-08T04:00:00.000Z",
+      visibility: "public",
+    },
+  ]);
   return render(await HomePage());
 }
 
@@ -201,13 +219,23 @@ describe("HomePage", () => {
     expect(marquee.nextElementSibling).toHaveAttribute("id", "statement");
   });
 
+  it("lists the newest 最新消息 instead of the milestones", async () => {
+    const { container } = await renderHome();
+
+    const news = container.querySelector("#news") as HTMLElement;
+    expect(within(news).getByRole("heading", { level: 2, name: "最新消息" })).toBeInTheDocument();
+    expect(within(news).getByRole("link", { name: /冬季派對報名開始/ })).toHaveAttribute("href", "/news/n1");
+    expect(container.querySelector("#archive")).toBeNull();
+    expect(container).not.toHaveTextContent("名稱創立");
+  });
+
   it("renders the sections in the specified order", async () => {
     const { container } = await renderHome();
 
     const order = Array.from(container.querySelectorAll("main > section")).map(
       (section) => section.getAttribute("id") ?? section.getAttribute("data-section"),
     );
-    expect(order).toEqual(["hero", "statement", "games", "legends", "events", "archive", "closing"]);
+    expect(order).toEqual(["hero", "statement", "games", "legends", "events", "news", "closing"]);
   });
 
   it("shows the tagline placeholder when the tagline is empty", async () => {

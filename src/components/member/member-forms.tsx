@@ -8,7 +8,7 @@ import {
   registerAction,
   requestResetAction,
   setPasswordAction,
-  updateNicknameAction,
+  updateProfileAction,
 } from "@/app/member/actions";
 import type { LegalConsentDocument, MemberActionState } from "@/types/member";
 import { LegalDialogButton } from "@/components/legal/legal-dialog-button";
@@ -127,23 +127,39 @@ export function SetPasswordForm({ token }: { token: string }) {
   );
 }
 
-export function NicknameForm({ nickname }: { nickname: string }) {
-  const [state, action, pending] = useActionState(updateNicknameAction, EMPTY);
+/**
+ * The two things a member may change themselves. After a refusal the typed values come back from the
+ * action (a form action resets its inputs), so nothing typed is lost.
+ */
+export function ProfileForm({ name, nickname }: { name: string; nickname: string }) {
+  const [state, action, pending] = useActionState(updateProfileAction, EMPTY);
+  const value = (field: "name" | "nickname", stored: string) => state.values?.[field] ?? stored;
   return (
     <form action={action} className="flex max-w-md flex-col gap-4">
+      <FormField
+        id="name"
+        name="name"
+        label="稱呼"
+        autoComplete="off"
+        required
+        maxLength={50}
+        defaultValue={value("name", name)}
+        error={state.fields?.name}
+        hint="讓管理員辨識你，不必填真名。"
+      />
       <FormField
         id="nickname"
         name="nickname"
         label="暱稱"
         required
         maxLength={30}
-        defaultValue={nickname}
+        defaultValue={value("nickname", nickname)}
         error={state.fields?.nickname}
-        hint="暱稱是你唯一可以自己修改的資料；其他資料請聯絡管理員。"
+        hint="在網站上將顯示這個名稱。稱呼與暱稱之外的資料請聯絡管理員修改。"
       />
       <FormMessage state={state} />
       <SubmitButton pending={pending} className="self-start">
-        儲存暱稱
+        儲存個人資料
       </SubmitButton>
     </form>
   );
