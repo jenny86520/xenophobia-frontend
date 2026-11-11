@@ -49,6 +49,7 @@ const upcoming: UpcomingPartyResponse = {
     id: "p1",
     title: "Online Hangout",
     description: "Chill night.",
+    summary: "Online games together.",
     category: "games",
     format: "online",
     startDate: "2099-10-05",
@@ -271,6 +272,23 @@ describe("HomePage", () => {
   it("has no inline back-to-top text link (the floating button lives in the layout)", async () => {
     await renderHome();
     expect(screen.queryByRole("link", { name: /top|回到頁首/i })).toBeNull();
+  });
+
+  it("shows the next party summary, not its formatted description", async () => {
+    await renderHome({ nextParty: { ...upcoming.nextParty!, description: "# 流程\n- 19:00 報到" } });
+
+    const events = screen.getByRole("region", { name: "活動" });
+    expect(within(events).getByText("Online games together.")).toBeInTheDocument();
+    expect(within(events).queryByText(/流程|19:00 報到/)).toBeNull();
+  });
+
+  it("leaves the Where row out of the next party when it has no location", async () => {
+    await renderHome({ nextParty: { ...upcoming.nextParty!, location: "" } });
+
+    const events = screen.getByRole("region", { name: "活動" });
+    expect(within(events).getByText("When")).toBeInTheDocument();
+    expect(within(events).getByText("Type")).toBeInTheDocument();
+    expect(within(events).queryByText("Where")).toBeNull();
   });
 
   it("shows the no-event message and no countdown when nextParty is null", async () => {

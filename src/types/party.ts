@@ -29,6 +29,8 @@ export type NextParty = PartySchedule & {
   id: string;
   title: string;
   description: string;
+  /** Shown on the home page; the description is laid out only on the detail page. */
+  summary: string;
   category: string;
   format: string;
   location: string;

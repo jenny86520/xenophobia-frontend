@@ -57,33 +57,44 @@ export function Events({ nextParty, recentParties }: EventsProps) {
                   {nextParty.startDate.slice(5).replace("-", "/")}
                 </p>
               </div>
-              <div className="col-span-4 flex flex-col gap-3 md:col-span-6 lg:col-span-5">
-                <h3 id="next-party-title" className="font-heading text-h2 text-balance text-ink">
-                  <Link
-                    href={`/party/${nextParty.id}`}
-                    className="link-underline after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
-                  >
-                    {nextParty.title}
-                  </Link>
-                  <ArrowRight aria-hidden="true" className="next-party-arrow ml-3 inline size-6 align-middle" />
-                </h3>
-                {nextParty.description && (
-                  <p className="max-w-[60ch] text-body text-ink-secondary">{nextParty.description}</p>
-                )}
+              <div className="col-span-4 md:col-span-6 lg:col-span-5">
+                {/* Beside the date (from md) an invisible copy of the Next label pushes the title down to the
+                    date's line, so the two start level; stacked on narrow screens it is not needed. */}
+                <div aria-hidden="true" className="invisible hidden md:block">
+                  <MetaLabel>Next</MetaLabel>
+                </div>
+                <div className="flex flex-col gap-3 md:mt-2">
+                  <h3 id="next-party-title" className="font-heading text-h2 text-balance text-ink">
+                    <Link
+                      href={`/party/${nextParty.id}`}
+                      className="link-underline after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+                    >
+                      {nextParty.title}
+                    </Link>
+                    <ArrowRight aria-hidden="true" className="next-party-arrow ml-3 inline size-6 align-middle" />
+                  </h3>
+                  {/* The summary, not the description: that one may hold "# " and "- " formatting. */}
+                  {nextParty.summary && (
+                    <p className="max-w-[60ch] text-body text-ink-secondary">{nextParty.summary}</p>
+                  )}
+                </div>
               </div>
               <dl className="col-span-4 flex flex-col md:col-span-8 lg:col-span-3 lg:col-start-10">
+                {/* No location (e.g. an online party) leaves the Where row out rather than empty. */}
                 {[
                   { label: "When", value: formatPartyTime(nextParty, UNDECIDED) },
                   { label: "Where", value: nextParty.location },
                   { label: "Type", value: nextParty.category },
-                ].map((row) => (
-                  <div key={row.label} className="flex justify-between gap-4 border-t border-line py-3">
-                    <dt>
-                      <MetaLabel>{row.label}</MetaLabel>
-                    </dt>
-                    <dd className="text-right text-body text-ink">{row.value}</dd>
-                  </div>
-                ))}
+                ]
+                  .filter((row) => row.value)
+                  .map((row) => (
+                    <div key={row.label} className="flex justify-between gap-4 border-t border-line py-3">
+                      <dt>
+                        <MetaLabel>{row.label}</MetaLabel>
+                      </dt>
+                      <dd className="text-right text-body text-ink">{row.value}</dd>
+                    </div>
+                  ))}
                 <div className="border-t border-line pt-3">
                   <PartyStatusBadges format={nextParty.format} isPublic={nextParty.isPublic} />
                 </div>

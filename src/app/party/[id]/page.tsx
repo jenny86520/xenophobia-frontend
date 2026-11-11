@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { EditorialGrid } from "@/components/brand/editorial-grid";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { formatCount, MetaLabel } from "@/components/brand/meta-label";
+import { PlainText } from "@/components/brand/plain-text";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
@@ -73,8 +74,9 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
   const lifecycle = resolvePartyLifecycleStatus(party.status);
   const hasRegistration = Boolean(party.registration);
   const subParties = party.subParties ?? [];
+  // A party without a location (e.g. online) has no Location row rather than an empty one.
   const details = [
-    { label: "Location", icon: MapPin, value: party.location },
+    ...(party.location ? [{ label: "Location", icon: MapPin, value: party.location }] : []),
     {
       label: "Date",
       icon: CalendarDays,
@@ -137,8 +139,9 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
               {party.title}
             </Heading>
             <PartyStatusBadges format={party.format} lifecycle={lifecycle} isPublic={party.isPublic} />
+            {/* Laid out like the legal documents: "# " headings sit one level under the page title. */}
             {party.description && (
-              <p className="max-w-[60ch] text-lead whitespace-pre-line text-ink-secondary">{party.description}</p>
+              <PlainText text={party.description} headingLevel={2} className="max-w-[60ch] text-lead" />
             )}
           </header>
           {party.registration && (

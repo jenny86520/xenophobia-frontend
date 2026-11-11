@@ -164,6 +164,47 @@ describe("PartyDetailPage", () => {
     expect(screen.queryByRole("img")).toBeNull();
   });
 
+  it("lays out the party description with headings under the page title, lists and kept line breaks", async () => {
+    mockedFetchPartyDetail.mockResolvedValue({
+      ...party,
+      description: "歡迎參加\n帶上朋友\n\n# 流程\n- 19:00 報到\n- 19:30 開始",
+      subParties: [],
+    });
+
+    const { container } = await renderPage();
+
+    expect(screen.getByRole("heading", { level: 2, name: "流程" })).toBeInTheDocument();
+    expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual(["19:00 報到", "19:30 開始"]);
+    const intro = within(container.querySelector("header") as HTMLElement).getByText(/歡迎參加/);
+    expect(intro.closest("p")?.textContent).toBe("歡迎參加帶上朋友");
+    expect(intro.closest("p")?.querySelectorAll("br")).toHaveLength(1);
+  });
+
+  it("lays out a sub-party description with headings one level under its title", async () => {
+    mockedFetchPartyDetail.mockResolvedValue({
+      ...party,
+      subParties: [subParty({ description: "# 注意事項\n- 自備滑鼠\n\n現場有飲料" })],
+    });
+
+    await renderPage();
+
+    const row = screen.getByRole("heading", { level: 3, name: "Setup and greetings" }).closest("li") as HTMLElement;
+    expect(within(row).getByRole("heading", { level: 4, name: "注意事項" })).toBeInTheDocument();
+    expect(within(row).getByRole("list")).toHaveTextContent("自備滑鼠");
+    expect(within(row).getByText("現場有飲料").tagName).toBe("SPAN");
+  });
+
+  it("leaves the Location row out when the party has no location", async () => {
+    mockedFetchPartyDetail.mockResolvedValue({ ...party, location: "", subParties: [] });
+
+    await renderPage();
+
+    expect(screen.queryByText("Location")).toBeNull();
+    for (const label of ["Date", "Time", "Type", "Created_by", "Updated_by"]) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
+  });
+
   it("omits the sub-party section when there are none", async () => {
     mockedFetchPartyDetail.mockResolvedValue({ ...party, coverUrl: null, subParties: [] });
 

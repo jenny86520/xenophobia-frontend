@@ -1,5 +1,6 @@
 import { Clock, MapPin } from "lucide-react";
 import { MetaLabel } from "@/components/brand/meta-label";
+import { PlainText } from "@/components/brand/plain-text";
 import { cn } from "@/lib/utils";
 import type { MemberRegistrationView } from "@/types/member";
 import type { SubParty } from "@/types/party";
@@ -16,7 +17,8 @@ type SubPartyListProps = {
 
 /**
  * A party's sub-parties as hairline-ruled rows: oversized time (start – end, 待定 or 時間待定), then
- * title, address (only when given), description and, when set, its cover; with registration, the
+ * title, address (only when given), description (laid out like the legal documents, its "# " headings
+ * one level under the sub-party's h3 title) and, when set, its cover; with registration, the
  * sub-party's sign-up is a third column (below the details on narrower screens).
  */
 /** The day as a small label over the time of day in large type; read as one range by screen readers. */
@@ -73,9 +75,7 @@ export function SubPartyList({ subParties, registration }: SubPartyListProps) {
                   <span>{sub.location}</span>
                 </p>
               )}
-              {sub.description && (
-                <p className="max-w-[65ch] text-body whitespace-pre-line text-ink-secondary">{sub.description}</p>
-              )}
+              {sub.description && <PlainText text={sub.description} headingLevel={4} />}
             </div>
             {sub.coverUrl && (
               // eslint-disable-next-line @next/next/no-img-element -- original upload on the backend origin
