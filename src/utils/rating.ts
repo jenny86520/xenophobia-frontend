@@ -12,3 +12,10 @@ export function ratingBreakdown(change: Pick<RatingChange, "teamPart" | "persona
   const team = `勝負 ${signedPoints(change.teamPart)}`;
   return change.note === "no-stats" ? `${team}・沒有個人數據` : `${team}・個人 ${signedPoints(change.personalPart)}`;
 }
+
+/** SWING per round as "+3.2%", "−1.5%" or "±0.0%" (one decimal, a real minus sign). */
+export function swingText(value: number): string {
+  const text = `${Math.abs(value).toFixed(1)}%`;
+  if (Math.round(value * 10) === 0) return `±${text}`;
+  return value > 0 ? `+${text}` : `−${text}`;
+}

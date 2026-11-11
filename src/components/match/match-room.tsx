@@ -11,7 +11,7 @@ import type {
   RatingChange,
   ScrimServerOption,
 } from "@/types/match";
-import { ratingBreakdown, signedPoints } from "@/utils/rating";
+import { ratingBreakdown, signedPoints, swingText } from "@/utils/rating";
 import { TeamNameForm } from "./match-forms";
 import { CandidateList, StageActions } from "./match-manage";
 import { MatchRoster } from "./match-roster";
@@ -30,6 +30,7 @@ function StatsLine({ stats }: { stats: MatchPlayerStats }) {
       {`${stats.kills} / ${stats.deaths} / ${stats.assists}`}
       <span className="sr-only">（擊殺／死亡／助攻）</span>
       {`・ADR ${stats.adr}・爆頭 ${stats.headshotPercent}%`}
+      {stats.swing !== null && `・SWING ${swingText(stats.swing)}`}
     </span>
   );
 }
@@ -121,6 +122,7 @@ function MatchStage({
   signedIn,
   candidate,
   servers,
+  demoHref = null,
 }: MatchRoomProps & { match: MatchDetail & { teams: NonNullable<MatchDetail["teams"]> } }) {
   const teamNames = { A: match.teams.A.name, B: match.teams.B.name };
   const onServer = ON_SERVER_OR_DONE.includes(match.status) && match.server;
@@ -150,6 +152,7 @@ function MatchStage({
             connect={connect}
             teamNames={teamNames}
             signedIn={signedIn}
+            demoHref={demoHref}
           />
         </section>
       )}
@@ -179,6 +182,8 @@ type MatchRoomProps = {
   signedIn: boolean;
   candidate: string | string[] | undefined;
   servers: ScrimServerOption[] | null;
+  /** Where the viewer downloads the demo, when they may (a finished match's players and creator). */
+  demoHref?: string | null;
 };
 
 /**

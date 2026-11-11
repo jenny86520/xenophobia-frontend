@@ -132,6 +132,7 @@ const viewer = (overrides: Partial<ViewerMatch["viewer"]> = {}, match: MatchDeta
     canBan: false,
     captainOf: null,
     connect: null,
+    canDownloadDemo: false,
     ...overrides,
   },
   stats: [],
@@ -873,10 +874,11 @@ describe("/matches/[id] on the game server", () => {
       firstDeaths: 0,
       tradeKills: 0,
       mvp: 1,
+      swing: null as number | null,
     });
     (fetchViewerMatch as jest.Mock).mockResolvedValue({
       ...viewer({}, done),
-      stats: [stat("a", "阿強", "A", 15), stat("c", "訪客C", "B", 12)],
+      stats: [{ ...stat("a", "阿強", "A", 15), swing: 3.2 }, stat("c", "訪客C", "B", 12)],
     });
     await renderMatch();
     const panel = screen.getByRole("region", { name: "比賽" });
@@ -884,10 +886,35 @@ describe("/matches/[id] on the game server", () => {
     // Each player's numbers sit beside them in their team's column.
     const teamA = screen.getByRole("region", { name: "A 隊" });
     expect(within(teamA).getByText("阿強").closest("li")).toHaveTextContent(
-      "15 / 10 / 2（擊殺／死亡／助攻）・ADR 76.9・爆頭 40%",
+      "15 / 10 / 2（擊殺／死亡／助攻）・ADR 76.9・爆頭 40%・SWING +3.2%",
     );
     const teamB = screen.getByRole("region", { name: "B 隊" });
     expect(within(teamB).getByText("訪客C").closest("li")).toHaveTextContent("12 / 10 / 2");
+    // No SWING until the demo is parsed.
+    expect(within(teamB).getByText("訪客C").closest("li")).not.toHaveTextContent("SWING");
     expect(within(teamB).getByText("小明").closest("li")).not.toHaveTextContent("ADR");
+    // Nobody here may download the demo: no link.
+    expect(screen.queryByRole("link", { name: "下載 demo" })).not.toBeInTheDocument();
+  });
+
+  it("offers the demo download to whoever the backend allows, once completed", async () => {
+    const done: MatchDetail = {
+      ...teamed(),
+      status: "completed",
+      server: {
+        serverName: "CS2 #1",
+        scoreA: 13,
+        scoreB: 9,
+        winner: "A",
+        resultSource: "server",
+        liveAt: "2026-11-05T12:05:00.000Z",
+        completedAt: "2026-11-05T12:50:00.000Z",
+      },
+    };
+    (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer({ canDownloadDemo: true }, done));
+    await renderMatch();
+    const link = screen.getByRole("link", { name: "下載 demo" });
+    expect(link).toHaveAttribute("href", "/matches/m1/demo");
+    expect(link).toHaveAttribute("download");
   });
 });

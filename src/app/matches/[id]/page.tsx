@@ -157,6 +157,9 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
           signedIn={viewerMatch !== null || managed !== null}
           candidate={candidate}
           servers={servers}
+          demoHref={
+            viewerMatch?.viewer.canDownloadDemo && shown.status === "completed" ? `/matches/${shown.id}/demo` : null
+          }
         />
       </Section>
 

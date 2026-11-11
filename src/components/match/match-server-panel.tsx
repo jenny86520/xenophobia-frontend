@@ -1,4 +1,4 @@
-import { Gamepad2 } from "lucide-react";
+import { Download, Gamepad2 } from "lucide-react";
 import { ctaPrimaryClasses } from "@/components/brand/cta-link";
 import { MetaLabel } from "@/components/brand/meta-label";
 import type { MatchConnect, MatchServer, MatchStatus } from "@/types/match";
@@ -81,6 +81,7 @@ export function MatchServerPanel({
   connect,
   teamNames,
   signedIn,
+  demoHref = null,
 }: {
   status: MatchStatus;
   server: MatchServer;
@@ -88,6 +89,8 @@ export function MatchServerPanel({
   teamNames: { A: string; B: string };
   /** false for visitors, who are told to sign in for the players' numbers. */
   signedIn: boolean;
+  /** Where this viewer downloads the demo (a finished match's players and creator), else null. */
+  demoHref?: string | null;
 }) {
   const completed = status === "completed";
   return (
@@ -107,6 +110,13 @@ export function MatchServerPanel({
       )}
       {completed && server.resultSource === "manual" && (
         <p className="text-body text-ink-secondary">手動輸入比分的場次沒有玩家數據。</p>
+      )}
+      {completed && demoHref && (
+        // A plain link: the browser saves the file the Route Handler relays.
+        <a href={demoHref} download className="link-with-icon inline-flex w-fit items-center gap-2 text-body text-ink">
+          <Download aria-hidden="true" className="size-[0.9em] shrink-0" />
+          <span className="link-underline">下載 demo</span>
+        </a>
       )}
     </div>
   );

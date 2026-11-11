@@ -89,6 +89,8 @@ export type MatchPlayerStats = {
   firstDeaths: number;
   tradeKills: number;
   mvp: number;
+  /** SWING per round from the demo, in percentage points (null until the demo is parsed). */
+  swing: number | null;
 };
 
 /** The last start on a server, for managers. */
@@ -191,6 +193,8 @@ export type ViewerMatch = MatchDetail & {
     captainOf: "A" | "B" | null;
     /** How to join, for this match's players and its creator while it waits or runs. */
     connect: MatchConnect | null;
+    /** The demo is there and the viewer may download it (this match's players and its creator). */
+    canDownloadDemo: boolean;
   };
   stats: MatchPlayerStats[];
 };
