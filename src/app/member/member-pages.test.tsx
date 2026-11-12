@@ -338,7 +338,7 @@ describe("/member", () => {
       within(subParties)
         .getAllByRole("listitem")
         .map((item) => item.textContent),
-    ).toEqual(["子派對：夜衝11/01 22:00", "子派對：續攤待定"]);
+    ).toEqual(["夜衝11/01 22:00", "續攤待定"]);
     expect(screen.queryByLabelText("暱稱")).not.toBeInTheDocument();
   });
 

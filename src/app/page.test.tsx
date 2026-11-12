@@ -282,6 +282,19 @@ describe("HomePage", () => {
     expect(within(events).queryByText(/流程|19:00 報到/)).toBeNull();
   });
 
+  it("links the Where row to its map above the block's own link", async () => {
+    const { container } = await renderHome({
+      nextParty: { ...upcoming.nextParty!, location: "台北車站", locationUrl: "https://maps.app.goo.gl/abc" },
+    });
+
+    const block = container.querySelector('article[aria-labelledby="next-party-title"]') as HTMLElement;
+    const map = within(block).getByRole("link", { name: /台北車站/ });
+    expect(map).toHaveAttribute("href", "https://maps.app.goo.gl/abc");
+    expect(map).toHaveAttribute("target", "_blank");
+    expect(map).toHaveClass("relative", "z-10");
+    expect(within(block).getByRole("link", { name: "Online Hangout" })).toHaveAttribute("href", "/party/p1");
+  });
+
   it("leaves the Where row out of the next party when it has no location", async () => {
     await renderHome({ nextParty: { ...upcoming.nextParty!, location: "" } });
 

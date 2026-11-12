@@ -93,7 +93,9 @@ describe("PartyDetailPage", () => {
     expect(screen.getByRole("link", { name: "Back to Party" })).toHaveAttribute("href", "/party");
     expect(screen.getByText("Red Room Studio, Taipei")).toBeInTheDocument();
     expect(screen.getByText("—")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "子派對" })).toBeInTheDocument();
+    // The section is still named 子派對 for assistive tech, but the heading is not shown.
+    expect(screen.getByRole("heading", { level: 2, name: "子派對" })).toHaveClass("sr-only");
+    expect(screen.getByRole("region", { name: "子派對" })).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
       "Setup and greetings",
       "Game rounds",
@@ -192,6 +194,33 @@ describe("PartyDetailPage", () => {
     expect(within(row).getByRole("heading", { level: 4, name: "注意事項" })).toBeInTheDocument();
     expect(within(row).getByRole("list")).toHaveTextContent("自備滑鼠");
     expect(within(row).getByText("現場有飲料").tagName).toBe("SPAN");
+  });
+
+  it("links the location and a sub-party address to their maps, and leaves others as text", async () => {
+    mockedFetchPartyDetail.mockResolvedValue({
+      ...party,
+      locationUrl: "https://maps.app.goo.gl/abc",
+      subParties: [
+        subParty({ location: "Bar 9", locationUrl: "https://maps.app.goo.gl/bar" }),
+        subParty({ id: "s2", title: "Park", location: "City Park", locationUrl: "" }),
+      ],
+    });
+
+    await renderPage();
+
+    const location = screen.getByRole("link", { name: /Red Room Studio, Taipei/ });
+    expect(location).toHaveAttribute("href", "https://maps.app.goo.gl/abc");
+    expect(location).toHaveAttribute("target", "_blank");
+    expect(screen.getByRole("link", { name: /Bar 9/ })).toHaveAttribute("href", "https://maps.app.goo.gl/bar");
+    expect(screen.getByText("City Park").closest("a")).toBeNull();
+  });
+
+  it("shows the location as text without a link", async () => {
+    mockedFetchPartyDetail.mockResolvedValue({ ...party, subParties: [] });
+
+    await renderPage();
+
+    expect(screen.getByText("Red Room Studio, Taipei").closest("a")).toBeNull();
   });
 
   it("leaves the Location row out when the party has no location", async () => {

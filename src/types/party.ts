@@ -34,6 +34,8 @@ export type NextParty = PartySchedule & {
   category: string;
   format: string;
   location: string;
+  /** http(s) link for the location (e.g. a map); "" or missing = none. */
+  locationUrl?: string;
   isPublic: boolean;
   coverUrl: CoverUrl;
 };
@@ -52,6 +54,8 @@ export type SubParty = {
   endDateTime: string;
   /** Empty string when no address was given. */
   location: string;
+  /** http(s) link for the location (e.g. a map); "" or missing = none. */
+  locationUrl?: string;
   coverUrl: CoverUrl;
   /** This sub-party's own count; status, deadline and pause are the party's. Detail only. */
   registration?: RegistrationSummary;
@@ -65,6 +69,8 @@ export type PartyListItem = PartySchedule & {
   format: string;
   status: string;
   location: string;
+  /** http(s) link for the location (e.g. a map); "" or missing = none. */
+  locationUrl?: string;
   summary: string;
   isPublic: boolean;
   coverUrl: CoverUrl;

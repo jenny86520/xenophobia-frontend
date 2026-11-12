@@ -9,6 +9,7 @@ import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
 import { MatchRow } from "@/components/match/match-row";
+import { LocationValue } from "@/components/party/location-value";
 import { PartyRegistration } from "@/components/party/party-registration";
 import { PartyStatusBadges } from "@/components/party/party-status-badges";
 import { SubPartyList } from "@/components/party/sub-party-list";
@@ -76,7 +77,15 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
   const subParties = party.subParties ?? [];
   // A party without a location (e.g. online) has no Location row rather than an empty one.
   const details = [
-    ...(party.location ? [{ label: "Location", icon: MapPin, value: party.location }] : []),
+    ...(party.location
+      ? [
+          {
+            label: "Location",
+            icon: MapPin,
+            value: <LocationValue location={party.location} locationUrl={party.locationUrl} />,
+          },
+        ]
+      : []),
     {
       label: "Date",
       icon: CalendarDays,
@@ -169,24 +178,15 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
       {subParties.length > 0 && (
         <Section labelledBy="sub-parties-title" ruled>
           <EditorialGrid className="gap-y-8">
-            <div
-              className={cn(
-                "col-span-4 flex flex-col gap-4 md:col-span-8",
-                hasRegistration ? "lg:col-span-12" : "lg:col-span-4",
-              )}
-            >
+            {/* No visible "子派對" heading: each sub-party's own title leads its row. The h2 stays for
+                assistive tech, so the section is named and reachable by heading. */}
+            <div className="col-span-4 md:col-span-8 lg:col-span-12">
               <Eyebrow>{`Sub-parties / ${formatCount(subParties.length)}`}</Eyebrow>
-              <Heading level={2} id="sub-parties-title">
+              <h2 id="sub-parties-title" className="sr-only">
                 子派對
-              </Heading>
+              </h2>
             </div>
-            {/* With registration each row has three columns, so the list takes the full width. */}
-            <div
-              className={cn(
-                "col-span-4 md:col-span-8",
-                hasRegistration ? "lg:col-span-12" : "lg:col-span-8 lg:col-start-5",
-              )}
-            >
+            <div className="col-span-4 md:col-span-8 lg:col-span-12">
               <SubPartyList
                 subParties={subParties}
                 registration={party.registration ? { partyId: party.id, member: memberRegistration } : undefined}

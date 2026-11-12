@@ -7,6 +7,7 @@ import { Section } from "@/components/brand/section";
 import { Spotlight } from "@/components/brand/spotlight";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
+import { LocationValue } from "@/components/party/location-value";
 import { PartyCoverBackdrop } from "@/components/party/party-cover-backdrop";
 import { PartyRow } from "@/components/party/party-row";
 import { PartyStatusBadges } from "@/components/party/party-status-badges";
@@ -80,13 +81,24 @@ export function Events({ nextParty, recentParties }: EventsProps) {
                 </div>
               </div>
               <dl className="col-span-4 flex flex-col md:col-span-8 lg:col-span-3 lg:col-start-10">
-                {/* No location (e.g. an online party) leaves the Where row out rather than empty. */}
+                {/* No location (e.g. an online party) leaves the Where row out rather than empty. A map link sits
+                    above the block's stretched title link (relative z-10), so it opens the map, not the party. */}
                 {[
-                  { label: "When", value: formatPartyTime(nextParty, UNDECIDED) },
-                  { label: "Where", value: nextParty.location },
-                  { label: "Type", value: nextParty.category },
+                  { label: "When", value: formatPartyTime(nextParty, UNDECIDED), shown: true },
+                  {
+                    label: "Where",
+                    value: (
+                      <LocationValue
+                        location={nextParty.location}
+                        locationUrl={nextParty.locationUrl}
+                        className={nextParty.locationUrl ? "relative z-10" : undefined}
+                      />
+                    ),
+                    shown: Boolean(nextParty.location),
+                  },
+                  { label: "Type", value: nextParty.category, shown: Boolean(nextParty.category) },
                 ]
-                  .filter((row) => row.value)
+                  .filter((row) => row.shown)
                   .map((row) => (
                     <div key={row.label} className="flex justify-between gap-4 border-t border-line py-3">
                       <dt>

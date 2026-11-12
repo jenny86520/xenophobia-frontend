@@ -6,6 +6,7 @@ import type { MemberRegistrationView } from "@/types/member";
 import type { SubParty } from "@/types/party";
 import { mediaUrl } from "@/utils/media";
 import { formatSubPartyRange, subPartyTimeParts } from "@/utils/party-time";
+import { LocationValue } from "./location-value";
 import { SubPartyRegistration } from "./sub-party-registration";
 
 type SubPartyListProps = {
@@ -72,7 +73,7 @@ export function SubPartyList({ subParties, registration }: SubPartyListProps) {
                     <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
                     Where
                   </MetaLabel>
-                  <span>{sub.location}</span>
+                  <LocationValue location={sub.location} locationUrl={sub.locationUrl} />
                 </p>
               )}
               {sub.description && <PlainText text={sub.description} headingLevel={4} />}
