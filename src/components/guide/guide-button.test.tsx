@@ -29,4 +29,18 @@ describe("GuideButton", () => {
     expect(within(dialog).getByText("每天按一次「簽到」。")).toBeInTheDocument();
     expect(within(dialog).getByRole("link", { name: "看完整手冊" })).toHaveAttribute("href", "/guide/checkin");
   });
+
+  it("takes another label, and gives each copy on one page its own dialog id", () => {
+    render(
+      <>
+        <GuideButton guide={guide} label="安全嗎？" idSuffix="member" />
+        <GuideButton guide={guide} label="安全嗎？" idSuffix="guest" />
+      </>,
+    );
+
+    const [first, second] = screen.getAllByRole("button", { name: "安全嗎？" });
+    expect(first.getAttribute("popovertarget")).toBe("guide-checkin-member");
+    expect(second.getAttribute("popovertarget")).toBe("guide-checkin-guest");
+    expect(screen.queryByRole("button", { name: "怎麼玩？" })).not.toBeInTheDocument();
+  });
 });

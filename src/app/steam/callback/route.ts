@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { clearMemberToken, memberFetch, memberToken, setMemberToken } from "@/lib/member-session";
 import { setPlayerToken } from "@/lib/player-session";
-import { STEAM_STATE_COOKIE, type SteamError, isSteamIntent, siteOrigin } from "@/lib/steam-login";
+import { STEAM_LINK_COOKIE, STEAM_STATE_COOKIE, type SteamError, isSteamIntent, siteOrigin } from "@/lib/steam-login";
 
 type GuestLogin = { accessToken: string; expiresIn: number; needsNickname: boolean };
 type MemberLogin = { accessToken: string; expiresIn: number };
@@ -22,6 +22,9 @@ export async function GET(request: Request): Promise<Response> {
   const store = await cookies();
   const expected = store.get(STEAM_STATE_COOKIE)?.value;
   store.delete({ name: STEAM_STATE_COOKIE, path: "/steam" });
+  // The link ticket is used once at most: whatever happens below, it is gone.
+  const linkTicket = store.get(STEAM_LINK_COOKIE)?.value;
+  store.delete({ name: STEAM_LINK_COOKIE, path: "/steam" });
 
   // A member sign-in's error is shown in the member login area (via=member), a guest's in the guest one.
   const back = (error: SteamError) =>
@@ -47,7 +50,12 @@ export async function GET(request: Request): Promise<Response> {
     } else {
       const token = await memberToken();
       if (!token) return Response.redirect(`${origin}/member/login`, 303);
-      response = await memberFetch("/api/member/steam", { method: "POST", body: JSON.stringify({ params }) }, token);
+      if (!linkTicket) return back("reauth-required");
+      response = await memberFetch(
+        "/api/member/steam",
+        { method: "POST", body: JSON.stringify({ params, linkTicket }) },
+        token,
+      );
     }
   } catch {
     return back("unavailable");
@@ -81,7 +89,8 @@ export async function GET(request: Request): Promise<Response> {
     }
   }
   if (response.status === 401) return back("failed");
-  if (response.status === 403) return back("disabled");
+  // For a link, 403 is the backend refusing a missing, expired or foreign link ticket.
+  if (response.status === 403) return back(intent === "link" ? "reauth-required" : "disabled");
   if (response.status === 409) return back(intent === "guest" ? "member-account" : "link-refused");
   if (response.status === 428) return back("consent-required");
   if (response.status === 429) return back("too-many");

@@ -89,6 +89,8 @@ export default async function MemberPage({ searchParams }: PageProps<"/member">)
           steam={profile.steam}
           result={typeof query.steam === "string" ? query.steam : undefined}
           createMatch={profile.canCreateMatch}
+          // 「安全嗎？」 beside the link form; only needed while unlinked, and a failure only hides it.
+          guide={profile.steam ? null : await fetchGuide("steam").catch(() => null)}
         />
       </Section>
 

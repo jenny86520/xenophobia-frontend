@@ -1,9 +1,11 @@
 import { CtaLink } from "@/components/brand/cta-link";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { TextLink } from "@/components/brand/text-link";
+import { GuideButton } from "@/components/guide/guide-button";
 import { STEAM_ERROR_TEXT, isSteamError } from "@/lib/steam-login";
+import type { Guide } from "@/types/guide";
 import type { SteamAccount } from "@/types/player";
-import { SteamLoginLink } from "./steam-login-link";
+import { SteamLinkForm } from "./steam-link-form";
 
 type MemberSteamProps = {
   steam: SteamAccount | null;
@@ -11,13 +13,16 @@ type MemberSteamProps = {
   createMatch?: boolean;
   /** The ?steam= code /steam/callback sent back with ("linked" or an error code). */
   result?: string;
+  /** The published Steam security guide (「安全嗎？」 beside the link form), null hides the button. */
+  guide?: Guide | null;
 };
 
 /**
  * The member's Steam account on the member page: linked (with the profile link; changing it is up
- * to an admin), or a link to sign in with Steam and bind it. Shows how the last attempt ended.
+ * to an admin), or the form that asks for the password again before going to Steam to bind it.
+ * Shows how the last attempt ended.
  */
-export function MemberSteam({ steam, result, createMatch }: MemberSteamProps) {
+export function MemberSteam({ steam, result, createMatch, guide = null }: MemberSteamProps) {
   return (
     <div className="mt-6 flex flex-wrap items-start justify-between gap-x-8 gap-y-4 border-b border-line pb-6">
       <div className="flex min-w-0 flex-col gap-3">
@@ -43,7 +48,8 @@ export function MemberSteam({ steam, result, createMatch }: MemberSteamProps) {
             <p className="text-body text-ink-secondary">
               參加內戰需要綁定 Steam 帳號。如果你曾以訪客身分用同一個 Steam 帳號參加過，紀錄會一併歸到會員帳號。
             </p>
-            <SteamLoginLink intent="link" label="綁定 Steam" variant="secondary" />
+            <GuideButton guide={guide} label="安全嗎？" />
+            <SteamLinkForm />
           </div>
         )}
       </div>

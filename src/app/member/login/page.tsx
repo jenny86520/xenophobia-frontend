@@ -4,7 +4,9 @@ import { PageHeader } from "@/components/brand/page-header";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
+import { GuideButton } from "@/components/guide/guide-button";
 import { LoginForm, ResetRequestForm } from "@/components/member/member-forms";
+import { fetchGuide } from "@/lib/public-content-client";
 import { SteamLoginLink } from "@/components/player/steam-login-link";
 import { STEAM_ERROR_TEXT, isSteamError } from "@/lib/steam-login";
 
@@ -19,6 +21,8 @@ export default async function MemberLoginPage({ searchParams }: PageProps<"/memb
   // A member Steam sign-in (via=member) reports in the member login area, a guest one in the guest area.
   const memberSteamError = via === "member" ? steamError : null;
   const guestSteamError = via === "member" ? null : steamError;
+  // 「安全嗎？」 beside both Steam buttons; unpublished or failing, the buttons just are not there.
+  const steamGuide = await fetchGuide("steam").catch(() => null);
   return (
     <main id="main">
       <Section spacing="tight" labelledBy="page-title">
@@ -41,8 +45,9 @@ export default async function MemberLoginPage({ searchParams }: PageProps<"/memb
                   {memberSteamError}
                 </p>
               )}
-              <div>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
                 <SteamLoginLink intent="member" label="以 Steam 登入會員" variant="secondary" />
+                <GuideButton guide={steamGuide} label="安全嗎？" idSuffix="member" />
               </div>
             </div>
             <p className="text-body text-ink-secondary">
@@ -78,8 +83,9 @@ export default async function MemberLoginPage({ searchParams }: PageProps<"/memb
                 {guestSteamError}
               </p>
             )}
-            <div>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               <SteamLoginLink intent="guest" label="以 Steam 登入" />
+              <GuideButton guide={steamGuide} label="安全嗎？" idSuffix="guest" />
             </div>
           </div>
         </EditorialGrid>

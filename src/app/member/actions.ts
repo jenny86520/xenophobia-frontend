@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { clearMemberToken, memberFetch, setMemberToken } from "@/lib/member-session";
+import { STEAM_LINK_COOKIE, steamCookieOptions } from "@/lib/steam-login";
 import type { IceCream } from "@/types/ice-cream";
 import type { CheckInResult, MemberActionState } from "@/types/member";
 import { iceCreamName } from "@/utils/ice-cream-events";
@@ -96,6 +98,28 @@ export async function setPasswordAction(_: MemberActionState, form: FormData): P
   if (!response) return UNREACHABLE;
   if (!response.ok) return errorState(response, "設定失敗，請稍後再試");
   return { ok: true, message: "密碼已設定，現在可以登入。" };
+}
+
+/**
+ * Before linking Steam the member types their password again. The backend answers with a
+ * ten-minute link ticket, kept in an httpOnly cookie for /steam only; /steam/login and
+ * /steam/callback require it, and the backend checks it before linking.
+ */
+export async function startSteamLinkAction(_: MemberActionState, form: FormData): Promise<MemberActionState> {
+  let response: Response;
+  try {
+    response = await memberFetch("/api/member/steam/link-ticket", {
+      method: "POST",
+      body: JSON.stringify({ password: text(form, "password") }),
+    });
+  } catch {
+    return UNREACHABLE;
+  }
+  if (response.status === 401) return signInAgain();
+  if (!response.ok) return errorState(response, "確認失敗，請稍後再試");
+  const { linkTicket, expiresIn } = (await response.json()) as { linkTicket: string; expiresIn: number };
+  (await cookies()).set(STEAM_LINK_COOKIE, linkTicket, steamCookieOptions(expiresIn));
+  redirect("/steam/login?intent=link");
 }
 
 /** The member's own 稱呼 and nickname; both are sent, and the backend records only what changed. */

@@ -84,6 +84,25 @@ describe("GET /steam/login", () => {
     }
     expect(cookieStore.set).not.toHaveBeenCalled();
   });
+
+  it("sends a member who has not typed their password again back to the member page", async () => {
+    memberToken.mockResolvedValue("member-token");
+
+    const response = await login(new Request(`${SITE}/steam/login?intent=link`));
+
+    expect(response.headers.get("location")).toBe(`${SITE}/member?steam=reauth-required`);
+    expect(cookieStore.set).not.toHaveBeenCalled();
+  });
+
+  it("sends a member with a link ticket on to Steam", async () => {
+    memberToken.mockResolvedValue("member-token");
+    cookieValues.set("xpa_steam_link", "ticket");
+
+    const response = await login(new Request(`${SITE}/steam/login?intent=link`));
+
+    expect(new URL(response.headers.get("location") as string).host).toBe("steamcommunity.com");
+    expect(cookieValues.get("xpa_steam_state")).toMatch(/^link\./);
+  });
 });
 
 describe("GET /steam/callback", () => {
@@ -166,20 +185,52 @@ describe("GET /steam/callback", () => {
     expect(setMemberToken).not.toHaveBeenCalled();
   });
 
-  it("links a signed-in member's account and returns to the member page", async () => {
+  it("links a signed-in member's account with the link ticket and returns to the member page", async () => {
     cookieValues.set("xpa_steam_state", "link.s2");
+    cookieValues.set("xpa_steam_link", "ticket-1");
     memberToken.mockResolvedValue("member-token");
     memberFetch.mockReturnValue(json(200, { steamId: "76561198000000001" }));
 
     const response = await callback(steamRedirect("link", "s2"));
 
     expect(response.headers.get("location")).toBe(`${SITE}/member?steam=linked`);
-    expect(memberFetch.mock.calls[0][0]).toBe("/api/member/steam");
-    expect(memberFetch.mock.calls[0][2]).toBe("member-token");
+    const [path, init, token] = memberFetch.mock.calls[0] as [string, RequestInit, string];
+    expect(path).toBe("/api/member/steam");
+    expect(token).toBe("member-token");
+    expect(JSON.parse(String(init.body))).toMatchObject({ linkTicket: "ticket-1" });
+    expect(cookieValues.has("xpa_steam_link")).toBe(false);
+  });
+
+  it("asks for the password again without a ticket, or when the backend refuses it", async () => {
+    memberToken.mockResolvedValue("member-token");
+    cookieValues.set("xpa_steam_state", "link.s7");
+    expect((await callback(steamRedirect("link", "s7"))).headers.get("location")).toBe(
+      `${SITE}/member?steam=reauth-required`,
+    );
+    expect(memberFetch).not.toHaveBeenCalled();
+
+    cookieValues.set("xpa_steam_state", "link.s8");
+    cookieValues.set("xpa_steam_link", "stale");
+    memberFetch.mockReturnValue(json(403, { error: "STEAM_LINK_REAUTH" }));
+    expect((await callback(steamRedirect("link", "s8"))).headers.get("location")).toBe(
+      `${SITE}/member?steam=reauth-required`,
+    );
+    expect(cookieValues.has("xpa_steam_link")).toBe(false);
+  });
+
+  it("drops the link ticket even when the state does not match", async () => {
+    cookieValues.set("xpa_steam_state", "link.right");
+    cookieValues.set("xpa_steam_link", "ticket");
+
+    await callback(steamRedirect("link", "wrong"));
+
+    expect(cookieValues.has("xpa_steam_link")).toBe(false);
+    expect(memberFetch).not.toHaveBeenCalled();
   });
 
   it("says why a link was refused, and drops an expired member session", async () => {
     cookieValues.set("xpa_steam_state", "link.s3");
+    cookieValues.set("xpa_steam_link", "ticket");
     memberToken.mockResolvedValue("member-token");
     memberFetch.mockReturnValue(json(409, { message: "x" }));
     expect((await callback(steamRedirect("link", "s3"))).headers.get("location")).toBe(
@@ -187,12 +238,14 @@ describe("GET /steam/callback", () => {
     );
 
     cookieValues.set("xpa_steam_state", "link.s6");
+    cookieValues.set("xpa_steam_link", "ticket");
     memberFetch.mockReturnValue(json(428, { message: "x" }));
     expect((await callback(steamRedirect("link", "s6"))).headers.get("location")).toBe(
       `${SITE}/member?steam=consent-required`,
     );
 
     cookieValues.set("xpa_steam_state", "link.s4");
+    cookieValues.set("xpa_steam_link", "ticket");
     memberFetch.mockReturnValue(json(401, { message: "x" }));
     expect((await callback(steamRedirect("link", "s4"))).headers.get("location")).toBe(`${SITE}/member/login`);
     expect(clearMemberToken).toHaveBeenCalled();

@@ -15,6 +15,23 @@ export function isSteamIntent(value: string | null): value is SteamIntent {
 export const STEAM_STATE_COOKIE = "xpa_steam_state";
 export const STEAM_STATE_MAX_AGE_SECONDS = 10 * 60;
 
+/**
+ * The backend's link ticket (the member typed their password again before linking Steam). Set by
+ * startSteamLinkAction, required by /steam/login?intent=link, read and dropped by /steam/callback.
+ */
+export const STEAM_LINK_COOKIE = "xpa_steam_link";
+
+/** Both Steam cookies: httpOnly, only sent to /steam/*, lax so Steam's redirect back carries them. */
+export function steamCookieOptions(maxAgeSeconds: number) {
+  return {
+    httpOnly: true,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/steam",
+    maxAge: maxAgeSeconds,
+  };
+}
+
 /** Why a Steam sign-in did not finish; the pages turn these codes into text. */
 export type SteamError =
   | "failed"
@@ -26,6 +43,7 @@ export type SteamError =
   | "locked"
   | "too-many"
   | "consent-required"
+  | "reauth-required"
   | "unavailable";
 
 export const STEAM_ERROR_TEXT: Record<SteamError, string> = {
@@ -39,6 +57,7 @@ export const STEAM_ERROR_TEXT: Record<SteamError, string> = {
   locked: "帳號已鎖定，請聯絡管理員解鎖",
   "too-many": "嘗試次數太多，請稍後再試。",
   "consent-required": "條款已更新，請先在下方閱讀並同意新版條款，再綁定 Steam。",
+  "reauth-required": "請先輸入密碼再綁定 Steam；確認後 10 分鐘內有效。",
   unavailable: "目前無法完成 Steam 登入，請稍後再試。",
 };
 

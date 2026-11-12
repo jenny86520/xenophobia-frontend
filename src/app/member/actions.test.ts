@@ -32,6 +32,7 @@ import {
   registrationAction,
   requestResetAction,
   setPasswordAction,
+  startSteamLinkAction,
   submitYoutubeVideoAction,
   updateFriendNoteAction,
   updateProfileAction,
@@ -96,6 +97,47 @@ describe("loginAction", () => {
     const [, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
     expect(new Headers(init.headers).get("X-Forwarded-For")).toBe("203.0.113.5");
     expect(cookieStore.set).not.toHaveBeenCalled();
+  });
+});
+
+describe("startSteamLinkAction", () => {
+  it("keeps the link ticket in a cookie for /steam only, then goes to Steam", async () => {
+    respond(200, { linkTicket: "ticket", expiresIn: 600 });
+
+    await expect(startSteamLinkAction({}, form({ password: "secret-123" }))).rejects.toThrow(
+      "REDIRECT /steam/login?intent=link",
+    );
+    expect(sentBody()).toEqual({ password: "secret-123" });
+    expect((global.fetch as jest.Mock).mock.calls[0][0]).toMatch(/\/api\/member\/steam\/link-ticket$/);
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      "xpa_steam_link",
+      "ticket",
+      expect.objectContaining({ httpOnly: true, path: "/steam", maxAge: 600, sameSite: "lax" }),
+    );
+  });
+
+  it("shows a wrong password on its field and stays on the page", async () => {
+    respond(400, { message: ["密碼錯誤"], fields: { password: "密碼錯誤" } });
+
+    const state = await startSteamLinkAction({}, form({ password: "nope" }));
+
+    expect(state).toEqual({ ok: false, message: "密碼錯誤", fields: { password: "密碼錯誤" } });
+    expect(cookieStore.set).not.toHaveBeenCalled();
+  });
+
+  it("names the lock after the third wrong password", async () => {
+    respond(423, { message: "帳號已鎖定，請聯絡管理員解鎖" });
+
+    const state = await startSteamLinkAction({}, form({ password: "nope" }));
+
+    expect(state.message).toBe("帳號已鎖定，請聯絡管理員解鎖");
+  });
+
+  it("sends an expired session to the login page", async () => {
+    respond(401);
+
+    await expect(startSteamLinkAction({}, form({ password: "x" }))).rejects.toThrow("REDIRECT /member/login");
+    expect(cookieStore.delete).toHaveBeenCalledWith("xpa_member");
   });
 });
 

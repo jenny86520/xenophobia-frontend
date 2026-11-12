@@ -40,6 +40,7 @@ jest.mock("./actions", () => ({
   registerAction: jest.fn(),
   requestResetAction: jest.fn(),
   setPasswordAction: jest.fn(),
+  startSteamLinkAction: jest.fn(),
   updateProfileAction: jest.fn(),
   acceptLegalAction: jest.fn(),
   checkInAction: jest.fn(),
@@ -57,6 +58,15 @@ jest.mock("./actions", () => ({
   acceptMatchInviteAction: jest.fn(),
   dismissMatchInviteAction: jest.fn(),
 }));
+
+const steamGuide = {
+  ref: "steam",
+  title: "Steam 登入安全說明",
+  content: "我們拿不到你的 Steam 密碼。",
+  imageUrl: null,
+  imageAlt: "Steam 登入安全說明",
+  video: null,
+};
 
 /** Page props for /member with an optional ?tab=. */
 const memberProps = (tab?: string) =>
@@ -278,12 +288,37 @@ describe("/member", () => {
     expect(fetchMemberVideoSubmissions).not.toHaveBeenCalled();
   });
 
-  it("offers to link Steam as a plain link when none is linked", async () => {
+  it("asks for the password again before linking Steam, in a form that works without JavaScript", async () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
     render(await MemberPage(memberProps()));
 
-    expect(screen.getByRole("link", { name: /綁定 Steam/ })).toHaveAttribute("href", "/steam/login?intent=link");
+    const password = screen.getByLabelText(/目前的密碼/);
+    expect(password).toHaveAttribute("type", "password");
+    expect(password).toBeRequired();
+    expect(password).toHaveAccessibleDescription(/綁定前請再輸入一次密碼。連續錯誤三次會鎖定帳號/);
+    expect(password.closest("form")).toHaveAttribute("action");
+    expect(screen.getByRole("button", { name: /綁定 Steam/ })).toHaveAttribute("type", "submit");
+    expect(screen.queryByRole("link", { name: /綁定 Steam/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "忘記密碼？" })).toHaveAttribute("href", "/member/login#reset-title");
     expect(screen.getByText(/參加內戰需要綁定 Steam 帳號/)).toBeInTheDocument();
+    // The Steam guide is not published in this test, so there is no 「安全嗎？」.
+    expect(screen.queryByRole("button", { name: "安全嗎？" })).not.toBeInTheDocument();
+  });
+
+  it("puts the published Steam guide's 「安全嗎？」 beside the link form", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+    (fetchGuide as jest.Mock).mockImplementation((ref: string) => Promise.resolve(ref === "steam" ? steamGuide : null));
+    render(await MemberPage(memberProps()));
+
+    expect(screen.getByRole("button", { name: "安全嗎？" })).toBeInTheDocument();
+    (fetchGuide as jest.Mock).mockReset().mockResolvedValue(null);
+  });
+
+  it("asks for the password again when the link ticket was missing or expired", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+    render(await MemberPage(memberQuery({ steam: "reauth-required" })));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("請先輸入密碼再綁定 Steam；確認後 10 分鐘內有效。");
   });
 
   it("shows the linked Steam account, and that changing it is up to an admin", async () => {
@@ -308,7 +343,8 @@ describe("/member", () => {
     );
     expect(screen.getByText("如需更換請聯絡管理員。")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent("已綁定 Steam 帳號。");
-    expect(screen.queryByRole("link", { name: /綁定 Steam/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /綁定 Steam/ })).not.toBeInTheDocument();
+    expect(fetchGuide).not.toHaveBeenCalledWith("steam");
   });
 
   it("explains a refused Steam link", async () => {
@@ -578,20 +614,21 @@ describe("/member", () => {
     it("puts the check-in guide's 「怎麼玩？」 beside the heading once it is published", async () => {
       (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
       (fetchMemberPoints as jest.Mock).mockResolvedValue(points());
-      (fetchGuide as jest.Mock).mockResolvedValueOnce({
-        ref: "checkin",
-        title: "每日簽到",
-        content: "每天按一次。",
-        imageUrl: null,
-        imageAlt: "每日簽到",
-        video: null,
-      });
+      // By ref: the Steam row above the tabs asks for the "steam" guide too.
+      (fetchGuide as jest.Mock).mockImplementation((ref: string) =>
+        Promise.resolve(
+          ref === "checkin"
+            ? { ref: "checkin", title: "每日簽到", content: "每天按一次。", imageUrl: null, imageAlt: "每日簽到", video: null }
+            : null,
+        ),
+      );
       render(await MemberPage(memberProps("points")));
 
       const heading = screen.getByRole("heading", { level: 2, name: "點數" });
       expect(
         within(heading.parentElement as HTMLElement).getByRole("button", { name: "怎麼玩？" }),
       ).toBeInTheDocument();
+      (fetchGuide as jest.Mock).mockReset().mockResolvedValue(null);
     });
 
     it("says today is done and leaves out the campaign when none is running", async () => {
@@ -1083,6 +1120,27 @@ describe("/member/login", () => {
       "/steam/login?intent=member",
     );
     expect(screen.getByRole("region", { name: "訪客以 Steam 登入" })).toHaveTextContent("以 Steam 登入會員");
+  });
+
+  it("puts 「安全嗎？」 beside both Steam buttons once the Steam guide is published, each with its own dialog", async () => {
+    (fetchGuide as jest.Mock).mockResolvedValueOnce(steamGuide);
+    render(await MemberLoginPage(loginProps()));
+
+    const buttons = screen.getAllByRole("button", { name: "安全嗎？" });
+    expect(buttons).toHaveLength(2);
+    const targets = buttons.map((b) => b.getAttribute("popovertarget"));
+    expect(new Set(targets).size).toBe(2);
+    for (const target of targets) {
+      const dialog = document.getElementById(target ?? "") as HTMLElement;
+      expect(within(dialog).getByRole("link", { name: "看完整手冊" })).toHaveAttribute("href", "/guide/steam");
+    }
+  });
+
+  it("leaves the Steam buttons alone while the Steam guide is unpublished", async () => {
+    render(await MemberLoginPage(loginProps()));
+
+    expect(screen.queryByRole("button", { name: "安全嗎？" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "以 Steam 登入" })).toBeInTheDocument();
   });
 
   it("shows a member Steam sign-in error in the login area, not the guest one", async () => {
