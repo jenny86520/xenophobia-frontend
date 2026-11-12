@@ -1,21 +1,21 @@
 import { render, screen, within } from "@testing-library/react";
-import { memberToken } from "@/lib/member-session";
+import { fetchMemberNewsSummary, memberToken } from "@/lib/member-session";
 import { fetchNews, fetchNewsList } from "@/lib/public-content-client";
-import type { NewsItem } from "@/types/news";
+import type { NewsListItem } from "@/types/news";
 import NewsItemPage from "./[id]/page";
 import NewsPage from "./page";
 
-jest.mock("@/lib/member-session", () => ({ memberToken: jest.fn() }));
+jest.mock("@/lib/member-session", () => ({ memberToken: jest.fn(), fetchMemberNewsSummary: jest.fn() }));
 jest.mock("@/lib/public-content-client", () => ({ fetchNewsList: jest.fn(), fetchNews: jest.fn() }));
-jest.mock("@/app/news/actions", () => ({ markNewsReadAction: jest.fn() }));
+jest.mock("@/app/news/actions", () => ({ markNewsReadAction: jest.fn(), markAllNewsReadAction: jest.fn() }));
 const mockNotFound = jest.fn(() => {
   throw new Error("NEXT_NOT_FOUND");
 });
 jest.mock("next/navigation", () => ({ notFound: () => mockNotFound() }));
 
-import { markNewsReadAction } from "@/app/news/actions";
+import { markAllNewsReadAction, markNewsReadAction } from "@/app/news/actions";
 
-const item = (id: string, overrides: Partial<NewsItem> = {}): NewsItem => ({
+const item = (id: string, overrides: Partial<NewsListItem> = {}): NewsListItem => ({
   id,
   title: `消息 ${id}`,
   content: "# 新功能\n\n- 每日簽到\n- 冰炫風",
@@ -35,6 +35,7 @@ const itemProps = (id: string) =>
 beforeEach(() => {
   jest.clearAllMocks();
   (memberToken as jest.Mock).mockResolvedValue(null);
+  (fetchMemberNewsSummary as jest.Mock).mockResolvedValue({ unread: 0, reminders: [] });
 });
 
 describe("/news", () => {
@@ -79,12 +80,36 @@ describe("/news", () => {
     expect(screen.getByText("目前還沒有消息。")).toBeInTheDocument();
   });
 
-  it("marks the messages on screen as read for a signed-in member", async () => {
+  it("tags what the member has not opened, marks nothing, and offers 全部標記已讀", async () => {
     (memberToken as jest.Mock).mockResolvedValue("token");
-    (fetchNewsList as jest.Mock).mockResolvedValue({ items: [item("a"), item("b")], total: 2, page: 1, pageSize: 10 });
+    (fetchMemberNewsSummary as jest.Mock).mockResolvedValue({ unread: 3, reminders: [] });
+    (fetchNewsList as jest.Mock).mockResolvedValue({
+      items: [item("a", { unread: true }), item("b", { unread: false })],
+      total: 2,
+      page: 1,
+      pageSize: 10,
+    });
     render(await NewsPage(listProps()));
 
-    expect(markNewsReadAction).toHaveBeenCalledWith(["a", "b"]);
+    const rows = within(screen.getByRole("list", { name: "消息列表" })).getAllByRole("link");
+    expect(within(rows[0]).getByText("未讀")).toBeInTheDocument();
+    expect(rows[0]).toHaveTextContent("NEW");
+    expect(rows[1]).not.toHaveTextContent("NEW");
+    expect(rows[1]).not.toHaveTextContent("未讀");
+    expect(markNewsReadAction).not.toHaveBeenCalled();
+
+    const button = screen.getByRole("button", { name: "全部標記已讀" });
+    expect(button).toHaveAttribute("type", "submit");
+    expect(button.closest("form")).not.toBeNull();
+    expect(markAllNewsReadAction).not.toHaveBeenCalled();
+  });
+
+  it("shows no NEW tags and no 全部標記已讀 without unread messages", async () => {
+    (fetchNewsList as jest.Mock).mockResolvedValue({ items: [item("a")], total: 1, page: 1, pageSize: 10 });
+    render(await NewsPage(listProps()));
+
+    expect(screen.queryByText("NEW")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "全部標記已讀" })).not.toBeInTheDocument();
   });
 });
 
@@ -96,6 +121,19 @@ describe("/news/[id]", () => {
     expect(screen.getByRole("heading", { level: 1, name: "點數商店上線" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 2, name: "新功能" })).toBeInTheDocument();
     expect(screen.getAllByRole("listitem").map((li) => li.textContent)).toEqual(["每日簽到", "冰炫風"]);
+  });
+
+  it("puts the way back above the title and marks the message read for a member", async () => {
+    (memberToken as jest.Mock).mockResolvedValue("token");
+    (fetchNews as jest.Mock).mockResolvedValue(item("a", { title: "點數商店上線" }));
+    render(await NewsItemPage(itemProps("a")));
+
+    const back = screen.getByRole("link", { name: "最新消息" });
+    expect(back).toHaveAttribute("href", "/news");
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(back.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "回到最新消息" })).not.toBeInTheDocument();
+    expect(markNewsReadAction).toHaveBeenCalledWith(["a"]);
   });
 
   it("is a real 404 for a message that cannot be shown", async () => {

@@ -30,7 +30,10 @@ export default async function NewsItemPage({ params }: PageProps<"/news/[id]">) 
   return (
     <main id="main">
       <Section spacing="tight" labelledBy="page-title">
-        <article className="flex flex-col gap-6">
+        <TextLink href="/news" className="text-body text-ink-secondary hover:text-ink">
+          <span aria-hidden="true">←</span> 最新消息
+        </TextLink>
+        <article className="mt-10 flex flex-col gap-6">
           <Eyebrow>NEWS</Eyebrow>
           <div className="flex flex-wrap items-center gap-3">
             <NewsCategoryBadge category={item.category} />
@@ -40,9 +43,6 @@ export default async function NewsItemPage({ params }: PageProps<"/news/[id]">) 
             {item.title}
           </Heading>
           <PlainText text={item.content} headingLevel={2} />
-          <TextLink href="/news" className="self-start text-body">
-            回到最新消息
-          </TextLink>
         </article>
         {signedIn && <MarkNewsSeen ids={[item.id]} />}
       </Section>

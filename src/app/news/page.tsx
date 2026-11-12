@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, CheckCheck } from "lucide-react";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { PageHeader } from "@/components/brand/page-header";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
-import { MarkNewsSeen } from "@/components/news/mark-news-seen";
-import { NEWS_CATEGORY_LABELS, NewsCategoryBadge, NewsMeta } from "@/components/news/news-labels";
-import { memberToken } from "@/lib/member-session";
+import { NEWS_CATEGORY_LABELS, NewsCategoryBadge, NewsMeta, NewsUnreadBadge } from "@/components/news/news-labels";
+import { Button } from "@/components/ui/button";
+import { markAllNewsReadAction } from "@/app/news/actions";
+import { fetchMemberNewsSummary } from "@/lib/member-session";
 import { fetchNewsList } from "@/lib/public-content-client";
 import type { NewsCategory } from "@/types/news";
 import { cn } from "@/lib/utils";
@@ -33,13 +34,15 @@ function pageHref(category: NewsCategory | null, page: number): string {
 
 /**
  * 最新消息 and 網站更新, newest first. The category tabs and pages are links (state in the URL), so
- * they work without JavaScript. A signed-in member's messages on screen count as read.
+ * they work without JavaScript. A signed-in member sees NEW on what they have not opened (the
+ * backend decides); listing never marks anything read, opening a message or 全部標記已讀 does.
  */
 export default async function NewsPage({ searchParams }: PageProps<"/news">) {
   const query = await searchParams;
   const category = query.category === "news" || query.category === "update" ? query.category : null;
   const page = typeof query.page === "string" && /^[1-9]\d*$/.test(query.page) ? Number(query.page) : 1;
-  const [list, signedIn] = await Promise.all([fetchNewsList(category, page), memberToken()]);
+  // The layout already fetched the summary in this request (React.cache); 0 when signed out.
+  const [list, summary] = await Promise.all([fetchNewsList(category, page), fetchMemberNewsSummary()]);
   const pages = Math.max(1, Math.ceil(list.total / list.pageSize));
 
   return (
@@ -52,18 +55,31 @@ export default async function NewsPage({ searchParams }: PageProps<"/news">) {
         />
       </Section>
       <Section spacing="tight">
-        <nav aria-label="消息分類" className="flex flex-wrap gap-x-8 gap-y-2 border-b border-line pb-4">
-          {TABS.map((tab) => (
-            <TextLink
-              key={tab.label}
-              href={pageHref(tab.category, 1)}
-              current={tab.category === category}
-              className={cn("text-body", tab.category === category ? "text-ink" : "text-ink-secondary hover:text-ink")}
-            >
-              {tab.label}
-            </TextLink>
-          ))}
-        </nav>
+        <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-b border-line pb-4">
+          <nav aria-label="消息分類" className="flex flex-wrap gap-x-8 gap-y-2">
+            {TABS.map((tab) => (
+              <TextLink
+                key={tab.label}
+                href={pageHref(tab.category, 1)}
+                current={tab.category === category}
+                className={cn(
+                  "text-body",
+                  tab.category === category ? "text-ink" : "text-ink-secondary hover:text-ink",
+                )}
+              >
+                {tab.label}
+              </TextLink>
+            ))}
+          </nav>
+          {summary.unread > 0 && (
+            <form action={markAllNewsReadAction}>
+              <Button type="submit" variant="outline">
+                <CheckCheck aria-hidden="true" />
+                全部標記已讀
+              </Button>
+            </form>
+          )}
+        </div>
         {list.items.length === 0 ? (
           <p className="mt-8 text-body text-ink-secondary">目前還沒有消息。</p>
         ) : (
@@ -76,7 +92,10 @@ export default async function NewsPage({ searchParams }: PageProps<"/news">) {
                 >
                   <div className="col-span-4 flex flex-col items-start gap-2 md:col-span-2">
                     <NewsMeta item={item} />
-                    <NewsCategoryBadge category={item.category} />
+                    <div className="flex flex-wrap gap-2">
+                      <NewsCategoryBadge category={item.category} />
+                      {item.unread && <NewsUnreadBadge />}
+                    </div>
                   </div>
                   <h2 className="col-span-4 font-heading text-h3 text-ink md:col-span-6 lg:col-span-9">{item.title}</h2>
                   <div className="hidden items-start justify-end lg:col-span-1 lg:flex">
@@ -96,7 +115,6 @@ export default async function NewsPage({ searchParams }: PageProps<"/news">) {
             {page < pages ? <TextLink href={pageHref(category, page + 1)}>較早的消息</TextLink> : <span />}
           </nav>
         )}
-        {signedIn && <MarkNewsSeen ids={list.items.map((item) => item.id)} />}
       </Section>
     </main>
   );

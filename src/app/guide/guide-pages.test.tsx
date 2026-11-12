@@ -68,6 +68,17 @@ describe("/guide/[ref]", () => {
     );
   });
 
+  it("puts the way back to the guide above the title", async () => {
+    (fetchGuide as jest.Mock).mockResolvedValue(guide());
+    render(await GuideItemPage(itemProps("checkin")));
+
+    const back = screen.getByRole("link", { name: "使用手冊" });
+    expect(back).toHaveAttribute("href", "/guide");
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(back.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "回到使用手冊" })).not.toBeInTheDocument();
+  });
+
   it("plays an uploaded video with controls and no autoplay", async () => {
     (fetchGuide as jest.Mock).mockResolvedValue(
       guide({ video: { source: "upload", url: "/media/videos/v.mp4", mimeType: "video/mp4" } }),

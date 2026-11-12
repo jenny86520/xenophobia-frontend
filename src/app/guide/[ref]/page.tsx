@@ -23,16 +23,16 @@ export default async function GuideItemPage({ params }: PageProps<"/guide/[ref]"
   return (
     <main id="main">
       <Section spacing="tight" labelledBy="page-title">
-        <article className="flex max-w-[65ch] flex-col gap-6">
+        <TextLink href="/guide" className="text-body text-ink-secondary hover:text-ink">
+          <span aria-hidden="true">←</span> 使用手冊
+        </TextLink>
+        <article className="mt-10 flex max-w-[65ch] flex-col gap-6">
           <Eyebrow>GUIDE</Eyebrow>
           <Heading level={1} id="page-title">
             {guide.title}
           </Heading>
           <GuideMedia guide={guide} />
           <PlainText text={guide.content} headingLevel={2} />
-          <TextLink href="/guide" className="self-start text-body">
-            回到使用手冊
-          </TextLink>
         </article>
       </Section>
     </main>

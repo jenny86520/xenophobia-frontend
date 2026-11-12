@@ -14,7 +14,10 @@ export type NewsItem = {
   visibility: "public" | "members";
 };
 
-export type NewsPage = { items: NewsItem[]; total: number; page: number; pageSize: number };
+/** A list row; `unread` only comes for a signed-in member (the header count's rule, decided by the backend). */
+export type NewsListItem = NewsItem & { unread?: boolean };
+
+export type NewsPage = { items: NewsListItem[]; total: number; page: number; pageSize: number };
 
 export type NewsReminder = { id: string; title: string; publishAt: string; excerpt: string };
 

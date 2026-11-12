@@ -1,4 +1,4 @@
-import { Megaphone, Wrench } from "lucide-react";
+import { Megaphone, Sparkles, Wrench } from "lucide-react";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { Badge } from "@/components/ui/badge";
 import type { NewsCategory, NewsItem } from "@/types/news";
@@ -16,6 +16,19 @@ export function NewsCategoryBadge({ category }: { category: NewsCategory }) {
     <Badge variant="outline" className="gap-1.5">
       <Icon aria-hidden="true" />
       {NEWS_CATEGORY_LABELS[category] ?? category}
+    </Badge>
+  );
+}
+
+/** A message the member has not opened yet: text plus a decorative icon, never colour alone. */
+export function NewsUnreadBadge() {
+  return (
+    <Badge className="gap-1.5">
+      <Sparkles aria-hidden="true" />
+      <span lang="en" aria-hidden="true">
+        NEW
+      </span>
+      <span className="sr-only">未讀</span>
     </Badge>
   );
 }

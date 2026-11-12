@@ -29,12 +29,26 @@ export async function acknowledgeNewsAction(formData: FormData): Promise<void> {
 }
 
 /**
- * The member has these messages on screen (/news or a message's page): called by MarkNewsSeen
+ * The member opened this message's page: called by MarkNewsSeen
  * after mount. The layout is revalidated so the header's unread count drops at once: client
  * navigation never re-fetches the root layout, so without it the count stayed until a full reload.
  * MarkNewsSeen stays mounted through the refresh, so this runs once per page.
  */
 export async function markNewsReadAction(ids: string[]): Promise<void> {
   await markRead(ids.slice(0, 50));
+  revalidatePath("/", "layout");
+}
+
+/**
+ * 全部標記已讀 on /news: the backend marks every message unread for the member, whatever its
+ * category or page, so no ids are sent. Best effort like the others; the layout is revalidated so
+ * the header count, the NEW tags and the button itself go in one re-render. Works without JavaScript.
+ */
+export async function markAllNewsReadAction(): Promise<void> {
+  try {
+    await memberFetch("/api/member/news/read-all", { method: "POST" });
+  } catch {
+    // Unreachable backend: the messages simply stay unread.
+  }
   revalidatePath("/", "layout");
 }
