@@ -9,10 +9,15 @@ const ROWS = [{ outline: false }, { outline: true }, { outline: false }] as cons
  * the band scrolls past (`.marquee-row`, a CSS view timeline; spec 品牌特效). Pure decoration, so
  * the whole band is hidden from assistive tech. Each row repeats the name so its edges never show
  * while it moves; without support or with reduced motion the rows simply stand still.
+ *
+ * `relative` is what keeps the band inside the page: BrandName's sr-only copy is absolutely
+ * positioned, and overflow-clip only clips descendants whose containing block is the band or
+ * inside it. Without it the copies far right in each row escaped (a 375px phone scrolled to
+ * 820px); the animated rows hid this, because their `translate` made each row a containing block.
  */
 export function BrandMarquee({ name }: { name: string }) {
   return (
-    <div aria-hidden="true" data-brand-marquee className="marquee overflow-clip py-section-tight select-none">
+    <div aria-hidden="true" data-brand-marquee className="marquee relative overflow-clip py-section-tight select-none">
       {ROWS.map((row, i) => (
         <div
           key={i}

@@ -1421,7 +1421,9 @@
  *
  * Anything that clips a .marquee-row or .media-reveal must use overflow: clip (overflow-clip),
  * never hidden: overflow: hidden makes the box a scroll container, and view() then follows that
- * box (which never scrolls) instead of the page, so the effect freezes.
+ * box (which never scrolls) instead of the page, so the effect freezes. The clipping box must also
+ * be positioned (relative): overflow never clips absolutely positioned descendants (such as the
+ * sr-only text inside BrandName) whose containing block lies outside it.
  */
 
 /* Scrolling wordmark (BrandMarquee): the middle row is outlined; its XPA letters keep the signal colour. */
