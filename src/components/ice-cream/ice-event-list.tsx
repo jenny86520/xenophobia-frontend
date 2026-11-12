@@ -3,6 +3,9 @@ import type { IceEvent } from "@/types/ice-cream";
 import { formatTaipeiDateTime } from "@/utils/datetime";
 import { describeIceEvent } from "@/utils/ice-cream-events";
 
+/** Events that end a physical redemption carry the quip picked then. */
+const QUIP_EVENTS = new Set(["redeemed_physical", "physical_confirmed", "physical_auto_confirmed"]);
+
 /** One token's events as hairline rows: time (Taiwan), what happened and the quip it carries. */
 export function IceEventList({ events, label }: { events: IceEvent[]; label: string }) {
   return (
@@ -15,7 +18,7 @@ export function IceEventList({ events, label }: { events: IceEvent[]; label: str
           <MetaLabel className="shrink-0 md:w-40">{formatTaipeiDateTime(event.createdAt)}</MetaLabel>
           <span className="text-body text-ink">
             {describeIceEvent(event)}
-            {event.note && event.type === "redeemed_physical" && (
+            {event.note && QUIP_EVENTS.has(event.type) && (
               <span className="text-ink-secondary">：「{event.note}」</span>
             )}
           </span>

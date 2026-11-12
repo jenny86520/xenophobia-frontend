@@ -509,6 +509,29 @@ describe("ice cream actions", () => {
     expect(sentBody()).toEqual({ method: "points" });
   });
 
+  it("waits for the holder after a physical redemption, who confirms or disputes it", async () => {
+    respond(201, { serial: 12, holder: { nickname: "小華" } });
+    await expect(redeemIceCreamAction("i1", "physical")).resolves.toEqual({
+      ok: true,
+      message: "已請客，等「小華」驗收。",
+    });
+
+    respond(201, token);
+    await expect(iceCreamStepAction("i1", "confirmPhysical")).resolves.toEqual({
+      ok: true,
+      message: "吃到了！冰炫風 #12功成身退。",
+    });
+    expect(call()[0]).toMatch(/\/i1\/confirm$/);
+    expect(call()[1].method).toBe("POST");
+
+    respond(201, token);
+    await expect(iceCreamStepAction("i1", "disputePhysical")).resolves.toEqual({
+      ok: true,
+      message: "已退回兌換中，等對方重新請客。",
+    });
+    expect(call()[0]).toMatch(/\/i1\/dispute$/);
+  });
+
   it("shows the backend's refusal, needs the box ticked to delete, and handles a lost session", async () => {
     respond(409, { message: "這支冰炫風已經退回" });
     await expect(iceCreamStepAction("i1", "accept")).resolves.toEqual({

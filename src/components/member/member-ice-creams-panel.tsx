@@ -1,3 +1,4 @@
+import { TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { iceCreamStepAction, redeemIceCreamAction } from "@/app/member/actions";
 import { MetaLabel } from "@/components/brand/meta-label";
@@ -79,17 +80,155 @@ function IncomingCard({ ice }: { ice: MemberIceCream }) {
   );
 }
 
-/** A token the member issued that its holder wants paid: 3 points, or a real one. */
+/** A warning in words with an icon (never colour alone), framed so it stands out from the rest. */
+function IceWarning({ children }: { children: ReactNode }) {
+  return (
+    <p className="flex items-start gap-2 rounded-sm border-l-2 border-signal bg-surface-elevated px-3 py-2 text-ink">
+      <TriangleAlert aria-hidden="true" className="mt-1 size-4 shrink-0 text-signal" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+/**
+ * What happens next in a confirmation dialog, as short keyed lines instead of a paragraph: the key
+ * in bold, the line beside it (stacked under it when narrow).
+ */
+function DialogPoints({ label, points }: { label: string; points: Array<[string, ReactNode]> }) {
+  return (
+    <dl aria-label={label} className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-[auto_1fr]">
+      {points.map(([key, line]) => (
+        <div key={key} className="contents">
+          <dt className="font-medium text-ink">{key}</dt>
+          <dd className="mb-1 sm:mb-0">{line}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/** A button that only closes its dialog, for the "not now" choice. */
+function CloseDialogButton({ dialogId, label }: { dialogId: string; label: string }) {
+  return (
+    <button type="button" popoverTarget={dialogId} popoverTargetAction="hide" className={CARD_BUTTON_CLASSES}>
+      {label}
+    </button>
+  );
+}
+
+/**
+ * A token the member issued that its holder wants paid: 3 points, or a real one, which first asks
+ * again and warns against claiming one never bought. Once claimed it waits for the holder (no
+ * buttons); a holder who said they never got it leaves a warning on the card.
+ */
 function RequestCard({ ice }: { ice: MemberIceCream }) {
+  const holder = ice.holder?.nickname ?? "";
+  const name = iceCreamName(ice.serial);
+  const dialog = `ice-treat-${ice.id}`;
+  const can = (action: IceCream["actions"][number]) => ice.actions.includes(action);
+  const waiting = ice.status === "confirming";
   return (
     <IceCreamCard
-      cover={{ serial: ice.serial, issuer: ice.issuer.nickname, state: `「${ice.holder?.nickname}」拿著它來討了` }}
+      cover={{
+        serial: ice.serial,
+        issuer: ice.issuer.nickname,
+        state: waiting ? `等「${holder}」驗收` : `「${holder}」拿著它來討了`,
+      }}
       detailsId={detailId(ice)}
-      dialogs={<DetailDialog ice={ice} />}
+      dialogs={
+        <>
+          <DetailDialog ice={ice} />
+          {can("redeem") && (
+            <PopoverDialog id={dialog} title="請吃一支">
+              <p className="text-ink">
+                真的要請「{holder}」吃一支{name}嗎？
+              </p>
+              <DialogPoints
+                label="請吃一支之後"
+                points={[
+                  ["驗收", "對方按「確認吃到了」，這支才功成身退。"],
+                  ["沒吃到", "對方說沒吃到，就退回兌換中，紀錄留在成長史冊。"],
+                  ["還沒買", "先按「給 3 點」最安全。"],
+                ]}
+              />
+              <IceWarning>冰炫風之神在看著你：還沒請就按，是詐騙行為。</IceWarning>
+              <div className="flex flex-wrap items-start gap-2">
+                <FriendActionButton
+                  action={redeemIceCreamAction.bind(null, ice.id, "physical")}
+                  label="我請了，等對方驗收"
+                  primary
+                />
+                <CloseDialogButton dialogId={dialog} label="再等等" />
+              </div>
+            </PopoverDialog>
+          )}
+        </>
+      }
     >
+      {ice.disputed && (
+        <div className="text-caption">
+          <IceWarning>「{holder}」說還沒吃到！不准詐騙喔。重新請一支，或乾脆給 3 點了事。</IceWarning>
+        </div>
+      )}
+      {waiting ? (
+        <p className="text-caption text-ink-secondary">
+          {formatTaipeiDateTime(ice.confirmExpiresAt ?? "")} 前沒回應就算吃到了
+        </p>
+      ) : (
+        can("redeem") && (
+          <div className="flex flex-wrap justify-center gap-2">
+            <FriendActionButton action={redeemIceCreamAction.bind(null, ice.id, "points")} label="給 3 點" primary />
+            <button type="button" popoverTarget={dialog} className={CARD_BUTTON_CLASSES}>
+              請吃一支
+            </button>
+          </div>
+        )
+      )}
+    </IceCreamCard>
+  );
+}
+
+/**
+ * A physical redemption waiting for the member (the holder): they confirm it, or say they never
+ * got it, which asks again and warns against saying so falsely.
+ */
+function ConfirmCard({ ice }: { ice: MemberIceCream }) {
+  const issuer = ice.issuer.nickname;
+  const dialog = `ice-dispute-${ice.id}`;
+  return (
+    <IceCreamCard
+      cover={{ serial: ice.serial, issuer, state: `「${issuer}」說已經請你吃了` }}
+      detailsId={detailId(ice)}
+      dialogs={
+        <>
+          <DetailDialog ice={ice} />
+          <PopoverDialog id={dialog} title="確定沒吃到嗎？">
+            <p>冰炫風會退回兌換中，「{issuer}」得重新請一次，或改給 3 點。</p>
+            <IceWarning>吃了說沒吃，冰炫風之神一樣看得到。這筆紀錄會留在成長史冊裡。</IceWarning>
+            <div className="flex flex-wrap items-start gap-2">
+              <FriendActionButton
+                action={iceCreamStepAction.bind(null, ice.id, "disputePhysical")}
+                label="真的沒吃到"
+                primary
+              />
+              <CloseDialogButton dialogId={dialog} label="啊我吃到了" />
+            </div>
+          </PopoverDialog>
+        </>
+      }
+    >
+      <p className="text-caption text-ink-secondary">
+        {formatTaipeiDateTime(ice.confirmExpiresAt ?? "")} 前沒回應，就當你吃到了
+      </p>
       <div className="flex flex-wrap justify-center gap-2">
-        <FriendActionButton action={redeemIceCreamAction.bind(null, ice.id, "points")} label="給 3 點" primary />
-        <FriendActionButton action={redeemIceCreamAction.bind(null, ice.id, "physical")} label="請吃一支" />
+        <FriendActionButton
+          action={iceCreamStepAction.bind(null, ice.id, "confirmPhysical")}
+          label="確認吃到了"
+          primary
+        />
+        <button type="button" popoverTarget={dialog} className={CARD_BUTTON_CLASSES}>
+          我沒吃到啊
+        </button>
       </div>
     </IceCreamCard>
   );
@@ -133,7 +272,14 @@ function HeldCard({ ice, friends }: { ice: MemberIceCream; friends: MemberIceCre
               <p className="text-ink">
                 要向「{ice.issuer.nickname}」申請兌換{name}嗎？
               </p>
-              <p>對方會給你 3 點，或請你吃一支真的。反悔的話，對方處理前都能撤回。</p>
+              <DialogPoints
+                label="對方會選一種方式兌現"
+                points={[
+                  ["給 3 點", "點數直接進你口袋。"],
+                  ["請吃一支", "吃到後回來按「確認吃到了」；72 小時沒回應，就當你吃得很滿足。"],
+                  ["反悔", "對方處理前都能撤回。"],
+                ]}
+              />
               <FriendActionButton
                 action={iceCreamStepAction.bind(null, ice.id, "requestRedeem")}
                 label="確認申請"
@@ -179,8 +325,9 @@ function HeldCard({ ice, friends }: { ice: MemberIceCream; friends: MemberIceCre
 }
 
 /**
- * The 冰炫風 tab: issuing and the tokens the member holds on the left; gifts waiting for them and
- * redemptions asked of them (as issuer) on the right, with links to the growth record and the shop.
+ * The 冰炫風 tab: issuing and the tokens the member holds on the left; gifts waiting for them,
+ * physical redemptions waiting for their confirmation and redemptions asked of them (as issuer)
+ * on the right, with links to the growth record and the shop.
  * Every rule (limit, points, who may do what) is the backend's.
  */
 export function MemberIceCreamsPanel({
@@ -241,6 +388,17 @@ export function MemberIceCreamsPanel({
             >
               {iceCreams.incoming.map((ice) => (
                 <IncomingCard key={ice.id} ice={ice} />
+              ))}
+            </CardSection>
+            <CardSection
+              id="ice-confirm-title"
+              title="冰送到了嗎？"
+              label="等你驗收的冰炫風"
+              empty="沒有等你驗收的冰，嘴巴先休息一下。"
+              className="lg:grid-cols-2"
+            >
+              {iceCreams.toConfirm.map((ice) => (
+                <ConfirmCard key={ice.id} ice={ice} />
               ))}
             </CardSection>
             <CardSection

@@ -182,6 +182,7 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: QueryVal
       held: [],
       incoming: [],
       redeemRequests: [],
+      toConfirm: [],
       friends: [],
     };
     return <MemberIceCreamsPanel iceCreams={iceCreams} guide={guide} />;

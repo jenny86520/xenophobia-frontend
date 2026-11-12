@@ -1,10 +1,19 @@
 /** A person on a token: the site only ever gets a nickname (「管理員」「已離開的會員」 included). */
 export type IcePerson = { nickname: string };
 
-export type IceStatus = "held" | "gifting" | "redeeming" | "retired" | "deleted";
+export type IceStatus = "held" | "gifting" | "redeeming" | "confirming" | "retired" | "deleted";
 
 /** What the viewing member may do; the site shows a button per action, the backend decides. */
-export type IceAction = "gift" | "accept" | "decline" | "requestRedeem" | "cancelRedeem" | "redeem" | "delete";
+export type IceAction =
+  | "gift"
+  | "accept"
+  | "decline"
+  | "requestRedeem"
+  | "cancelRedeem"
+  | "redeem"
+  | "confirmPhysical"
+  | "disputePhysical"
+  | "delete";
 
 export type IceCream = {
   id: string;
@@ -15,6 +24,10 @@ export type IceCream = {
   holder: IcePerson | null;
   giftTo: IcePerson | null;
   giftExpiresAt: string | null;
+  /** While confirming: when the holder's silence counts as having eaten it. */
+  confirmExpiresAt: string | null;
+  /** Back to redeeming because the holder said they never got it. */
+  disputed: boolean;
   createdAt: string;
   endedAt: string | null;
   actions: IceAction[];
@@ -31,7 +44,10 @@ export type MemberIceCreams = {
   create: { allowed: boolean; reason: string | null };
   held: MemberIceCream[];
   incoming: MemberIceCream[];
+  /** Asked to redeem, or waiting for the holder to confirm a physical one. */
   redeemRequests: MemberIceCream[];
+  /** Physical redemptions waiting for the member (the holder) to confirm. */
+  toConfirm: MemberIceCream[];
   friends: { memberId: string; nickname: string }[];
 };
 

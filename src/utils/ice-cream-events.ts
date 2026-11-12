@@ -9,6 +9,7 @@ export const ICE_STATUS_TEXT: Record<IceStatus, string> = {
   held: "持有中",
   gifting: "贈送中",
   redeeming: "兌換中",
+  confirming: "等驗收",
   retired: "功成身退",
   deleted: "已刪除",
 };
@@ -44,6 +45,14 @@ export function describeIceEvent(event: IceEvent): string {
       return `${actor} 以 3 點兌換給 ${target}，功成身退`;
     case "redeemed_physical":
       return `${actor} 請 ${target} 吃了冰炫風，功成身退`;
+    case "physical_claimed":
+      return `${actor} 說請 ${target} 吃了一支，等驗收`;
+    case "physical_confirmed":
+      return `${actor} 確認吃到了，功成身退`;
+    case "physical_disputed":
+      return `${actor} 說沒吃到，退回兌換中`;
+    case "physical_auto_confirmed":
+      return `72 小時沒回應，當作 ${target} 吃到了，功成身退`;
     case "deleted":
       return `${actor} 刪除了這支冰炫風`;
     case "issuer_left":

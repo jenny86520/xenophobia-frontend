@@ -386,14 +386,26 @@ export async function giftIceCreamAction(id: string, _: MemberActionState, form:
   return { ok: true, message: `已送給「${result.giftTo?.nickname ?? ""}」，等對方接收（24 小時內）。` };
 }
 
-const ICE_STEPS = {
-  accept: { path: "accept", method: "POST", done: "已收下這支冰炫風。" },
-  decline: { path: "decline", method: "POST", done: "已退回。" },
-  requestRedeem: { path: "redeem-request", method: "POST", done: "已申請兌換，等發行人處理。" },
-  cancelRedeem: { path: "redeem-request", method: "DELETE", done: "已撤回兌換申請。" },
-} as const;
+const ICE_STEPS: Record<
+  "accept" | "decline" | "requestRedeem" | "cancelRedeem" | "confirmPhysical" | "disputePhysical",
+  { path: string; method: "POST" | "DELETE"; done: (ice: IceCream) => string }
+> = {
+  accept: { path: "accept", method: "POST", done: () => "已收下這支冰炫風。" },
+  decline: { path: "decline", method: "POST", done: () => "已退回。" },
+  requestRedeem: { path: "redeem-request", method: "POST", done: () => "已申請兌換，等發行人處理。" },
+  cancelRedeem: { path: "redeem-request", method: "DELETE", done: () => "已撤回兌換申請。" },
+  confirmPhysical: {
+    path: "confirm",
+    method: "POST",
+    done: (ice) => `吃到了！${iceCreamName(ice.serial)}功成身退。`,
+  },
+  disputePhysical: { path: "dispute", method: "POST", done: () => "已退回兌換中，等對方重新請客。" },
+};
 
-/** Accept, decline, ask to redeem or withdraw that request; token id and step are bound. */
+/**
+ * Accept, decline, ask to redeem or withdraw that request, or (the holder) confirm or dispute a
+ * physical redemption; token id and step are bound.
+ */
 export async function iceCreamStepAction(id: string, step: keyof typeof ICE_STEPS): Promise<MemberActionState> {
   const { path, method, done } = ICE_STEPS[step];
   const result = await iceCreamRequest(
@@ -401,7 +413,7 @@ export async function iceCreamStepAction(id: string, step: keyof typeof ICE_STEP
     { method },
     "操作失敗，請重新整理後再試",
   );
-  return isState(result) ? result : { ok: true, message: done };
+  return isState(result) ? result : { ok: true, message: done(result) };
 }
 
 /** The issuer completes a redemption: 3 points to the holder, or a physical McFlurry. */
@@ -417,7 +429,7 @@ export async function redeemIceCreamAction(id: string, method: "points" | "physi
     message:
       method === "points"
         ? `已給 3 點，${iceCreamName(result.serial)}功成身退。`
-        : `${iceCreamName(result.serial)}功成身退。`,
+        : `已請客，等「${result.holder?.nickname ?? ""}」驗收。`,
   };
 }
 

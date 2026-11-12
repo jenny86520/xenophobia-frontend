@@ -589,7 +589,9 @@ describe("/member", () => {
       render(await MemberPage(memberProps("points")));
 
       const heading = screen.getByRole("heading", { level: 2, name: "點數" });
-      expect(within(heading.parentElement as HTMLElement).getByRole("button", { name: "怎麼玩？" })).toBeInTheDocument();
+      expect(
+        within(heading.parentElement as HTMLElement).getByRole("button", { name: "怎麼玩？" }),
+      ).toBeInTheDocument();
     });
 
     it("says today is done and leaves out the campaign when none is running", async () => {
@@ -650,6 +652,8 @@ describe("/member", () => {
       holder: { nickname: "小明" },
       giftTo: null,
       giftExpiresAt: null,
+      confirmExpiresAt: null,
+      disputed: false,
       createdAt: "2026-11-06T04:00:00.000Z",
       endedAt: null,
       actions: [],
@@ -687,6 +691,7 @@ describe("/member", () => {
         token(20, { issuer: { nickname: "小華" }, holder: { nickname: "小華" }, actions: ["accept", "decline"] }),
       ],
       redeemRequests: [token(9, { holder: { nickname: "小美" }, status: "redeeming", actions: ["redeem"] })],
+      toConfirm: [],
       friends: [{ memberId: "hua", nickname: "小華" }],
       ...overrides,
     });
@@ -788,6 +793,109 @@ describe("/member", () => {
       expect(screen.getByText("冰庫空空的，自己發一支，或等朋友塞冰給你。")).toBeInTheDocument();
       expect(screen.getByText("還沒有人塞冰炫風給你，先去多交幾個朋友吧。")).toBeInTheDocument();
       expect(screen.getByText("目前沒人來討冰，荷包很安全。")).toBeInTheDocument();
+      expect(screen.getByText("沒有等你驗收的冰，嘴巴先休息一下。")).toBeInTheDocument();
+    });
+
+    it("asks again before a physical redemption and warns against claiming one never bought", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberIceCreams as jest.Mock).mockResolvedValue(iceCreams());
+      render(await MemberPage(memberProps("ice-creams")));
+
+      const requests = within(screen.getByRole("region", { name: "有人來討冰了" })).getByRole("list", {
+        name: "等你兌現的冰炫風",
+      });
+      // 請吃一支 only opens the dialog; the submit lives inside it.
+      expect(within(requests).getByRole("button", { name: "請吃一支" })).toHaveAttribute(
+        "popovertarget",
+        "ice-treat-i9",
+      );
+      const treat = within(requests).getByRole("dialog", { name: "請吃一支" });
+      expect(treat).toHaveTextContent("真的要請「小美」吃一支冰炫風 #9嗎？");
+      // What follows is short keyed lines, the warning a framed line of its own.
+      const after = treat.querySelector("dl") as HTMLElement;
+      expect(after).toHaveAccessibleName("請吃一支之後");
+      expect(
+        within(after)
+          .getAllByRole("term")
+          .map((t) => t.textContent),
+      ).toEqual(["驗收", "沒吃到", "還沒買"]);
+      expect(after).toHaveTextContent("先按「給 3 點」最安全。");
+      expect(treat).toHaveTextContent("冰炫風之神在看著你：還沒請就按，是詐騙行為。");
+      expect(within(treat).getByRole("button", { name: "我請了，等對方驗收" })).toHaveAttribute("type", "submit");
+      expect(within(treat).getByRole("button", { name: "再等等" })).toHaveAttribute("popovertargetaction", "hide");
+
+      // Asking to redeem explains the confirmation that follows a physical one.
+      const ask = screen.getByRole("dialog", { name: "兌換冰炫風 #3" });
+      const ways = ask.querySelector("dl") as HTMLElement;
+      expect(ways).toHaveAccessibleName("對方會選一種方式兌現");
+      expect(
+        within(ways)
+          .getAllByRole("term")
+          .map((t) => t.textContent),
+      ).toEqual(["給 3 點", "請吃一支", "反悔"]);
+      expect(ways).toHaveTextContent("72 小時沒回應，就當你吃得很滿足。");
+    });
+
+    it("lets the holder confirm or, after asking again, dispute a physical redemption", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberIceCreams as jest.Mock).mockResolvedValue(
+        iceCreams({
+          toConfirm: [
+            token(15, {
+              status: "confirming",
+              holder: { nickname: "小明" },
+              issuer: { nickname: "阿明" },
+              // 06:30Z is 14:30 in Taiwan.
+              confirmExpiresAt: "2026-11-15T06:30:00.000Z",
+              actions: ["confirmPhysical", "disputePhysical"],
+            }),
+          ],
+        }),
+      );
+      render(await MemberPage(memberProps("ice-creams")));
+
+      const list = within(screen.getByRole("region", { name: "冰送到了嗎？" })).getByRole("list", {
+        name: "等你驗收的冰炫風",
+      });
+      expect(list).toHaveTextContent("「阿明」說已經請你吃了");
+      expect(list).toHaveTextContent("2026/11/15 14:30 前沒回應，就當你吃到了");
+      expect(within(list).getByRole("button", { name: "確認吃到了" })).toHaveAttribute("type", "submit");
+      expect(within(list).getByRole("button", { name: "我沒吃到啊" })).toHaveAttribute(
+        "popovertarget",
+        "ice-dispute-i15",
+      );
+      const dispute = within(list).getByRole("dialog", { name: "確定沒吃到嗎？" });
+      expect(dispute).toHaveTextContent("吃了說沒吃，冰炫風之神一樣看得到。");
+      expect(within(dispute).getByRole("button", { name: "真的沒吃到" })).toHaveAttribute("type", "submit");
+      expect(within(dispute).getByRole("button", { name: "啊我吃到了" })).toHaveAttribute(
+        "popovertargetaction",
+        "hide",
+      );
+    });
+
+    it("shows the issuer a claimed redemption waiting, and warns after the holder said they never got it", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberIceCreams as jest.Mock).mockResolvedValue(
+        iceCreams({
+          redeemRequests: [
+            token(9, {
+              holder: { nickname: "小美" },
+              status: "confirming",
+              confirmExpiresAt: "2026-11-15T06:30:00.000Z",
+            }),
+            token(10, { holder: { nickname: "小華" }, status: "redeeming", disputed: true, actions: ["redeem"] }),
+          ],
+        }),
+      );
+      render(await MemberPage(memberProps("ice-creams")));
+
+      const cards = Array.from(screen.getByRole("list", { name: "等你兌現的冰炫風" }).children) as HTMLElement[];
+      expect(cards[0]).toHaveTextContent("等「小美」驗收");
+      expect(cards[0]).toHaveTextContent("2026/11/15 14:30 前沒回應就算吃到了");
+      expect(within(cards[0]).queryByRole("button", { name: "給 3 點" })).not.toBeInTheDocument();
+      expect(within(cards[0]).queryByRole("button", { name: "請吃一支" })).not.toBeInTheDocument();
+      expect(cards[1]).toHaveTextContent("「小華」說還沒吃到！不准詐騙喔。重新請一支，或乾脆給 3 點了事。");
+      expect(within(cards[1]).getByRole("button", { name: "給 3 點" })).toBeInTheDocument();
     });
   });
 
