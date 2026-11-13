@@ -16,6 +16,8 @@ import {
   acceptLegalAction,
   acceptMatchInviteAction,
   answerFriendRequestAction,
+  buyCosmeticAction,
+  changeCupAction,
   checkInAction,
   claimIceCampaignAction,
   claimQuestAction,
@@ -26,6 +28,7 @@ import {
   markIceCreamsSeenAction,
   redeemIceCreamAction,
   dismissMatchInviteAction,
+  equipCosmeticAction,
   removeFriendAction,
   sendFriendRequestAction,
   loginAction,
@@ -619,3 +622,53 @@ describe("ice cream actions", () => {
   });
 });
 
+describe("cosmetic actions", () => {
+  const call = () => (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+
+  it("buys at the price the member saw and refreshes the shop and the member page", async () => {
+    respond(201, { item: { name: "派對常客" }, balance: 20 });
+    await expect(buyCosmeticAction("t1", 30)).resolves.toEqual({ ok: true, message: "已購買「派對常客」" });
+    const [url, init] = call();
+    expect(url).toMatch(/\/api\/member\/cosmetics\/t1\/purchase$/);
+    expect(init.method).toBe("POST");
+    expect(sentBody()).toEqual({ price: 30 });
+    expect(mockRevalidate).toHaveBeenCalledWith("/shop");
+    expect(mockRevalidate).toHaveBeenCalledWith("/member");
+  });
+
+  it("shows the backend's refusal as it is", async () => {
+    respond(409, { message: "價格已更新，請重新確認" });
+    await expect(buyCosmeticAction("t1", 25)).resolves.toMatchObject({ ok: false, message: "價格已更新，請重新確認" });
+    expect(mockRevalidate).not.toHaveBeenCalled();
+  });
+
+  it("equips and takes off, refreshing the whole site", async () => {
+    respond(200, { owned: [], cups: [] });
+    await expect(equipCosmeticAction("title", "t1")).resolves.toEqual({ ok: true, message: "已裝備。" });
+    expect(call()[1].method).toBe("PUT");
+    expect(sentBody()).toEqual({ kind: "title", itemId: "t1" });
+    expect(mockRevalidate).toHaveBeenCalledWith("/");
+
+    jest.clearAllMocks();
+    respond(200, { owned: [], cups: [] });
+    await expect(equipCosmeticAction("frame", null)).resolves.toEqual({ ok: true, message: "已卸下。" });
+    expect(sentBody()).toEqual({ kind: "frame", itemId: null });
+  });
+
+  it("changes a cup onto a token and names the cup", async () => {
+    respond(201, { serial: 20, cup: { name: "聖誕杯" } });
+    await expect(changeCupAction("ice-1", {}, form({ itemId: "c1" }))).resolves.toEqual({
+      ok: true,
+      message: "已換上「聖誕杯」。",
+    });
+    expect(call()[0]).toMatch(/\/api\/member\/ice-creams\/ice-1\/cup$/);
+    expect(sentBody()).toEqual({ itemId: "c1" });
+
+    jest.clearAllMocks();
+    respond(409, { message: "你沒有這款杯子" });
+    await expect(changeCupAction("ice-1", {}, form({ itemId: "c1" }))).resolves.toMatchObject({
+      ok: false,
+      message: "你沒有這款杯子",
+    });
+  });
+});

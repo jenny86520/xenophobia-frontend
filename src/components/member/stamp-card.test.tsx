@@ -64,3 +64,38 @@ describe("StampCard", () => {
     expect(screen.queryByRole("link", { name: "下一張" })).toBeNull();
   });
 });
+
+describe("StampCard looks", () => {
+  it("stamps with the equipped seal's ink and image", () => {
+    const { container } = render(
+      <StampCard
+        streak={2}
+        requiredDays={7}
+        checkedInToday
+        ledgerPage={1}
+        look={{
+          template: "stamp.square",
+          params: { inkColor: "#ff8fab", border: "double", image: "x.png" },
+          imageUrl: "/media/images/x.png",
+        }}
+      />,
+    );
+    const seal = container.querySelector("[data-stamped] .stamp-mark") as HTMLElement;
+    expect(seal.style.getPropertyValue("--skin-ink")).toBe("#ff8fab");
+    expect(seal).toHaveClass("rounded-sm", "border-double", "border-4");
+    expect(seal).not.toHaveClass("rounded-full", "border-signal");
+    expect(seal.querySelector("img")?.getAttribute("src")).toMatch(/\/media\/images\/x\.png$/);
+  });
+
+  it("keeps the default red XPA seal without a look or for an unknown template", () => {
+    for (const look of [null, { template: "stamp.future", params: { inkColor: "#ffffff" }, imageUrl: null }]) {
+      const { container, unmount } = render(
+        <StampCard streak={1} requiredDays={7} checkedInToday ledgerPage={1} look={look} />,
+      );
+      const seal = container.querySelector("[data-stamped] .stamp-mark") as HTMLElement;
+      expect(seal).toHaveClass("border-signal", "rounded-full");
+      expect(seal.getAttribute("style")).toBeNull();
+      unmount();
+    }
+  });
+});

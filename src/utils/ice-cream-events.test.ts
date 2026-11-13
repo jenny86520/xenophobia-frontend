@@ -32,3 +32,9 @@ describe("ICE_STATUS_TEXT", () => {
     expect(ICE_STATUS_TEXT.confirming).toBe("等驗收");
   });
 });
+
+describe("cup changes", () => {
+  it("names who changed the cup and which one", () => {
+    expect(describeIceEvent({ ...event("cup_changed", "小華", null), note: "聖誕杯" })).toBe("小華 換上了「聖誕杯」");
+  });
+});

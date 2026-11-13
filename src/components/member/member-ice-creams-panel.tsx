@@ -1,6 +1,6 @@
 import { TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
-import { iceCreamStepAction, redeemIceCreamAction } from "@/app/member/actions";
+import { changeCupAction, iceCreamStepAction, redeemIceCreamAction } from "@/app/member/actions";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { GuideButton } from "@/components/guide/guide-button";
 import { PopoverDialog } from "@/components/brand/popover-dialog";
@@ -12,12 +12,13 @@ import {
   IceCreamDetailDialog,
   IceCreamGrid,
 } from "@/components/ice-cream/ice-cream-card";
+import type { CupStock } from "@/types/cosmetic";
 import type { Guide } from "@/types/guide";
 import type { IceCream, MemberIceCream, MemberIceCreams } from "@/types/ice-cream";
 import { formatTaipeiDateTime } from "@/utils/datetime";
 import { ICE_STATUS_TEXT, iceCreamName } from "@/utils/ice-cream-events";
 import { FriendActionButton } from "./friend-forms";
-import { CreateIceCreamForm, DeleteIceCreamForm, GiftIceCreamForm } from "./ice-cream-forms";
+import { ChangeCupForm, CreateIceCreamForm, DeleteIceCreamForm, GiftIceCreamForm } from "./ice-cream-forms";
 import { MarkIceCreamsSeen } from "./mark-ice-creams-seen";
 import { MemberTabColumns } from "./member-tabs";
 
@@ -56,16 +57,30 @@ function CardSection({
 
 const detailId = (ice: MemberIceCream) => `ice-detail-${ice.id}`;
 
-/** The token's life in a dialog, opened by clicking its card. */
-function DetailDialog({ ice }: { ice: MemberIceCream }) {
-  return <IceCreamDetailDialog id={detailId(ice)} history={{ iceCream: ice, events: ice.events }} />;
+/**
+ * The token's life in a dialog, opened by clicking its card. A token the member holds in hand also
+ * offers 換杯子 from their cup stock.
+ */
+function DetailDialog({ ice, cupStock }: { ice: MemberIceCream; cupStock?: CupStock[] }) {
+  return (
+    <IceCreamDetailDialog id={detailId(ice)} history={{ iceCream: ice, events: ice.events }}>
+      {ice.canChangeCup && cupStock && (
+        <ChangeCupForm
+          id={ice.id}
+          serial={ice.serial}
+          stock={cupStock}
+          change={changeCupAction.bind(null, ice.id)}
+        />
+      )}
+    </IceCreamDetailDialog>
+  );
 }
 
 /** A gift waiting for the member: take it, or send it back. */
 function IncomingCard({ ice }: { ice: MemberIceCream }) {
   return (
     <IceCreamCard
-      cover={{ serial: ice.serial, issuer: ice.issuer.nickname, state: `「${ice.holder?.nickname}」塞給你的` }}
+      cover={{ serial: ice.serial, issuer: ice.issuer.nickname, state: `「${ice.holder?.nickname}」塞給你的`, cup: ice.cup }}
       detailsId={detailId(ice)}
       dialogs={<DetailDialog ice={ice} />}
     >
@@ -133,6 +148,7 @@ function RequestCard({ ice }: { ice: MemberIceCream }) {
         serial: ice.serial,
         issuer: ice.issuer.nickname,
         state: waiting ? `等「${holder}」驗收` : `「${holder}」拿著它來討了`,
+        cup: ice.cup,
       }}
       detailsId={detailId(ice)}
       dialogs={
@@ -197,7 +213,7 @@ function ConfirmCard({ ice }: { ice: MemberIceCream }) {
   const dialog = `ice-dispute-${ice.id}`;
   return (
     <IceCreamCard
-      cover={{ serial: ice.serial, issuer, state: `「${issuer}」說已經請你吃了` }}
+      cover={{ serial: ice.serial, issuer, state: `「${issuer}」說已經請你吃了`, cup: ice.cup }}
       detailsId={detailId(ice)}
       dialogs={
         <>
@@ -247,17 +263,25 @@ function heldState(ice: IceCream): string {
  * (the backend's `actions`). Giving, asking to redeem and deleting each open a dialog: the friend picker, a second
  * confirmation naming the issuer, or the ticked delete. Native popovers, so no JavaScript needed.
  */
-function HeldCard({ ice, friends }: { ice: MemberIceCream; friends: MemberIceCreams["friends"] }) {
+function HeldCard({
+  ice,
+  friends,
+  cupStock,
+}: {
+  ice: MemberIceCream;
+  friends: MemberIceCreams["friends"];
+  cupStock: CupStock[];
+}) {
   const can = (action: IceCream["actions"][number]) => ice.actions.includes(action);
   const name = iceCreamName(ice.serial);
   const dialog = (kind: string) => `ice-${kind}-${ice.id}`;
   return (
     <IceCreamCard
-      cover={{ serial: ice.serial, issuer: ice.issuer.nickname, state: heldState(ice), isNew: ice.isNew }}
+      cover={{ serial: ice.serial, issuer: ice.issuer.nickname, state: heldState(ice), isNew: ice.isNew, cup: ice.cup }}
       detailsId={detailId(ice)}
       dialogs={
         <>
-          <DetailDialog ice={ice} />
+          <DetailDialog ice={ice} cupStock={cupStock} />
           {can("gift") && (
             <PopoverDialog id={dialog("gift")} title={`贈送${name}`}>
               {friends.length > 0 ? (
@@ -372,7 +396,7 @@ export function MemberIceCreamsPanel({
               className="lg:grid-cols-3"
             >
               {iceCreams.held.map((ice) => (
-                <HeldCard key={ice.id} ice={ice} friends={iceCreams.friends} />
+                <HeldCard key={ice.id} ice={ice} friends={iceCreams.friends} cupStock={iceCreams.cupStock ?? []} />
               ))}
             </CardSection>
           </>

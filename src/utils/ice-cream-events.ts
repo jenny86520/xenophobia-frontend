@@ -57,6 +57,8 @@ export function describeIceEvent(event: IceEvent): string {
       return `${actor} 刪除了這支冰炫風`;
     case "issuer_left":
       return "發行人已離開，功成身退";
+    case "cup_changed":
+      return `${actor} 換上了「${event.note}」`;
     case "holder_left":
       return target ? `持有人已離開，回到 ${target} 手上` : "持有人已離開，功成身退";
     default:

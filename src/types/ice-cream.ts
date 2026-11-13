@@ -1,3 +1,4 @@
+import type { CupStock, CupView, ShopCosmetic } from "./cosmetic";
 import type { ShopQuest } from "./quest";
 
 /** A person on a token: the site only ever gets a nickname (「管理員」「已離開的會員」 included). */
@@ -32,7 +33,11 @@ export type IceCream = {
   disputed: boolean;
   createdAt: string;
   endedAt: string | null;
+  /** The cup a holder changed onto it; null or missing = the default cup. */
+  cup?: CupView | null;
   actions: IceAction[];
+  /** The viewing member holds it in hand and may change its cup from their stock. */
+  canChangeCup?: boolean;
   /** Given by the admins or claimed in the shop, and not yet seen on the 冰炫風 tab. */
   isNew: boolean;
 };
@@ -51,6 +56,8 @@ export type MemberIceCreams = {
   /** Physical redemptions waiting for the member (the holder) to confirm. */
   toConfirm: MemberIceCream[];
   friends: { memberId: string; nickname: string }[];
+  /** Cups the member bought and has not used yet (offered by 換杯子). */
+  cupStock?: CupStock[];
 };
 
 /** A token on the 冰炫風 tab, with its life so far for its detail dialog. */
@@ -65,6 +72,8 @@ export type IceEvent = {
   actor: IcePerson | null;
   target: IcePerson | null;
   note: string;
+  /** The token's cup right after this event; null or missing = the default cup. */
+  cup?: CupView | null;
   createdAt: string;
 };
 
@@ -72,7 +81,7 @@ export type IceEvent = {
 export type IceAlbumPage = { items: IceCreamHistory[]; total: number; page: number; pageSize: number };
 
 /** GET /api/ice-creams/:id. */
-export type IceCreamHistory = { iceCream: Omit<IceCream, "actions" | "isNew">; events: IceEvent[] };
+export type IceCreamHistory = { iceCream: Omit<IceCream, "actions" | "isNew" | "canChangeCup">; events: IceEvent[] };
 
 /** GET /api/shop. */
 export type Shop = {
@@ -84,7 +93,9 @@ export type Shop = {
   balance: number | null;
   /** Newbie quests in order; an older backend may leave it out. */
   quests?: ShopQuest[];
+  /** Cosmetics on sale in shelf order; an older backend may leave it out. */
+  cosmetics?: ShopCosmetic[];
 };
 
 /** A friend's tokens on their friend page. */
-export type HeldIceCream = { id: string; serial: number; status: IceStatus; issuer: string };
+export type HeldIceCream = { id: string; serial: number; status: IceStatus; issuer: string; cup?: CupView | null };

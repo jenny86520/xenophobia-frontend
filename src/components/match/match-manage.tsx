@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Spotlight } from "@/components/brand/spotlight";
 import { Heading } from "@/components/brand/typography";
+import { frameRow } from "@/components/cosmetics/frame";
+import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 import { cn } from "@/lib/utils";
 import type { ManagedMatch, MatchServerSession, ScrimServerOption, TeamCandidate } from "@/types/match";
 import {
@@ -84,9 +86,12 @@ function CandidateCard({
               {side.players.map((player) => (
                 <li
                   key={player.playerId}
-                  className="flex items-baseline justify-between gap-4 border-b border-line py-2 text-body text-ink"
+                  {...frameRow(player.frame, "flex items-baseline justify-between gap-4 border-b border-line py-2 text-body text-ink")}
                 >
-                  <span>{player.name}</span>
+                  <span className="inline-flex flex-wrap items-center gap-2">
+                    {player.name}
+                    <MemberTitleTag look={player.memberTitle} />
+                  </span>
                   {player.rating !== undefined && (
                     <span className="font-mono text-label text-ink-secondary tabular-nums">{player.rating}</span>
                   )}

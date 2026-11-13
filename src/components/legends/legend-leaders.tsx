@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Trophy } from "lucide-react";
 import { MetaLabel } from "@/components/brand/meta-label";
+import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 import { Heading } from "@/components/brand/typography";
 import type { LegendBoard } from "@/types/legends";
 import { legendTabHref, tabOf } from "@/utils/legend-tabs";
@@ -40,8 +41,9 @@ export function LegendLeaders({ boards }: { boards: LegendBoard[] }) {
                     </span>
                     <span className="flex max-w-full flex-col items-end text-body text-ink">
                       {leaders.map((entry) => (
-                        <span key={entry.nickname} className="max-w-full truncate">
-                          {entry.nickname}
+                        <span key={entry.nickname} className="flex max-w-full items-center justify-end gap-2">
+                          <span className="min-w-0 truncate">{entry.nickname}</span>
+                          <MemberTitleTag look={entry.memberTitle} />
                         </span>
                       ))}
                     </span>

@@ -1,5 +1,7 @@
 import { Crown, MapPinned } from "lucide-react";
 import { Heading } from "@/components/brand/typography";
+import { frameRow } from "@/components/cosmetics/frame";
+import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 import type {
   ConfirmedTeam,
   ManagedMatch,
@@ -88,9 +90,9 @@ function TeamColumn({
           if (!player) return null;
           const stats = statsOf.get(id);
           return (
-            <li key={id} className="flex flex-col gap-1 border-b border-line py-3">
+            <li key={id} {...frameRow(player.frame, "flex flex-col gap-1 border-b border-line py-3")}>
               <span className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <span className="inline-flex items-center gap-2 text-body text-ink">
+                <span className="inline-flex flex-wrap items-center gap-2 text-body text-ink">
                   {player.isCaptain && (
                     <>
                       <Crown aria-hidden="true" className="size-4 text-signal" />
@@ -98,6 +100,7 @@ function TeamColumn({
                     </>
                   )}
                   {player.name}
+                  <MemberTitleTag look={player.memberTitle} />
                 </span>
                 {player.rating !== undefined && (
                   <span className="font-mono text-label text-ink-secondary tabular-nums">{player.rating}</span>

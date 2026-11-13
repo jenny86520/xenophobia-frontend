@@ -1,5 +1,13 @@
+import type { CosmeticLook } from "./cosmetic";
+
 /** One place on a board: only the place, the member's nickname and the number are public. */
-export type LegendEntry = { rank: number; nickname: string; value: number };
+export type LegendEntry = {
+  rank: number;
+  nickname: string;
+  /** The equipped title (spec member-cosmetics); null or missing when none. */
+  memberTitle?: CosmeticLook | null;
+  value: number;
+};
 
 export type LegendBoard = {
   /** Backend board code, e.g. "scrim-rating"; new codes may appear without a frontend change. */
@@ -15,6 +23,9 @@ export type LegendBoard = {
 
 /** GET /api/legends: the overall ranking (points) and the boards in the admins' order. */
 export type Legends = {
-  overall: { title: string; entries: Array<{ rank: number; nickname: string; points: number }> };
+  overall: {
+    title: string;
+    entries: Array<{ rank: number; nickname: string; memberTitle?: CosmeticLook | null; points: number }>;
+  };
   boards: LegendBoard[];
 };

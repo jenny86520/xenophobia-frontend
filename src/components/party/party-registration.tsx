@@ -12,6 +12,7 @@ import type {
   RegistrationSummary,
 } from "@/types/member";
 import { RegistrationButton } from "./registration-button";
+import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 
 const STATUS_TEXT: Record<RegistrationStatus, string> = {
   open: "開放報名中",
@@ -118,7 +119,7 @@ export function ParticipantCount({
   );
 }
 
-/** The participants a signed-in member may see: nickname, Discord ID, guests marked 非會員. */
+/** The participants a signed-in member may see: nickname with a member's equipped title, Discord ID, guests marked 非會員. */
 export function ParticipantList({ participants, labelledBy }: { participants: Participant[]; labelledBy: string }) {
   if (participants.length === 0) {
     return <p className="text-body text-ink-secondary">目前還沒有人報名。</p>;
@@ -130,9 +131,10 @@ export function ParticipantList({ participants, labelledBy }: { participants: Pa
           key={`${participant.discordId}-${participant.registeredAt}`}
           className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line py-3"
         >
-          <span className="text-body text-ink">
+          <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-body text-ink">
             {participant.nickname}
-            {participant.guest && <span className="ml-2 font-mono text-meta text-ink-muted">非會員</span>}
+            <MemberTitleTag look={participant.memberTitle} />
+            {participant.guest && <span className="font-mono text-meta text-ink-muted">非會員</span>}
           </span>
           <span className="font-mono text-meta text-ink-secondary">{participant.discordId || "—"}</span>
         </li>

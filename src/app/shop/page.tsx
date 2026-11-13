@@ -1,21 +1,25 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { CalendarCheck, Flame } from "lucide-react";
-import { claimIceCampaignAction, claimQuestAction } from "@/app/member/actions";
+import { buyCosmeticAction, claimIceCampaignAction, claimQuestAction } from "@/app/member/actions";
 import { PageHeader } from "@/components/brand/page-header";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
+import { CosmeticPreview } from "@/components/cosmetics/cosmetic-preview";
 import { FriendActionButton } from "@/components/member/friend-forms";
+import { BuyCosmeticForm } from "@/components/shop/buy-cosmetic-form";
 import { ProductCard, ProductShelf } from "@/components/shop/product-card";
 import { ShopBalance } from "@/components/shop/shop-balance";
 import { fetchMemberProfile } from "@/lib/member-session";
 import { fetchShop } from "@/lib/public-content-client";
+import type { ShopCosmetic } from "@/types/cosmetic";
 import type { ShopQuest } from "@/types/quest";
+import { cosmeticTerms } from "@/utils/cosmetics";
 import { questHref, questIcon } from "@/utils/quests";
 
 export const metadata: Metadata = {
   title: "Shop",
-  description: "XenoPhobiA 點數商店：限定冰炫風、每日簽到、連續簽到活動與新手任務。",
+  description: "XenoPhobiA 點數商店：限定冰炫風、每日簽到、連續簽到活動、新手任務與外觀。",
 };
 
 const dateText = (date: string) => date.replaceAll("-", "/");
@@ -33,12 +37,19 @@ function questAction(quest: ShopQuest, signIn: (label: string) => ReactNode) {
   return href ? <TextLink href={href}>去完成</TextLink> : null;
 }
 
+/** A cosmetic card's action: buy, 已擁有 (collectibles) or a sign-in for visitors. */
+function cosmeticAction(item: ShopCosmetic, signIn: (label: string) => ReactNode) {
+  if (item.owned === null && item.stock === null) return signIn("登入會員後即可購買");
+  return <BuyCosmeticForm buy={buyCosmeticAction.bind(null, item.id, item.price)} owned={item.owned === true} />;
+}
+
 /**
  * The point shop, open to everyone: square product cards on two shelves, each under its heading.
  * 冰炫風 holds the limited ice creams running now (tagged 期間限定; members claim one each per period)
  * and issuing your own; 點數任務 holds the ways to earn points: daily check-in, the running streak
- * campaign and the newbie quests (tagged 新手任務). Everything, quest states included, comes from
- * the backend.
+ * campaign and the newbie quests (tagged 新手任務); 外觀 holds the cosmetics on sale (titles, scrim
+ * room frames, stamp cards and ice cream cups, each previewed). Everything, quest states and what a
+ * member owns included, comes from the backend.
  */
 export default async function ShopPage() {
   const [shop, profile] = await Promise.all([fetchShop(), fetchMemberProfile()]);
@@ -129,6 +140,23 @@ export default async function ShopPage() {
                 />
               );
             })}
+          </ProductShelf>
+          <ProductShelf id="shelf-cosmetics" title="外觀">
+            {(shop.cosmetics ?? []).length === 0 ? (
+              <li className="text-body text-ink-secondary">目前沒有外觀商品</li>
+            ) : (
+              (shop.cosmetics ?? []).map((item) => (
+                <ProductCard
+                  key={item.id}
+                  id={`product-cosmetic-${item.id}`}
+                  picture={<CosmeticPreview kind={item.kind} look={item.look} />}
+                  name={item.name}
+                  price={`${item.price} 點`}
+                  terms={item.stock === null ? [cosmeticTerms(item.kind)] : [cosmeticTerms(item.kind), `庫存 ${item.stock}`]}
+                  action={cosmeticAction(item, signIn)}
+                />
+              ))
+            )}
           </ProductShelf>
         </div>
       </Section>

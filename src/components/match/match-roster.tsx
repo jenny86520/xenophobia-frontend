@@ -1,12 +1,17 @@
 import { Crown } from "lucide-react";
 import { Heading } from "@/components/brand/typography";
+import { frameRow } from "@/components/cosmetics/frame";
+import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 import type { MatchDetail, MatchPlayer } from "@/types/match";
 
-/** A player's name with their rating when the viewer may see it, and the captain mark. */
+/**
+ * A player's name with their rating when the viewer may see it, the captain mark, and a member's
+ * equipped title and frame (spec member-cosmetics; guests have none).
+ */
 function PlayerLine({ player, showRating }: { player: MatchPlayer; showRating: boolean }) {
   return (
-    <li className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line py-3">
-      <span className="inline-flex items-center gap-2 text-body text-ink">
+    <li {...frameRow(player.frame, "flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line py-3")}>
+      <span className="inline-flex flex-wrap items-center gap-2 text-body text-ink">
         {player.isCaptain && (
           <>
             <Crown aria-hidden="true" className="size-4 text-signal" />
@@ -14,6 +19,7 @@ function PlayerLine({ player, showRating }: { player: MatchPlayer; showRating: b
           </>
         )}
         {player.name}
+        <MemberTitleTag look={player.memberTitle} />
       </span>
       {showRating && player.rating !== undefined && (
         <span className="font-mono text-label text-ink-secondary tabular-nums">{player.rating}</span>

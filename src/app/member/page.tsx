@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { CtaLink } from "@/components/brand/cta-link";
 import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { PageHeader } from "@/components/brand/page-header";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
+import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 import { ProfileForm } from "@/components/member/member-forms";
 import { MemberMatchesPanel } from "@/components/match/member-matches-panel";
 import { MemberTabPanel, MemberTabs } from "@/components/member/member-tabs";
 import { MemberFriendsPanel } from "@/components/member/member-friends-panel";
 import { LegalConsentPanel } from "@/components/member/legal-consent-panel";
+import { MemberCosmeticsPanel } from "@/components/member/member-cosmetics-panel";
 import { MemberIceCreamsPanel } from "@/components/member/member-ice-creams-panel";
 import { MemberPointsPanel } from "@/components/member/member-points-panel";
 import { MemberVideosPanel } from "@/components/member/member-videos-panel";
 import { MemberSteam } from "@/components/player/member-steam";
 import {
+  fetchMemberCosmetics,
   fetchMemberFriends,
   fetchMemberIceCreams,
   fetchMemberLegalChanges,
@@ -119,7 +123,7 @@ function positiveInteger(value: QueryValue): number | undefined {
 /** The open tab's content; only that tab's data is fetched. */
 async function tabContent(tab: MemberTab, profile: MemberProfile, page: QueryValue, card: QueryValue) {
   if (tab === "profile") {
-    const details = [
+    const details: Array<{ label: string; value: ReactNode }> = [
       { label: "會員編號", value: profile.memberCode ?? "—" },
       { label: "稱呼", value: profile.name },
       { label: "暱稱", value: profile.nickname },
@@ -128,6 +132,16 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: QueryVal
       { label: "Email", value: profile.email },
       { label: "手機", value: profile.phone },
       { label: "角色", value: profile.role?.name ?? "—" },
+      {
+        label: "稱號",
+        value: profile.memberTitle ? (
+          <MemberTitleTag look={profile.memberTitle} className="text-body" />
+        ) : (
+          <span className="text-body text-ink-secondary">
+            還沒有裝備稱號，到<TextLink href="/member?tab=cosmetics">收藏</TextLink>裝備
+          </span>
+        ),
+      },
     ];
     return (
       <MemberTabPanel id="profile-title" eyebrow="Profile" title="個人資料">
@@ -193,6 +207,11 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: QueryVal
       friends: [],
     };
     return <MemberIceCreamsPanel iceCreams={iceCreams} guide={guide} />;
+  }
+
+  if (tab === "cosmetics") {
+    const collection = (await fetchMemberCosmetics()) ?? { owned: [], cups: [] };
+    return <MemberCosmeticsPanel collection={collection} />;
   }
 
   if (tab === "videos") {

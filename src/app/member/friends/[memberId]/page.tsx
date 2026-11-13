@@ -6,6 +6,7 @@ import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
 import { IceCreamIcon } from "@/components/brand/ice-cream-icon";
+import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 import { FriendNoteForm } from "@/components/member/friend-forms";
 import { IceCreamCard, IceCreamDetailCard, IceCreamGrid } from "@/components/ice-cream/ice-cream-card";
 import { ICE_STATUS_TEXT } from "@/utils/ice-cream-events";
@@ -86,6 +87,7 @@ export default async function FriendPage({ params }: PageProps<"/member/friends/
         <BackToFriends />
         <div className="mt-10">
           <PageHeader eyebrow={`FRIEND / ${friend.memberCode ?? "—"}`} title={friend.nickname} />
+          {friend.memberTitle && <MemberTitleTag look={friend.memberTitle} className="mt-4 text-body" />}
         </div>
         <dl className="mt-section-tight grid max-w-3xl grid-cols-1 border-t border-line md:grid-cols-2">
           {details.map((item) => (
@@ -141,6 +143,7 @@ export default async function FriendPage({ params }: PageProps<"/member/friends/
                     serial: ice.serial,
                     issuer: ice.issuer,
                     state: `${friend.nickname}・${ICE_STATUS_TEXT[ice.status]}`,
+                    cup: ice.cup ?? null,
                   }}
                 />
               );

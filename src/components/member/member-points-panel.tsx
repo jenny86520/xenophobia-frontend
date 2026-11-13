@@ -4,6 +4,7 @@ import { MetaLabel } from "@/components/brand/meta-label";
 import { GuideButton } from "@/components/guide/guide-button";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
+import type { CosmeticLook } from "@/types/cosmetic";
 import type { Guide } from "@/types/guide";
 import type { MemberPoints, PointCampaignProgress } from "@/types/member";
 import type { Quest } from "@/types/quest";
@@ -21,11 +22,13 @@ function CampaignCard({
   checkedInToday,
   requestedCard,
   ledgerPage,
+  stampLook,
 }: {
   campaign: PointCampaignProgress;
   checkedInToday: boolean;
   requestedCard?: number;
   ledgerPage: number;
+  stampLook?: CosmeticLook | null;
 }) {
   return (
     <section aria-labelledby="campaign-title" className="flex flex-col gap-4 border-t border-line pt-8">
@@ -47,6 +50,7 @@ function CampaignCard({
         checkedInToday={checkedInToday}
         requestedCard={requestedCard}
         ledgerPage={ledgerPage}
+        look={stampLook}
       />
     </section>
   );
@@ -112,6 +116,7 @@ export function MemberPointsPanel({
                   checkedInToday={points.checkedInToday}
                   requestedCard={card}
                   ledgerPage={entries.page}
+                  stampLook={points.stampLook}
                 />
               )
             }

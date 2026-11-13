@@ -14,6 +14,7 @@ import { InfoDialog } from "@/components/brand/info-dialog";
 import { Heading } from "@/components/brand/typography";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 import type { LegendEntry } from "@/types/legends";
 import { MEDAL_PLACES, MEDALS } from "./medals";
 
@@ -39,7 +40,7 @@ export function EmptyBoard() {
 
 /**
  * Hairline rows of place (mono, with an sr-only 「第 N 名」; places 1 to 3 add a gold, silver or bronze
- * trophy), nickname and value with its unit. Rows are not interactive.
+ * trophy), nickname with the member's equipped title, and value with its unit. Rows are not interactive.
  */
 export function LegendRows({ label, unit, entries }: { label: string; unit: string; entries: LegendEntry[] }) {
   return (
@@ -58,7 +59,10 @@ export function LegendRows({ label, unit, entries }: { label: string; unit: stri
               <Trophy aria-hidden="true" className={cn("size-5 shrink-0", MEDALS[entry.rank].text)} />
             )}
           </span>
-          <span className="min-w-0 flex-1 truncate text-lead text-ink">{entry.nickname}</span>
+          <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="min-w-0 truncate text-lead text-ink">{entry.nickname}</span>
+            <MemberTitleTag look={entry.memberTitle} />
+          </span>
           <span className="shrink-0 font-mono text-body text-ink-secondary tabular-nums">
             {entry.value} {unit}
           </span>

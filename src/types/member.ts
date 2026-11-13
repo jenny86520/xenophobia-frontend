@@ -1,3 +1,4 @@
+import type { CosmeticLook } from "./cosmetic";
 import type { LegalKey } from "./legal";
 import type { SteamAccount } from "./player";
 
@@ -31,6 +32,8 @@ export type MemberProfile = {
   steam: SteamAccount | null;
   /** The role may create scrim matches and the permission is not paused (decided by the backend). */
   canCreateMatch: boolean;
+  /** The title the member has equipped; null or missing when none. */
+  memberTitle?: CosmeticLook | null;
   /** Whether the member must agree to renewed terms before any member action (decided by the backend). */
   legalConsent: LegalConsent;
 };
@@ -102,6 +105,8 @@ export type Participant = {
   registeredAt: string;
   /** A non-member an admin added by hand. */
   guest: boolean;
+  /** The equipped title (spec member-cosmetics); null or missing when none. */
+  memberTitle?: CosmeticLook | null;
 };
 
 /** A signed-in member's view of one sub-party: its own count, sign-up and list. */
@@ -186,6 +191,8 @@ export type MemberPoints = {
   checkedInToday: boolean;
   campaign: PointCampaignProgress | null;
   entries: { items: PointEntry[]; total: number; page: number; pageSize: number };
+  /** The stamp card look the member equipped; null or missing = the default seal. */
+  stampLook?: CosmeticLook | null;
 };
 
 /** POST /api/member/check-ins. */

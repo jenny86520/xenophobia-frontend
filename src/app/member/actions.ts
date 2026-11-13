@@ -427,6 +427,17 @@ export async function giftIceCreamAction(id: string, _: MemberActionState, form:
   return { ok: true, message: `已送給「${result.giftTo?.nickname ?? ""}」，等對方接收（24 小時內）。` };
 }
 
+/** Uses one cup from the member's stock on a token they hold (spec member-cosmetics); the token id is bound. */
+export async function changeCupAction(id: string, _: MemberActionState, form: FormData): Promise<MemberActionState> {
+  const result = await iceCreamRequest(
+    `/api/member/ice-creams/${encodeURIComponent(id)}/cup`,
+    { method: "POST", body: JSON.stringify({ itemId: text(form, "itemId") }) },
+    "換杯子失敗，請稍後再試",
+  );
+  if (isState(result)) return result;
+  return { ok: true, message: `已換上「${result.cup?.name ?? ""}」。` };
+}
+
 const ICE_STEPS: Record<
   "accept" | "decline" | "requestRedeem" | "cancelRedeem" | "confirmPhysical" | "disputePhysical",
   { path: string; method: "POST" | "DELETE"; done: (ice: IceCream) => string }
@@ -501,4 +512,36 @@ export async function claimIceCampaignAction(campaignId: string): Promise<Member
   if (isState(result)) return result;
   revalidatePath("/shop");
   return { ok: true, message: `已兌換${iceCreamName(result.serial)}，在會員頁的冰炫風分頁可以看到。` };
+}
+
+// ---- Cosmetics (spec member-cosmetics) --------------------------------------------------------
+
+/**
+ * Buys a cosmetic at the price the member saw (bound with the item id and price); the backend
+ * refuses a changed price, an item off sale, a collectible already owned or a short balance.
+ */
+export async function buyCosmeticAction(itemId: string, price: number): Promise<MemberActionState> {
+  const sent = await friendRequest(`/api/member/cosmetics/${encodeURIComponent(itemId)}/purchase`, {
+    method: "POST",
+    body: JSON.stringify({ price }),
+  });
+  if ("state" in sent) return sent.state;
+  if (!sent.response.ok) return errorState(sent.response, "購買失敗，請稍後再試");
+  const result = (await sent.response.json()) as { item: { name: string } };
+  revalidatePath("/shop");
+  revalidatePath("/member");
+  return { ok: true, message: `已購買「${result.item.name}」` };
+}
+
+/** Equips a collectible of `kind`, or takes that kind off with `itemId` null (both bound). */
+export async function equipCosmeticAction(kind: string, itemId: string | null): Promise<MemberActionState> {
+  const sent = await friendRequest("/api/member/cosmetics/loadout", {
+    method: "PUT",
+    body: JSON.stringify({ kind, itemId }),
+  });
+  if ("state" in sent) return sent.state;
+  if (!sent.response.ok) return errorState(sent.response, "更換失敗，請稍後再試");
+  // Titles and frames show across the site (friends, Legends, the scrim room).
+  revalidatePath("/", "layout");
+  return { ok: true, message: itemId ? "已裝備。" : "已卸下。" };
 }

@@ -1670,6 +1670,32 @@
   }
 }
 
+/*
+ * Cosmetic frames (spec member-cosmetics). frameProps() sets --skin-main/--skin-accent from the
+ * admins' validated colours and --skin-speed (4s or 2.5s) from a fixed choice. The pulse frame keeps
+ * a static glow in its main colour; without reduced motion the glow breathes smoothly to the accent
+ * and back (never flashing). The border stays in the main colour, which the backend checked for 3:1.
+ */
+.frame-pulse {
+  box-shadow: 0 0 10px var(--skin-main);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .frame-pulse {
+    animation: xpa-frame-pulse var(--skin-speed, 4s) ease-in-out infinite;
+  }
+}
+
+@keyframes xpa-frame-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 6px var(--skin-main);
+  }
+  50% {
+    box-shadow: 0 0 18px var(--skin-accent, var(--skin-main));
+  }
+}
+
 /* Visitors who prefer reduced motion get (near-)instant transitions and animations. */
 @media (prefers-reduced-motion: reduce) {
   *,

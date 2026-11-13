@@ -2,6 +2,7 @@ import { Trophy } from "lucide-react";
 import type { CSSProperties } from "react";
 import { formatCount } from "@/components/brand/meta-label";
 import { cn } from "@/lib/utils";
+import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 import type { Legends } from "@/types/legends";
 import { MEDAL_PLACES, MEDALS } from "./medals";
 import { PodiumReveal } from "./podium-reveal";
@@ -41,9 +42,12 @@ export function LegendPodium({ title, entries }: { title: string; entries: Legen
             <span className="sr-only">第 {rank} 名</span>
             <span className="mt-4 flex w-full min-w-0 flex-col">
               {members.map((member, i) => (
-                <span key={i} className="truncate font-heading text-lead text-ink md:text-h3">
-                  {i > 0 && <span className="sr-only">、</span>}
-                  {member.nickname}
+                <span key={i} className="flex min-w-0 flex-col items-center gap-1">
+                  <span className="max-w-full truncate font-heading text-lead text-ink md:text-h3">
+                    {i > 0 && <span className="sr-only">、</span>}
+                    {member.nickname}
+                  </span>
+                  <MemberTitleTag look={member.memberTitle} />
                 </span>
               ))}
             </span>

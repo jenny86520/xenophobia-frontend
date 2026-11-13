@@ -1,3 +1,4 @@
+import type { CosmeticLook } from "@/types/cosmetic";
 import type { MatchStatus } from "@/types/match";
 import type { HeldIceCream } from "@/types/ice-cream";
 
@@ -7,6 +8,8 @@ export type FriendPerson = {
   nickname: string;
   memberCode: string | null;
   hasSteam: boolean;
+  /** The equipped title (spec member-cosmetics); null or missing when none. */
+  memberTitle?: CosmeticLook | null;
 };
 
 /** A friend, with the viewer's own private note (null when none). */
@@ -17,6 +20,8 @@ export type FriendProfile = {
   memberId: string;
   nickname: string;
   memberCode: string | null;
+  /** The equipped title (spec member-cosmetics); null or missing when none. */
+  memberTitle?: CosmeticLook | null;
   discordId: string;
   /** The linked Steam account; null when not linked. */
   steam: { steamName: string | null; profileUrl: string } | null;
@@ -37,7 +42,7 @@ export type MatchInvite = {
   id: string;
   kind: MatchInviteKind;
   /** The inviting friend, with the viewer's own private note. */
-  from: { nickname: string; memberCode: string | null; note: string | null };
+  from: { nickname: string; memberCode: string | null; note: string | null; memberTitle?: CosmeticLook | null };
   match: { id: string; title: string; status: MatchStatus; playerCount: number; rosterSize: number };
   createdAt: string;
 };

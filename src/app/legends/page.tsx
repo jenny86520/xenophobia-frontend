@@ -73,7 +73,7 @@ function OverallTab({ legends }: { legends: Legends }) {
   const podium = entries.filter((entry) => entry.rank <= MEDAL_PLACES);
   const rest = entries
     .filter((entry) => entry.rank > MEDAL_PLACES)
-    .map(({ rank, nickname, points }) => ({ rank, nickname, value: points }));
+    .map(({ rank, nickname, memberTitle, points }) => ({ rank, nickname, memberTitle, value: points }));
   return (
     <EditorialGrid className="gap-y-16">
       <section

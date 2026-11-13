@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 import { forwardedForHeader } from "@/lib/forwarded-for";
 import { backendBaseUrl } from "@/lib/public-content-client";
+import type { CosmeticCollection } from "@/types/cosmetic";
 import type { FriendProfile, FriendsOverview } from "@/types/friends";
 import type { IceAlbumPage, IceCreamHistory, MemberIceCreams } from "@/types/ice-cream";
 import type { MemberMatches } from "@/types/match";
@@ -113,6 +114,11 @@ export async function fetchMemberQuests(): Promise<Quest[] | null> {
 /** The member's tokens, gifts waiting for them and redemptions asked of them; null when signed out. */
 export function fetchMemberIceCreams(): Promise<MemberIceCreams | null> {
   return memberGetJson<MemberIceCreams>("/api/member/ice-creams");
+}
+
+/** The member's cosmetics (collection, what is equipped, cup stock); null when signed out. */
+export function fetchMemberCosmetics(): Promise<CosmeticCollection | null> {
+  return memberGetJson<CosmeticCollection>("/api/member/cosmetics");
 }
 
 /** Tokens per album page: three or four full rows of cards. */

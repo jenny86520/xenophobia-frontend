@@ -7,6 +7,7 @@ import { MemberTabColumns } from "@/components/member/member-tabs";
 import type { FriendPerson, FriendsOverview, MatchInvite } from "@/types/friends";
 import { AddFriendForm, FriendActionButton, RemoveFriendForm } from "./friend-forms";
 import { FriendName, friendHref } from "./friend-name";
+import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 
 /**
  * The member page's 好友 tab in two columns from 1024px: the friends in the main column, and on the
@@ -146,7 +147,7 @@ function PersonRow({
   return (
     <li className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line py-4">
       <div className="flex min-w-0 flex-col gap-1">
-        <FriendName nickname={person.nickname} note={memo} href={href} />
+        <FriendName nickname={person.nickname} note={memo} href={href} memberTitle={person.memberTitle} />
         <span className="flex flex-wrap gap-x-4 gap-y-1">
           <MetaLabel>{person.memberCode ?? "—"}</MetaLabel>
           {!person.hasSteam && <MetaLabel>尚未綁定 Steam</MetaLabel>}
@@ -168,6 +169,7 @@ function MatchInviteRow({ invite }: { invite: MatchInvite }) {
         </TextLink>
         <p className="text-body text-ink-secondary">
           「{invite.from.nickname}」
+          <MemberTitleTag look={invite.from.memberTitle} className="mx-1" />
           {invite.from.note && <span className="text-ink-secondary">（{invite.from.note}）</span>}
           {invite.kind === "group" ? "邀你加入小隊" : "邀你報名這一場"}
         </p>

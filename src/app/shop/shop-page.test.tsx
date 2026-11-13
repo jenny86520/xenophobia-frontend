@@ -6,7 +6,11 @@ import ShopPage from "./page";
 
 jest.mock("@/lib/member-session", () => ({ fetchMemberProfile: jest.fn() }));
 jest.mock("@/lib/public-content-client", () => ({ fetchShop: jest.fn() }));
-jest.mock("@/app/member/actions", () => ({ claimIceCampaignAction: jest.fn(), claimQuestAction: jest.fn() }));
+jest.mock("@/app/member/actions", () => ({
+  claimIceCampaignAction: jest.fn(),
+  claimQuestAction: jest.fn(),
+  buyCosmeticAction: jest.fn(),
+}));
 
 const shop = (overrides: Partial<Shop> = {}): Shop => ({
   checkin: { points: 1 },
@@ -26,9 +30,16 @@ const shop = (overrides: Partial<Shop> = {}): Shop => ({
 });
 
 async function renderPage(data: Shop, member: boolean) {
-  // The backend sends a balance and quest states only with a member's token.
+  // The backend sends a balance, quest states and what the member owns only with a member's token.
   (fetchShop as jest.Mock).mockResolvedValue(
-    member ? data : { ...data, balance: null, quests: data.quests?.map((quest) => ({ ...quest, state: null })) },
+    member
+      ? data
+      : {
+          ...data,
+          balance: null,
+          quests: data.quests?.map((quest) => ({ ...quest, state: null })),
+          cosmetics: data.cosmetics?.map((item) => ({ ...item, owned: null, stock: null })),
+        },
   );
   (fetchMemberProfile as jest.Mock).mockResolvedValue(member ? { nickname: "小明" } : null);
   render(await ShopPage());
@@ -47,7 +58,7 @@ describe("/shop", () => {
     expect(balance).toHaveClass("fixed", "top-24");
 
     // Two shelves, each named by its heading; square cards named by their product.
-    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["冰炫風", "點數任務"]);
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["冰炫風", "點數任務", "外觀"]);
     const iceCreams = shelf("冰炫風");
     const tasks = shelf("點數任務");
     expect(ids(iceCreams)).toEqual(["product-c1", "product-c2", "product-create"]);
@@ -108,5 +119,64 @@ describe("/shop", () => {
     await renderPage(shop({ iceCampaigns: [], streakCampaign: null, quests: undefined }), false);
     expect(ids(shelf("冰炫風"))).toEqual(["product-create"]);
     expect(ids(shelf("點數任務"))).toEqual(["product-checkin"]);
+  });
+
+  describe("外觀 shelf", () => {
+    const cosmetics: NonNullable<Shop["cosmetics"]> = [
+      {
+        id: "t1",
+        kind: "title",
+        name: "派對常客",
+        price: 30,
+        look: { template: "title.basic", params: { text: "派對常客", textColor: "#ffd166" }, imageUrl: null },
+        owned: true,
+        stock: null,
+      },
+      {
+        id: "f1",
+        kind: "frame",
+        name: "霓虹框",
+        price: 40,
+        look: { template: "frame.pulse", params: { mainColor: "#00e5ff", accentColor: "#ff3df0", speed: "slow" }, imageUrl: null },
+        owned: false,
+        stock: null,
+      },
+      {
+        id: "c1",
+        kind: "cup",
+        name: "聖誕杯",
+        price: 5,
+        look: { template: "cup.classic", params: { lineColor: "#f5f5f5", cupColor: "#c62a2f" }, imageUrl: null },
+        owned: null,
+        stock: 1,
+      },
+    ];
+
+    it("previews each cosmetic, marks owned ones and keeps cups buyable with their stock", async () => {
+      await renderPage(shop({ cosmetics }), true);
+      const [title, frame, cup] = shelf("外觀");
+      expect(title).toHaveAccessibleName("派對常客");
+      expect(title).toHaveTextContent("30 點");
+      expect(title).toHaveTextContent("稱號・永久");
+      expect(title).toHaveTextContent("已擁有");
+      expect(within(title).queryByRole("button")).not.toBeInTheDocument();
+      expect(within(frame).getByRole("button", { name: "購買" })).toBeInTheDocument();
+      expect(frame.querySelector("[data-frame='frame.pulse']")).not.toBeNull();
+      expect(cup).toHaveTextContent("冰炫風杯・換一次・庫存 1");
+      expect(within(cup).getByRole("button", { name: "購買" })).toBeInTheDocument();
+      expect(cup.querySelector("svg[data-cup='cup.classic']")).not.toBeNull();
+    });
+
+    it("asks visitors to sign in and says when nothing is on sale", async () => {
+      await renderPage(shop({ cosmetics }), false);
+      for (const card of shelf("外觀")) {
+        expect(within(card).getByRole("link", { name: "登入會員後即可購買" })).toHaveAttribute("href", "/member/login");
+      }
+    });
+
+    it("says when there is nothing on sale", async () => {
+      await renderPage(shop({ cosmetics: [] }), true);
+      expect(shelf("外觀")[0]).toHaveTextContent("目前沒有外觀商品");
+    });
   });
 });

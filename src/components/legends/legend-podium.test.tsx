@@ -55,3 +55,24 @@ describe("LegendPodium", () => {
     expect(steps[1]).toHaveClass("col-start-3");
   });
 });
+
+describe("LegendPodium titles", () => {
+  it("shows a member's equipped title under their nickname", () => {
+    render(
+      <LegendPodium
+        title="傳奇總榜"
+        entries={[
+          {
+            rank: 1,
+            nickname: "阿明",
+            points: 29,
+            memberTitle: { template: "title.basic", params: { text: "派對常客", textColor: "#ffd166" }, imageUrl: null },
+          },
+          { rank: 2, nickname: "小華", points: 18, memberTitle: null },
+        ]}
+      />,
+    );
+    expect(stepOf("阿明")).toHaveTextContent("稱號：派對常客");
+    expect(stepOf("小華")).not.toHaveTextContent("稱號");
+  });
+});

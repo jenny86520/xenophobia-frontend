@@ -1,3 +1,4 @@
+import type { CosmeticLook } from "./cosmetic";
 /** Scrim match types, as the backend's /api/matches routes return them. */
 
 export type MatchStatus =
@@ -135,6 +136,10 @@ export type MatchPlayer = {
   rating?: number;
   /** Only for signed-in viewers, once the match is rated: this match's change. */
   ratingChange?: RatingChange;
+  /** The equipped title (spec member-cosmetics); null or missing when none. */
+  memberTitle?: CosmeticLook | null;
+  /** The equipped scrim-room frame; null for guests and when none. */
+  frame?: CosmeticLook | null;
 };
 
 /** One player's change in one rated match: the team result plus the personal part. */
@@ -204,7 +209,13 @@ export type CandidateSide = {
   total: number;
   average: number;
   /** `rating` is left out for visitors (they still get the totals). */
-  players: { playerId: string; name: string; rating?: number }[];
+  players: {
+    playerId: string;
+    name: string;
+    rating?: number;
+    memberTitle?: CosmeticLook | null;
+    frame?: CosmeticLook | null;
+  }[];
   suggestedCaptain: string;
 };
 

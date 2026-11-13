@@ -4,6 +4,7 @@ import { MetaLabel } from "@/components/brand/meta-label";
 import { PopoverDialog } from "@/components/brand/popover-dialog";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import type { CupView } from "@/types/cosmetic";
 import type { IceCreamHistory } from "@/types/ice-cream";
 import { ICE_STATUS_TEXT, iceCreamName } from "@/utils/ice-cream-events";
 import { IceEventList } from "./ice-event-list";
@@ -16,9 +17,11 @@ export type IceCreamCover = {
   /** Who holds it and how (「小華・持有中」), or how it ended (「功成身退」). */
   state: string;
   isNew?: boolean;
+  /** The cup a holder changed onto it; null or missing = the default cup. */
+  cup?: CupView | null;
 };
 
-type IceCreamFacts = Pick<IceCreamHistory["iceCream"], "serial" | "issuer" | "status" | "holder">;
+type IceCreamFacts = Pick<IceCreamHistory["iceCream"], "serial" | "issuer" | "status" | "holder" | "cup">;
 
 /** A token's cover from the backend's view of it. */
 export function coverOf(ice: IceCreamFacts & { isNew?: boolean }): IceCreamCover {
@@ -28,6 +31,7 @@ export function coverOf(ice: IceCreamFacts & { isNew?: boolean }): IceCreamCover
     issuer: ice.issuer.nickname,
     state: ice.holder ? `${ice.holder.nickname}・${status}` : status,
     isNew: ice.isNew,
+    cup: ice.cup ?? null,
   };
 }
 
@@ -40,7 +44,7 @@ export const CARD_BUTTON_CLASSES = cn(
 function CoverContent({ cover }: { cover: IceCreamCover }) {
   return (
     <>
-      <IceCreamIcon className="size-10 text-ink-secondary" />
+      <IceCreamIcon className="size-10 text-ink-secondary" look={cover.cup} />
       <span className="text-lead text-ink">{iceCreamName(cover.serial)}</span>
       <MetaLabel>{cover.issuer} 發行</MetaLabel>
       <span className="text-caption text-ink-secondary">{cover.state}</span>
@@ -109,8 +113,19 @@ export function IceCreamGrid({
   );
 }
 
-/** One token in detail (number, issuer, holder or ending, its whole life) in a dialog. */
-export function IceCreamDetailDialog({ id, history }: { id: string; history: IceCreamHistory }) {
+/**
+ * One token in detail (number, issuer, holder or ending, its cup, its whole life) in a dialog;
+ * `children` (the holder's 換杯子 form) come between the details and the record.
+ */
+export function IceCreamDetailDialog({
+  id,
+  history,
+  children,
+}: {
+  id: string;
+  history: IceCreamHistory;
+  children?: ReactNode;
+}) {
   const { iceCream, events } = history;
   const name = iceCreamName(iceCream.serial);
   const status = ICE_STATUS_TEXT[iceCream.status] ?? iceCream.status;
@@ -118,10 +133,13 @@ export function IceCreamDetailDialog({ id, history }: { id: string; history: Ice
     { label: "發行人", value: iceCream.issuer.nickname },
     iceCream.holder ? { label: "持有人", value: iceCream.holder.nickname } : { label: "結局", value: status },
     ...(iceCream.holder ? [{ label: "狀態", value: status }] : []),
+    { label: "杯子", value: iceCream.cup?.name ?? "預設杯" },
   ];
   return (
     <PopoverDialog id={id} title={name} size="wide">
-      <dl className="grid grid-cols-1 gap-x-6 sm:grid-cols-3">
+      <div className="flex items-center gap-4">
+        <IceCreamIcon className="size-14 shrink-0 text-ink-secondary" look={iceCream.cup} />
+        <dl className="grid flex-1 grid-cols-1 gap-x-6 sm:grid-cols-2">
         {details.map((item) => (
           <div key={item.label} className="flex flex-col gap-1 py-2">
             <dt>
@@ -130,7 +148,9 @@ export function IceCreamDetailDialog({ id, history }: { id: string; history: Ice
             <dd className="text-lead text-ink">{item.value}</dd>
           </div>
         ))}
-      </dl>
+        </dl>
+      </div>
+      {children}
       <IceEventList events={events} label={`${name}的一生`} />
     </PopoverDialog>
   );

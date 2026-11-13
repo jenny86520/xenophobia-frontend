@@ -1,5 +1,6 @@
 import { render, screen, within } from "@testing-library/react";
 import {
+  fetchMemberCosmetics,
   fetchMemberFriends,
   fetchMemberPendingSummary,
   fetchMemberIceCreams,
@@ -26,6 +27,7 @@ jest.mock("@/lib/member-session", () => ({
   // Newbie quests are covered by their own tests; null leaves the list out here.
   fetchMemberQuests: jest.fn().mockResolvedValue(null),
   fetchMemberIceCreams: jest.fn(),
+  fetchMemberCosmetics: jest.fn(),
   fetchMemberFriends: jest.fn(),
   fetchMemberPendingSummary: jest.fn(),
   fetchMemberLegalChanges: jest.fn(),
@@ -60,6 +62,8 @@ jest.mock("./actions", () => ({
   removeFriendAction: jest.fn(),
   acceptMatchInviteAction: jest.fn(),
   dismissMatchInviteAction: jest.fn(),
+  equipCosmeticAction: jest.fn(),
+  changeCupAction: jest.fn(),
 }));
 
 const steamGuide = {
@@ -256,6 +260,23 @@ describe("/member", () => {
     expect(fetchMemberVideoSubmissions).not.toHaveBeenCalled();
   });
 
+  it("shows the equipped title among the details, or where to equip one", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue({
+      ...profile,
+      memberTitle: { template: "title.basic", params: { text: "派對常客", textColor: "#ffd166" }, imageUrl: null },
+    });
+    const { unmount } = render(await MemberPage(memberProps()));
+    const title = screen.getByText("稱號", { selector: "dt *" }).closest("div") as HTMLElement;
+    expect(title).toHaveTextContent("稱號：派對常客");
+    unmount();
+
+    (fetchMemberProfile as jest.Mock).mockResolvedValue({ ...profile, memberTitle: null });
+    render(await MemberPage(memberProps()));
+    const none = screen.getByText("稱號", { selector: "dt *" }).closest("div") as HTMLElement;
+    expect(none).toHaveTextContent("還沒有裝備稱號");
+    expect(within(none).getByRole("link", { name: "收藏" })).toHaveAttribute("href", "/member?tab=cosmetics");
+  });
+
   it("opens the 個人資料 tab by default: the details and the 稱呼/nickname form", async () => {
     (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
     render(await MemberPage(memberProps()));
@@ -280,6 +301,7 @@ describe("/member", () => {
       ["投稿影片", "/member?tab=videos"],
       ["點數", "/member?tab=points"],
       ["冰炫風", "/member?tab=ice-creams"],
+      ["收藏", "/member?tab=cosmetics"],
     ]);
     expect(within(tabs).getByRole("link", { name: "個人資料" })).toHaveAttribute("aria-current", "page");
     expect(within(tabs).getByRole("link", { name: "投稿影片" })).not.toHaveAttribute("aria-current");
@@ -1075,6 +1097,51 @@ describe("/member", () => {
 
       expect(screen.getByText("還沒有投稿。")).toBeInTheDocument();
     });
+  });
+});
+
+describe("/member 收藏 tab", () => {
+  const look = (text: string) => ({ template: "title.basic", params: { text, textColor: "#ffd166" }, imageUrl: null });
+
+  it("lists owned looks by kind with 裝備/卸下, and the cups in stock", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+    (fetchMemberCosmetics as jest.Mock).mockResolvedValue({
+      owned: [
+        { id: "t1", kind: "title", name: "派對常客", look: look("派對常客"), onSale: true, equipped: true },
+        { id: "t2", kind: "title", name: "內戰鐵人", look: look("內戰鐵人"), onSale: false, equipped: false },
+        {
+          id: "f1",
+          kind: "frame",
+          name: "霓虹框",
+          look: { template: "frame.line", params: { mainColor: "#00e5ff", borderStyle: "solid", glow: false }, imageUrl: null },
+          onSale: true,
+          equipped: false,
+        },
+      ],
+      cups: [{ item: { id: "c1", name: "聖誕杯", template: "cup.classic", params: { lineColor: "#ffffff" } }, count: 2 }],
+    });
+
+    render(await MemberPage(memberProps("cosmetics")));
+
+    expect(screen.getByRole("link", { name: "收藏" })).toHaveAttribute("aria-current", "page");
+    const titles = within(screen.getByRole("list", { name: "稱號" })).getAllByRole("listitem");
+    expect(titles[0]).toHaveTextContent("裝備中");
+    expect(within(titles[0]).getByRole("button", { name: "卸下" })).toBeInTheDocument();
+    expect(titles[1]).toHaveTextContent("已下架");
+    expect(within(titles[1]).getByRole("button", { name: "裝備" })).toBeInTheDocument();
+    expect(within(screen.getByRole("list", { name: "比賽室框" })).getByRole("button", { name: "裝備" })).toBeInTheDocument();
+    expect(screen.getByText("還沒有集點卡外觀。")).toBeInTheDocument();
+    expect(within(screen.getByRole("list", { name: "冰炫風杯" })).getByRole("listitem")).toHaveTextContent("聖誕杯× 2");
+  });
+
+  it("points to the shop when the member owns nothing", async () => {
+    (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+    (fetchMemberCosmetics as jest.Mock).mockResolvedValue({ owned: [], cups: [] });
+
+    render(await MemberPage(memberProps("cosmetics")));
+
+    expect(screen.getByText(/還沒有任何外觀/)).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "點數商店" })[0]).toHaveAttribute("href", "/shop#shelf-cosmetics");
   });
 });
 
