@@ -20,6 +20,7 @@ import {
   fetchMemberMatches,
   fetchMemberPendingSummary,
   fetchMemberPoints,
+  fetchMemberQuests,
   fetchMemberProfile,
   fetchMemberVideoSubmissions,
   type PendingSummary,
@@ -163,15 +164,19 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: QueryVal
 
   if (tab === "points") {
     const pageNumber = positiveInteger(page) ?? 1;
-    // The tab's 「怎麼玩？」 guide; a failure only hides the button.
-    const [found, guide] = await Promise.all([fetchMemberPoints(pageNumber), fetchGuide("checkin").catch(() => null)]);
+    // The tab's 「怎麼玩？」 guide and the newbie quests; a failure only hides them.
+    const [found, guide, quests] = await Promise.all([
+      fetchMemberPoints(pageNumber),
+      fetchGuide("checkin").catch(() => null),
+      fetchMemberQuests(),
+    ]);
     const points = found ?? {
       balance: 0,
       checkedInToday: false,
       campaign: null,
       entries: { items: [], total: 0, page: 1, pageSize: 20 },
     };
-    return <MemberPointsPanel points={points} guide={guide} card={positiveInteger(card)} />;
+    return <MemberPointsPanel points={points} guide={guide} quests={quests} card={positiveInteger(card)} />;
   }
 
   if (tab === "ice-creams") {

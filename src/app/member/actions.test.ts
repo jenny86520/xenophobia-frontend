@@ -18,6 +18,7 @@ import {
   answerFriendRequestAction,
   checkInAction,
   claimIceCampaignAction,
+  claimQuestAction,
   createIceCreamAction,
   deleteIceCreamAction,
   giftIceCreamAction,
@@ -502,6 +503,24 @@ describe("checkInAction", () => {
 
     respond(401, {});
     await expect(checkInAction()).rejects.toThrow("REDIRECT /member/login");
+  });
+});
+
+describe("claimQuestAction", () => {
+  it("claims a quest, names the points and refreshes the member page and the shop", async () => {
+    respond(200, { code: "steam", points: 2, balance: 5 });
+    await expect(claimQuestAction("steam")).resolves.toEqual({ ok: true, message: "已領取 2 點" });
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/member\/quests\/steam\/claim$/);
+    expect(init.method).toBe("POST");
+    expect(mockRevalidate).toHaveBeenCalledWith("/member");
+    expect(mockRevalidate).toHaveBeenCalledWith("/shop");
+  });
+
+  it("shows the backend's refusal as it is", async () => {
+    respond(409, { message: "還沒完成這個任務" });
+    await expect(claimQuestAction("friend")).resolves.toMatchObject({ ok: false, message: "還沒完成這個任務" });
+    expect(mockRevalidate).not.toHaveBeenCalled();
   });
 });
 

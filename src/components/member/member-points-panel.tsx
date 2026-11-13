@@ -6,11 +6,13 @@ import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
 import type { Guide } from "@/types/guide";
 import type { MemberPoints, PointCampaignProgress } from "@/types/member";
+import type { Quest } from "@/types/quest";
 import { formatTaipeiDateTime } from "@/utils/datetime";
 import { pointsTabHref } from "@/utils/member-tabs";
 import { formatPointAmount, pointKindLabel } from "@/utils/point-kinds";
 import { CheckInPanel } from "./check-in-panel";
 import { MemberTabColumns } from "./member-tabs";
+import { QuestList } from "./quest-list";
 import { StampCard } from "./stamp-card";
 
 /** The running campaign: name and end, the rules behind an ⓘ, and the stamp card. */
@@ -73,10 +75,13 @@ function EntryPages({ page, pageSize, total, card }: MemberPoints["entries"] & {
 export function MemberPointsPanel({
   points,
   guide = null,
+  quests = null,
   card,
 }: {
   points: MemberPoints;
   guide?: Guide | null;
+  /** The newbie quests; null leaves the list out. */
+  quests?: Quest[] | null;
   /** `?card=` for a long campaign's stamp card. */
   card?: number;
 }) {
@@ -111,6 +116,7 @@ export function MemberPointsPanel({
               )
             }
           />
+          <QuestList quests={quests} />
           <p className="text-body">
             <TextLink href="/shop" icon={Store}>
               點數商店

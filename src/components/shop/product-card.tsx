@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { IceCreamIcon } from "@/components/brand/ice-cream-icon";
 import { MetaLabel } from "@/components/brand/meta-label";
+import { Heading } from "@/components/brand/typography";
 import { Badge } from "@/components/ui/badge";
 
 type ProductCardProps = {
@@ -43,11 +44,19 @@ export function ProductCard({ id, name, price, terms, action, picture, tag }: Pr
   );
 }
 
-/** The shelf: one card per row on phones, up to four side by side on wide screens. */
-export function ProductShelf({ label, children }: { label: string; children: ReactNode }) {
+/**
+ * One shelf of the shop under its own heading, which names the list: one card per row on phones,
+ * up to four side by side on wide screens.
+ */
+export function ProductShelf({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <ul aria-label={label} className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {children}
-    </ul>
+    <section aria-labelledby={id} className="flex flex-col">
+      <Heading level={2} id={id}>
+        {title}
+      </Heading>
+      <ul aria-labelledby={id} className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {children}
+      </ul>
+    </section>
   );
 }

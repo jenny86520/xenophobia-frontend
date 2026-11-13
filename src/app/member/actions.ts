@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { clearMemberToken, memberFetch, setMemberToken } from "@/lib/member-session";
 import { STEAM_LINK_COOKIE, steamCookieOptions } from "@/lib/steam-login";
+import type { QuestClaimResult } from "@/types/quest";
 import type { IceCream } from "@/types/ice-cream";
 import type { CheckInResult, MemberActionState } from "@/types/member";
 import { iceCreamName } from "@/utils/ice-cream-events";
@@ -154,6 +155,22 @@ export async function checkInAction(): Promise<MemberActionState> {
       ? `連續簽到滿 ${campaign?.requiredDays ?? ""} 天，另外獲得 ${awarded.streakBonus} 點連續簽到獎勵。`
       : "";
   return { ok: true, message: `簽到成功，獲得 ${awarded.checkin} 點。${bonus}` };
+}
+
+/** Claims a newbie quest; the backend checks it again and refuses one not done or already claimed. */
+export async function claimQuestAction(code: string): Promise<MemberActionState> {
+  let response: Response;
+  try {
+    response = await memberFetch(`/api/member/quests/${encodeURIComponent(code)}/claim`, { method: "POST" });
+  } catch {
+    return UNREACHABLE;
+  }
+  if (response.status === 401) return signInAgain();
+  if (!response.ok) return errorState(response, "領取失敗，請稍後再試");
+  const { points } = (await response.json()) as QuestClaimResult;
+  revalidatePath("/member");
+  revalidatePath("/shop");
+  return { ok: true, message: `已領取 ${points} 點` };
 }
 
 /** Agrees to the documents at the versions the member was shown; the backend refuses stale ones. */

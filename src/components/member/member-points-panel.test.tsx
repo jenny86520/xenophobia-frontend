@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import type { MemberPoints } from "@/types/member";
 import { MemberPointsPanel } from "./member-points-panel";
 
-jest.mock("@/app/member/actions", () => ({ checkInAction: jest.fn() }));
+jest.mock("@/app/member/actions", () => ({ checkInAction: jest.fn(), claimQuestAction: jest.fn() }));
 
 const entry = { id: "e1", amount: 1, kind: "checkin", createdAt: "2026-11-09T01:00:00.000Z" };
 
@@ -28,6 +28,20 @@ describe("MemberPointsPanel", () => {
     expect(container.querySelector("#stamp-card")).toBeNull();
     expect(screen.queryByRole("button", { name: "「簽到規則」說明" })).toBeNull();
     expect(container.querySelector("progress")).toBeNull();
+  });
+
+  it("lists the newbie quests between the check-in and the shop link", () => {
+    render(
+      <MemberPointsPanel
+        points={points()}
+        quests={[{ code: "checkin", title: "第一次簽到", description: "簽到一次", points: 1, state: "claimable" }]}
+      />,
+    );
+    const heading = screen.getByRole("heading", { name: "新手任務" });
+    expect(heading.compareDocumentPosition(screen.getByRole("link", { name: "點數商店" }))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    expect(screen.getByRole("button", { name: "領取" })).toBeInTheDocument();
   });
 
   it("shows the running campaign with its rules and stamp card", () => {

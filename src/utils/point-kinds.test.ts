@@ -10,6 +10,7 @@ describe("pointKindLabel", () => {
   it("names the scrim and video kinds", () => {
     expect(pointKindLabel("scrim_play")).toBe("參加內戰");
     expect(pointKindLabel("video_accepted")).toBe("投稿影片入選");
+    expect(pointKindLabel("quest_reward")).toBe("新手任務");
   });
 
   it("shows an unknown kind as its code", () => {

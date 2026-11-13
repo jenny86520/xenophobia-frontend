@@ -23,6 +23,8 @@ jest.mock("@/lib/member-session", () => ({
   fetchMemberVideoSubmissions: jest.fn(),
   fetchMemberMatches: jest.fn(),
   fetchMemberPoints: jest.fn(),
+  // Newbie quests are covered by their own tests; null leaves the list out here.
+  fetchMemberQuests: jest.fn().mockResolvedValue(null),
   fetchMemberIceCreams: jest.fn(),
   fetchMemberFriends: jest.fn(),
   fetchMemberPendingSummary: jest.fn(),
@@ -44,6 +46,7 @@ jest.mock("./actions", () => ({
   updateProfileAction: jest.fn(),
   acceptLegalAction: jest.fn(),
   checkInAction: jest.fn(),
+  claimQuestAction: jest.fn(),
   createIceCreamAction: jest.fn(),
   giftIceCreamAction: jest.fn(),
   deleteIceCreamAction: jest.fn(),

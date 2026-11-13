@@ -1,3 +1,5 @@
+import type { ShopQuest } from "./quest";
+
 /** A person on a token: the site only ever gets a nickname (「管理員」「已離開的會員」 included). */
 export type IcePerson = { nickname: string };
 
@@ -80,6 +82,8 @@ export type Shop = {
   createCost: number;
   /** The signed-in member's points; null for visitors. */
   balance: number | null;
+  /** Newbie quests in order; an older backend may leave it out. */
+  quests?: ShopQuest[];
 };
 
 /** A friend's tokens on their friend page. */

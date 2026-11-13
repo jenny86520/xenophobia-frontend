@@ -6,6 +6,7 @@ import type { FriendProfile, FriendsOverview } from "@/types/friends";
 import type { IceAlbumPage, IceCreamHistory, MemberIceCreams } from "@/types/ice-cream";
 import type { MemberMatches } from "@/types/match";
 import type { NewsSummary } from "@/types/news";
+import type { Quest } from "@/types/quest";
 import type {
   LegalConsentChanges,
   MemberPoints,
@@ -98,6 +99,15 @@ async function memberGetJson<T>(path: string): Promise<T | null> {
   if (response.status === 401 || response.status === 404) return null;
   if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
   return (await response.json()) as T;
+}
+
+/** The member's newbie quests; null when signed out or the backend cannot answer (the list is then left out). */
+export async function fetchMemberQuests(): Promise<Quest[] | null> {
+  try {
+    return (await memberGetJson<{ quests: Quest[] }>("/api/member/quests"))?.quests ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** The member's tokens, gifts waiting for them and redemptions asked of them; null when signed out. */

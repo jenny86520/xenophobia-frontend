@@ -11,6 +11,7 @@ const POINT_KIND_LABELS: Record<string, string> = {
   attendance_revoked: "取消到場",
   scrim_play: "參加內戰",
   video_accepted: "投稿影片入選",
+  quest_reward: "新手任務",
 };
 
 export function pointKindLabel(kind: string): string {
