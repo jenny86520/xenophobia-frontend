@@ -7,6 +7,11 @@ describe("pointKindLabel", () => {
     expect(pointKindLabel("attendance_revoked")).toBe("取消到場");
   });
 
+  it("names the scrim and video kinds", () => {
+    expect(pointKindLabel("scrim_play")).toBe("參加內戰");
+    expect(pointKindLabel("video_accepted")).toBe("投稿影片入選");
+  });
+
   it("shows an unknown kind as its code", () => {
     expect(pointKindLabel("something_new")).toBe("something_new");
   });

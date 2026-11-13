@@ -9,6 +9,8 @@ const POINT_KIND_LABELS: Record<string, string> = {
   party_attend: "派對到場",
   sub_party_attend: "子派對到場",
   attendance_revoked: "取消到場",
+  scrim_play: "參加內戰",
+  video_accepted: "投稿影片入選",
 };
 
 export function pointKindLabel(kind: string): string {
