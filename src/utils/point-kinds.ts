@@ -6,6 +6,9 @@ const POINT_KIND_LABELS: Record<string, string> = {
   ice_redeem_paid: "兌換冰炫風付出",
   ice_redeem_received: "兌換冰炫風收到",
   manual_grant: "管理員補發",
+  party_attend: "派對到場",
+  sub_party_attend: "子派對到場",
+  attendance_revoked: "取消到場",
 };
 
 export function pointKindLabel(kind: string): string {

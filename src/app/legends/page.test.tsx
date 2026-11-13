@@ -225,6 +225,32 @@ describe("LegendsPage", () => {
     expect(board).toHaveTextContent("參加子派對次數・單位：次");
     expect(board).toHaveTextContent("一個派對裡的每一場");
     expect(document.getElementById("legend-rules-sub-party-attendance")).toHaveTextContent("每個子派對算一次");
+    expect(document.getElementById("legend-rules-sub-party-attendance")).toHaveTextContent(
+      "管理員點名記為到場的子派對",
+    );
+  });
+
+  it("explains that the party board counts attendance, not sign-ups", async () => {
+    await renderPage(
+      {
+        ...legends,
+        boards: [
+          {
+            code: "party-attendance",
+            title: "派對常客",
+            metric: "參加活動次數",
+            unit: "次",
+            countsTowardOverall: true,
+            entries: [{ rank: 1, nickname: "阿明", value: 3 }],
+          },
+        ],
+      },
+      "party",
+    );
+
+    const rules = document.getElementById("legend-rules-party-attendance");
+    expect(rules).toHaveTextContent("管理員點名記為到場的活動次數");
+    expect(rules).toHaveTextContent("只報名、沒有到場的不算");
   });
 
   it("puts a board added later under 其他, with a default icon and no ⓘ", async () => {
