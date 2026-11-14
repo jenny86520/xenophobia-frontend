@@ -1,4 +1,4 @@
-import type { CupStock, CupView, ShopCosmetic } from "./cosmetic";
+import type { CupStock, CupView, ShopCosmetic, ShopCosmeticCategory } from "./cosmetic";
 import type { ShopQuest } from "./quest";
 
 /** A person on a token: the site only ever gets a nickname (「管理員」「已離開的會員」 included). */
@@ -112,6 +112,8 @@ export type Shop = {
   quests?: ShopQuest[];
   /** Cosmetics on sale in shelf order; an older backend may leave it out. */
   cosmetics?: ShopCosmetic[];
+  /** The admins' cosmetic categories in display order; an older backend may leave it out. */
+  cosmeticCategories?: ShopCosmeticCategory[];
 };
 
 /** A friend's tokens on their friend page. */

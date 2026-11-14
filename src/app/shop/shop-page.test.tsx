@@ -14,7 +14,11 @@ jest.mock("@/app/member/actions", () => ({
 
 const shop = (overrides: Partial<Shop> = {}): Shop => ({
   checkin: { points: 1 },
-  streakCampaign: { title: "十一月全勤", endDate: "2026-11-30", requiredDays: 10 },
+  streakCampaign: {
+    title: "十一月全勤",
+    endDate: "2026-11-30",
+    requiredDays: 10,
+  },
   iceCampaigns: [
     { id: "c1", title: "聖誕限定", endDate: "2026-12-25", claimed: false },
     { id: "c2", title: "週年限定", endDate: "2026-12-31", claimed: true },
@@ -22,14 +26,32 @@ const shop = (overrides: Partial<Shop> = {}): Shop => ({
   createCost: 3,
   balance: 12,
   quests: [
-    { code: "steam", title: "綁定 Steam", description: "綁定你的 Steam 帳號", points: 2, state: "claimable" },
-    { code: "friend", title: "交到第一位好友", description: "被接受一次好友邀請", points: 1, state: "todo" },
-    { code: "checkin", title: "第一次簽到", description: "簽到一次", points: 1, state: "claimed" },
+    {
+      code: "steam",
+      title: "綁定 Steam",
+      description: "綁定你的 Steam 帳號",
+      points: 2,
+      state: "claimable",
+    },
+    {
+      code: "friend",
+      title: "交到第一位好友",
+      description: "被接受一次好友邀請",
+      points: 1,
+      state: "todo",
+    },
+    {
+      code: "checkin",
+      title: "第一次簽到",
+      description: "簽到一次",
+      points: 1,
+      state: "claimed",
+    },
   ],
   ...overrides,
 });
 
-async function renderPage(data: Shop, member: boolean) {
+async function renderPage(data: Shop, member: boolean, query: Record<string, string> = {}) {
   // The backend sends a balance, quest states and what the member owns only with a member's token.
   (fetchShop as jest.Mock).mockResolvedValue(
     member
@@ -38,11 +60,20 @@ async function renderPage(data: Shop, member: boolean) {
           ...data,
           balance: null,
           quests: data.quests?.map((quest) => ({ ...quest, state: null })),
-          cosmetics: data.cosmetics?.map((item) => ({ ...item, owned: null, stock: null })),
+          cosmetics: data.cosmetics?.map((item) => ({
+            ...item,
+            owned: null,
+            stock: null,
+          })),
         },
   );
   (fetchMemberProfile as jest.Mock).mockResolvedValue(member ? { nickname: "小明" } : null);
-  render(await ShopPage());
+  render(
+    await ShopPage({
+      params: Promise.resolve({}),
+      searchParams: Promise.resolve(query),
+    } as PageProps<"/shop">),
+  );
 }
 
 describe("/shop", () => {
@@ -58,7 +89,11 @@ describe("/shop", () => {
     expect(balance).toHaveClass("fixed", "top-24");
 
     // Two shelves, each named by its heading; square cards named by their product.
-    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual(["冰炫風", "點數任務", "外觀"]);
+    expect(screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent)).toEqual([
+      "冰炫風",
+      "點數任務",
+      "外觀",
+    ]);
     const iceCreams = shelf("冰炫風");
     const tasks = shelf("點數任務");
     expect(ids(iceCreams)).toEqual(["product-c1", "product-c2", "product-create"]);
@@ -128,7 +163,11 @@ describe("/shop", () => {
         kind: "title",
         name: "派對常客",
         price: 30,
-        look: { template: "title.basic", params: { text: "派對常客", textColor: "#ffd166" }, imageUrl: null },
+        look: {
+          template: "title.basic",
+          params: { text: "派對常客", textColor: "#ffd166" },
+          imageUrl: null,
+        },
         owned: true,
         stock: null,
       },
@@ -137,7 +176,15 @@ describe("/shop", () => {
         kind: "frame",
         name: "霓虹框",
         price: 40,
-        look: { template: "frame.pulse", params: { mainColor: "#00e5ff", accentColor: "#ff3df0", speed: "slow" }, imageUrl: null },
+        look: {
+          template: "frame.pulse",
+          params: {
+            mainColor: "#00e5ff",
+            accentColor: "#ff3df0",
+            speed: "slow",
+          },
+          imageUrl: null,
+        },
         owned: false,
         stock: null,
       },
@@ -146,7 +193,11 @@ describe("/shop", () => {
         kind: "cup",
         name: "聖誕杯",
         price: 5,
-        look: { template: "cup.classic", params: { lineColor: "#f5f5f5", cupColor: "#c62a2f" }, imageUrl: null },
+        look: {
+          template: "cup.classic",
+          params: { lineColor: "#f5f5f5", cupColor: "#c62a2f" },
+          imageUrl: null,
+        },
         owned: null,
         stock: 1,
       },
@@ -186,9 +237,31 @@ describe("/shop", () => {
 
     it("tags limited items, meters what is left and marks sold-out ones without a buy button", async () => {
       const limited: NonNullable<Shop["cosmetics"]> = [
-        { ...cosmetics[2], stockLimit: 20, remaining: 3, saleEndsOn: "2026-12-31", soldOut: false },
-        { ...cosmetics[1], id: "f2", name: "跨年框", stockLimit: 5, remaining: 0, saleEndsOn: null, soldOut: true },
-        { ...cosmetics[1], id: "f3", name: "常駐框", stockLimit: null, remaining: null, saleEndsOn: null, soldOut: false },
+        {
+          ...cosmetics[2],
+          stockLimit: 20,
+          remaining: 3,
+          saleEndsOn: "2026-12-31",
+          soldOut: false,
+        },
+        {
+          ...cosmetics[1],
+          id: "f2",
+          name: "跨年框",
+          stockLimit: 5,
+          remaining: 0,
+          saleEndsOn: null,
+          soldOut: true,
+        },
+        {
+          ...cosmetics[1],
+          id: "f3",
+          name: "常駐框",
+          stockLimit: null,
+          remaining: null,
+          saleEndsOn: null,
+          soldOut: false,
+        },
       ];
       await renderPage(shop({ cosmetics: limited }), true);
       const [cup, frame, plain] = shelf("外觀");
@@ -216,6 +289,138 @@ describe("/shop", () => {
     it("says when there is nothing on sale", async () => {
       await renderPage(shop({ cosmetics: [] }), true);
       expect(shelf("外觀")[0]).toHaveTextContent("目前沒有外觀商品");
+      expect(screen.queryByRole("navigation", { name: "外觀分類" })).not.toBeInTheDocument();
     });
+
+    describe("categories", () => {
+      const cosmeticCategories = [
+        { id: "xmas", name: "聖誕系列" },
+        { id: "party", name: "派對限定" },
+        { id: "spring", name: "新春" },
+      ];
+      // 派對常客 (owned) and 霓虹框 in 派對限定, 聖誕杯 in 聖誕系列, plus an item with no category.
+      const sorted: NonNullable<Shop["cosmetics"]> = [
+        { ...cosmetics[0], categoryId: "party" },
+        { ...cosmetics[1], categoryId: "party" },
+        { ...cosmetics[2], categoryId: "xmas" },
+        { ...cosmetics[1], id: "f9", name: "常駐框", categoryId: null },
+      ];
+      const tabs = () =>
+        within(screen.getByRole("navigation", { name: "外觀分類" }))
+          .getAllByRole("link")
+          .map((link) => link.textContent);
+
+      it("tabs the categories with items in the admins' order, 其他 last, and sections 全部", async () => {
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true);
+        expect(tabs()).toEqual(["全部 4", "聖誕系列 1", "派對限定 2", "其他 1"]);
+        expect(screen.getByRole("link", { name: "全部 4" })).toHaveAttribute("aria-current", "page");
+        expect(screen.getByRole("link", { name: "派對限定 2" })).toHaveAttribute(
+          "href",
+          "/shop?category=party#shelf-cosmetics",
+        );
+        expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
+          "聖誕系列",
+          "派對限定",
+          "其他",
+        ]);
+        expect(ids(shelf("聖誕系列"))).toEqual(["product-cosmetic-c1"]);
+        expect(ids(shelf("派對限定"))).toEqual(["product-cosmetic-t1", "product-cosmetic-f1"]);
+        expect(ids(shelf("其他"))).toEqual(["product-cosmetic-f9"]);
+      });
+
+      it("shows one category under its tab, without a sub-heading", async () => {
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, {
+          category: "party",
+        });
+        expect(screen.getByRole("link", { name: "派對限定 2" })).toHaveAttribute("aria-current", "page");
+        expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
+        expect(ids(shelf("外觀"))).toEqual(["product-cosmetic-t1", "product-cosmetic-f1"]);
+        // The other shelves stay.
+        expect(ids(shelf("冰炫風"))).toContain("product-create");
+      });
+
+      it("treats an unknown or empty category as 全部", async () => {
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, {
+          category: "spring",
+        });
+        expect(screen.getByRole("link", { name: "全部 4" })).toHaveAttribute("aria-current", "page");
+      });
+
+      it("has only 全部 and 其他 without categories", async () => {
+        await renderPage(shop({ cosmetics }), false);
+        expect(tabs()).toEqual(["全部 3", "其他 3"]);
+        expect(shelf("外觀")).toHaveLength(3);
+      });
+
+      it("lets a member hide what they own, keeping cups and the counts", async () => {
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, {
+          category: "party",
+        });
+        expect(screen.getByRole("link", { name: "隱藏已擁有" })).toHaveAttribute(
+          "href",
+          "/shop?category=party&owned=hide#shelf-cosmetics",
+        );
+
+        document.body.innerHTML = "";
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, {
+          category: "party",
+          owned: "hide",
+        });
+        expect(ids(shelf("外觀"))).toEqual(["product-cosmetic-f1"]);
+        expect(tabs()).toContain("派對限定 2");
+        expect(screen.getByRole("link", { name: "顯示已擁有" })).toHaveAttribute(
+          "href",
+          "/shop?category=party#shelf-cosmetics",
+        );
+        // Tabs keep the toggle.
+        expect(screen.getByRole("link", { name: "全部 4" })).toHaveAttribute(
+          "href",
+          "/shop?owned=hide#shelf-cosmetics",
+        );
+
+        document.body.innerHTML = "";
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, {
+          category: "xmas",
+          owned: "hide",
+        });
+        // A cup is never hidden.
+        expect(ids(shelf("外觀"))).toEqual(["product-cosmetic-c1"]);
+      });
+
+      it("says so when everything in a tab is owned", async () => {
+        const owned = sorted.map((item) => (item.id === "f1" ? { ...item, owned: true } : item));
+        await renderPage(shop({ cosmetics: owned, cosmeticCategories }), true, {
+          category: "party",
+          owned: "hide",
+        });
+        expect(screen.getByText(/這類外觀你都擁有了/)).toBeInTheDocument();
+        const show = screen.getAllByRole("link", { name: "顯示已擁有" });
+        show.forEach((link) => expect(link).toHaveAttribute("href", "/shop?category=party#shelf-cosmetics"));
+      });
+
+      it("gives visitors no hide link and ignores owned=hide", async () => {
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), false, {
+          owned: "hide",
+        });
+        expect(screen.queryByRole("link", { name: /已擁有/ })).not.toBeInTheDocument();
+        expect(tabs()).toEqual(["全部 4", "聖誕系列 1", "派對限定 2", "其他 1"]);
+        expect(ids(shelf("派對限定"))).toHaveLength(2);
+      });
+    });
+  });
+
+  it("links to each shelf from the page header", async () => {
+    await renderPage(shop(), false);
+    const nav = screen.getByRole("navigation", { name: "商店分類" });
+    expect(
+      within(nav)
+        .getAllByRole("link")
+        .map((link) => [link.textContent, link.getAttribute("href")]),
+    ).toEqual([
+      ["冰炫風", "#shelf-ice-creams"],
+      ["點數任務", "#shelf-tasks"],
+      ["外觀", "#shelf-cosmetics"],
+    ]);
+    expect(document.getElementById("shelf-tasks")).toHaveTextContent("點數任務");
   });
 });

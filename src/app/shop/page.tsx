@@ -11,19 +11,31 @@ import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { CosmeticPreview } from "@/components/cosmetics/cosmetic-preview";
 import { FriendActionButton } from "@/components/member/friend-forms";
+import { Heading } from "@/components/brand/typography";
 import { BuyCosmeticForm } from "@/components/shop/buy-cosmetic-form";
 import {
   ProductCard,
+  ProductGrid,
   ProductShelf,
   ShelfStatus,
 } from "@/components/shop/product-card";
 import { ShopBalance } from "@/components/shop/shop-balance";
+import { ShopCosmeticTabs } from "@/components/shop/shop-cosmetic-tabs";
+import { ShopJumpNav } from "@/components/shop/shop-jump-nav";
 import { fetchMemberProfile } from "@/lib/member-session";
 import { fetchShop } from "@/lib/public-content-client";
 import type { ShopCosmetic } from "@/types/cosmetic";
 import type { ShopQuest } from "@/types/quest";
 import { cosmeticTerms } from "@/utils/cosmetics";
 import { questHref, questIcon } from "@/utils/quests";
+import {
+  COSMETICS_SHELF_ID,
+  cosmeticGroups,
+  parseHideOwned,
+  parseShopCategory,
+  shopCosmeticsHref,
+  shownGroups,
+} from "@/utils/shop-cosmetics";
 
 export const metadata: Metadata = {
   title: "Shop",
@@ -99,6 +111,100 @@ function stockOf(
   return { remaining: item.remaining ?? 0, limit: item.stockLimit };
 }
 
+/** One cosmetic's card (the same under 全部 and under its category's tab). */
+function cosmeticCard(
+  item: ShopCosmetic,
+  signIn: (label: string) => ReactNode,
+) {
+  return (
+    <ProductCard
+      key={item.id}
+      id={`product-cosmetic-${item.id}`}
+      picture={<CosmeticPreview kind={item.kind} look={item.look} />}
+      name={item.name}
+      price={`${item.price} 點`}
+      terms={cosmeticTermsOf(item)}
+      tag={item.stockLimit ? `限量 ${item.stockLimit} 份` : undefined}
+      stock={stockOf(item)}
+      soldOut={item.soldOut === true}
+      action={cosmeticAction(item, signIn)}
+    />
+  );
+}
+
+/**
+ * The cosmetics shelf (spec point-shop): tabs by the admins' categories (其他 for the rest), the
+ * member's 隱藏已擁有, and under 全部 one section per category with its own heading. A single
+ * group needs no heading of its own: the shelf's heading names the grid.
+ */
+function CosmeticsShelf({
+  shop,
+  query,
+  signedIn,
+  signIn,
+}: {
+  shop: Awaited<ReturnType<typeof fetchShop>>;
+  query: { category?: string | string[]; owned?: string | string[] };
+  signedIn: boolean;
+  signIn: (label: string) => ReactNode;
+}) {
+  const items = shop.cosmetics ?? [];
+  const groups = cosmeticGroups(shop.cosmeticCategories ?? [], items);
+  const current = parseShopCategory(query.category, groups);
+  const hideOwned = parseHideOwned(query.owned, signedIn);
+  const shown = shownGroups(groups, current, hideOwned);
+
+  let body: ReactNode;
+  if (items.length === 0) {
+    body = (
+      <ProductGrid labelledBy={COSMETICS_SHELF_ID}>
+        <li className="text-body text-ink-secondary">目前沒有外觀商品</li>
+      </ProductGrid>
+    );
+  } else if (shown.length === 0) {
+    body = (
+      <p className="mt-6 flex flex-wrap items-baseline gap-x-4 gap-y-2 text-body text-ink-secondary">
+        這類外觀你都擁有了
+        <TextLink href={shopCosmeticsHref(current, false)}>顯示已擁有</TextLink>
+      </p>
+    );
+  } else if (shown.length === 1) {
+    body = (
+      <ProductGrid labelledBy={COSMETICS_SHELF_ID}>
+        {shown[0].items.map((item) => cosmeticCard(item, signIn))}
+      </ProductGrid>
+    );
+  } else {
+    body = shown.map((group) => {
+      const headingId = `${COSMETICS_SHELF_ID}-${group.key}`;
+      return (
+        <section key={group.key} aria-labelledby={headingId} className="mt-10">
+          <Heading level={3} id={headingId}>
+            {group.label}
+          </Heading>
+          <ProductGrid labelledBy={headingId}>
+            {group.items.map((item) => cosmeticCard(item, signIn))}
+          </ProductGrid>
+        </section>
+      );
+    });
+  }
+
+  return (
+    <ProductShelf id={COSMETICS_SHELF_ID} title="外觀" grid={false}>
+      {groups.length > 0 && (
+        <ShopCosmeticTabs
+          groups={groups}
+          current={current}
+          hideOwned={hideOwned}
+          signedIn={signedIn}
+        />
+      )}
+      {body}
+    </ProductShelf>
+  );
+}
+
 /**
  * The point shop, open to everyone: square product cards on two shelves, each under its heading.
  * 冰炫風 holds the limited ice creams running now (tagged 期間限定; members claim one each per period)
@@ -107,10 +213,11 @@ function stockOf(
  * room frames, stamp cards and ice cream cups, each previewed). Everything, quest states and what a
  * member owns included, comes from the backend.
  */
-export default async function ShopPage() {
-  const [shop, profile] = await Promise.all([
+export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
+  const [shop, profile, query] = await Promise.all([
     fetchShop(),
     fetchMemberProfile(),
+    searchParams,
   ]);
   const signIn = (label: string) => (
     <TextLink href="/member/login">{label}</TextLink>
@@ -130,6 +237,7 @@ export default async function ShopPage() {
           description="簽到攢點數，換點好料。限定冰炫風手刀搶，自己發的冰炫風送朋友。"
           actions={<TextLink href="/ice-creams">冰炫風成長史冊</TextLink>}
         />
+        <ShopJumpNav />
       </Section>
 
       <Section spacing="tight">
@@ -218,30 +326,12 @@ export default async function ShopPage() {
               );
             })}
           </ProductShelf>
-          <ProductShelf id="shelf-cosmetics" title="外觀">
-            {(shop.cosmetics ?? []).length === 0 ? (
-              <li className="text-body text-ink-secondary">目前沒有外觀商品</li>
-            ) : (
-              (shop.cosmetics ?? []).map((item) => (
-                <ProductCard
-                  key={item.id}
-                  id={`product-cosmetic-${item.id}`}
-                  picture={
-                    <CosmeticPreview kind={item.kind} look={item.look} />
-                  }
-                  name={item.name}
-                  price={`${item.price} 點`}
-                  terms={cosmeticTermsOf(item)}
-                  tag={
-                    item.stockLimit ? `限量 ${item.stockLimit} 份` : undefined
-                  }
-                  stock={stockOf(item)}
-                  soldOut={item.soldOut === true}
-                  action={cosmeticAction(item, signIn)}
-                />
-              ))
-            )}
-          </ProductShelf>
+          <CosmeticsShelf
+            shop={shop}
+            query={query}
+            signedIn={profile !== null}
+            signIn={signIn}
+          />
         </div>
       </Section>
       {shop.balance !== null && <ShopBalance balance={shop.balance} />}

@@ -163,16 +163,39 @@ export function ShelfStatus({
 }
 
 /**
- * One shelf of the shop under its own heading, which names the list: one card per row on phones,
- * up to four side by side on wide screens.
+ * A grid of product cards named by a heading: one card per row on phones, up to four side by side
+ * on wide screens.
+ */
+export function ProductGrid({
+  labelledBy,
+  children,
+}: {
+  labelledBy: string;
+  children: ReactNode;
+}) {
+  return (
+    <ul
+      aria-labelledby={labelledBy}
+      className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+    >
+      {children}
+    </ul>
+  );
+}
+
+/**
+ * One shelf of the shop under its own heading, which names the list. With `grid={false}` the shelf
+ * holds its own content (the cosmetics' tabs and sections) instead of one grid of cards.
  */
 export function ProductShelf({
   id,
   title,
+  grid = true,
   children,
 }: {
   id: string;
   title: string;
+  grid?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -180,12 +203,7 @@ export function ProductShelf({
       <Heading level={2} id={id}>
         {title}
       </Heading>
-      <ul
-        aria-labelledby={id}
-        className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-      >
-        {children}
-      </ul>
+      {grid ? <ProductGrid labelledBy={id}>{children}</ProductGrid> : children}
     </section>
   );
 }

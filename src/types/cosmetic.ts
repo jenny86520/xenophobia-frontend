@@ -26,7 +26,12 @@ export type ShopCosmetic = {
   saleEndsOn?: string | null;
   /** Every copy is sold: no buy button. */
   soldOut?: boolean;
+  /** The admins' shop category; null (or missing from older backends) = 未分類, shown under 其他. */
+  categoryId?: string | null;
 };
+
+/** One of the admins' cosmetic categories (the shop's tabs), in display order. */
+export type ShopCosmeticCategory = { id: string; name: string };
 
 export type OwnedCosmetic = {
   id: string;
