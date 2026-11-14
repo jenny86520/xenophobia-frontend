@@ -51,14 +51,19 @@ function targetIndex(key: string, index: number, total: number): number | null {
  * the server HTML, so it is open without JavaScript too. Collapsed bodies are `inert`.
  * Only the expanded panel mounts a player, and only after hydration, so autoplay can
  * respect prefers-reduced-motion. It never switches games by itself. Inside the expanded game it
- * plays the featured videos in order: an ended video moves to the next, the last one back to the
- * first (a single video just stops); previous/next and numbered buttons switch by hand.
+ * plays the featured videos in order, once: an ended video moves to the next and the last one
+ * stays at its end; previous/next (wrapping around) and numbered buttons switch by hand. A YouTube
+ * video shows only its thumbnail and a play button until the visitor presses play in that game;
+ * after that the game's YouTube videos load their player directly. Expanding another game asks
+ * again, so an idle home page never keeps loading YouTube embeds.
  */
 export function GameCarousel({ games }: { games: Game[] }) {
   const [active, setActive] = useState(0);
   // Index into the expanded game's videos; every newly expanded game starts at its first.
   const [activeVideo, setActiveVideo] = useState(0);
   const [announcement, setAnnouncement] = useState("");
+  // The visitor pressed play on a YouTube video in the expanded game.
+  const [youtubeOptIn, setYoutubeOptIn] = useState(false);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const baseId = useId();
   const total = games.length;
@@ -75,6 +80,7 @@ export function GameCarousel({ games }: { games: Game[] }) {
     if (index === active) return;
     setActive(index);
     setActiveVideo(0);
+    setYoutubeOptIn(false);
     setAnnouncement(`${games[index].name}（第 ${index + 1} 個，共 ${total} 個）`);
   }
 
@@ -85,9 +91,10 @@ export function GameCarousel({ games }: { games: Game[] }) {
     setAnnouncement(`第 ${index + 1} 部，共 ${videos.length} 部：${videoTitle(videos[index])}`);
   }
 
+  /** Automatic move after a video ends: one round only, the last video stays at its end. */
   function playNext() {
     const total = games[active].videos.length;
-    if (total > 1) setActiveVideo((index) => (index + 1) % total);
+    setActiveVideo((index) => (index + 1 < total ? index + 1 : index));
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
@@ -143,6 +150,8 @@ export function GameCarousel({ games }: { games: Game[] }) {
                           gameName={game.name}
                           video={video}
                           autoplay={!reducedMotion}
+                          youtubeOptIn={youtubeOptIn}
+                          onRequestPlay={() => setYoutubeOptIn(true)}
                           onEnded={playNext}
                         />
                       ) : video ? (

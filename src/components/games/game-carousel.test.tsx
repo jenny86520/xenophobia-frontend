@@ -50,7 +50,11 @@ function mockYouTubeApi() {
 }
 
 const panel = (name: RegExp) => screen.getByRole("group", { name });
-const toggle = (name: string) => screen.getByRole("button", { name: new RegExp(name) });
+/** A panel's own button (the only buttons with aria-expanded; a play button may share the name). */
+const toggle = (name: string) =>
+  screen.getAllByRole("button", { name: new RegExp(name) }).find((button) => button.hasAttribute("aria-expanded"))!;
+const playButton = (name: string) => screen.getByRole("button", { name: `播放：${name}` });
+const facades = () => document.querySelectorAll("[data-youtube-facade]");
 const players = () => document.querySelectorAll("iframe, video");
 const bodyOf = (button: HTMLElement) => document.getElementById(button.getAttribute("aria-controls") ?? "")!;
 const currentVideo = () => document.querySelector("video") as HTMLVideoElement;
@@ -100,14 +104,46 @@ describe("GameCarousel (expanding)", () => {
     expect(bodyOf(toggle("APEX"))).toHaveAttribute("inert");
   });
 
-  it("mounts only the expanded panel's player: a muted, autoplaying youtube-nocookie embed with the IFrame API", () => {
+  it("shows a YouTube video as its thumbnail and a play button, loading nothing else from YouTube", () => {
+    const { Player } = mockYouTubeApi();
     render(<GameCarousel games={games} />);
 
-    expect(players()).toHaveLength(1);
+    expect(players()).toHaveLength(0);
+    expect(facades()).toHaveLength(1);
+    const ac = panel(/Assetto Corsa/);
+    const thumbnail = ac.querySelector("img")!;
+    expect(thumbnail).toHaveAttribute("src", "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg");
+    expect(thumbnail).toHaveAttribute("alt", "");
+    expect(thumbnail).toHaveAttribute("referrerpolicy", "no-referrer");
+    expect(within(ac).getByRole("button", { name: "播放：Assetto Corsa highlight：Hot lap" })).toBeInTheDocument();
+    expect(Player).not.toHaveBeenCalled();
+    expect(document.querySelector('script[src*="youtube.com/iframe_api"]')).toBeNull();
+  });
+
+  it("loads the youtube-nocookie player with sound and the IFrame API once play is pressed", async () => {
+    const { Player } = mockYouTubeApi();
+    render(<GameCarousel games={games} />);
+
+    fireEvent.click(playButton("Assetto Corsa highlight：Hot lap"));
+
+    expect(facades()).toHaveLength(0);
     expect(within(panel(/Assetto Corsa/)).getByTitle("Assetto Corsa highlight：Hot lap")).toHaveAttribute(
       "src",
-      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?playsinline=1&rel=0&autoplay=1&mute=1&enablejsapi=1&origin=http%3A%2F%2Flocalhost",
+      "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?playsinline=1&rel=0&autoplay=1&enablejsapi=1&origin=http%3A%2F%2Flocalhost",
     );
+    await waitFor(() => expect(Player).toHaveBeenCalledTimes(1));
+  });
+
+  it("shows the title when the thumbnail cannot load, keeping the play button", () => {
+    render(<GameCarousel games={games} />);
+    const ac = panel(/Assetto Corsa/);
+
+    fireEvent.error(ac.querySelector("img")!);
+
+    expect(ac.querySelector("img")).toBeNull();
+    expect(within(ac.querySelector("[data-youtube-facade]") as HTMLElement).getByText("Hot lap")).toBeInTheDocument();
+    fireEvent.click(playButton("Assetto Corsa highlight：Hot lap"));
+    expect(players()).toHaveLength(1);
   });
 
   it("expands a collapsed panel on click, plays its first video and announces the game", () => {
@@ -159,9 +195,10 @@ describe("GameCarousel (expanding)", () => {
     mockReducedMotion(true);
     render(<GameCarousel games={games} />);
 
-    const src = screen.getByTitle("Assetto Corsa highlight：Hot lap").getAttribute("src") ?? "";
-    expect(src).not.toContain("autoplay");
-    expect(src).not.toContain("mute");
+    // Pressing play is a request to play, reduced motion or not.
+    expect(facades()).toHaveLength(1);
+    fireEvent.click(playButton("Assetto Corsa highlight：Hot lap"));
+    expect(screen.getByTitle("Assetto Corsa highlight：Hot lap").getAttribute("src")).toContain("autoplay=1");
 
     fireEvent.click(toggle("CS2"));
     expect(screen.getByLabelText("CS2 highlight：Ace clutch")).toHaveProperty("autoplay", false);
@@ -180,7 +217,7 @@ describe("GameCarousel (expanding)", () => {
   });
 
   describe("video playlist", () => {
-    it("moves to the next video when one ends, and back to the first after the last, without announcing", () => {
+    it("moves to the next video when one ends and stops at the end of the last, without announcing", () => {
       render(<GameCarousel games={games} />);
       fireEvent.click(toggle("CS2"));
       const announced = screen.getByText("CS2（第 2 個，共 3 個）");
@@ -191,8 +228,11 @@ describe("GameCarousel (expanding)", () => {
       expect(currentVideo()).toHaveProperty("autoplay", true);
 
       fireEvent.ended(currentVideo());
+      expect(currentVideo()).toHaveAccessibleName("CS2 highlight：Eco win");
       fireEvent.ended(currentVideo());
-      expect(currentVideo()).toHaveAccessibleName("CS2 highlight：Ace clutch");
+      // One round only: the last video stays where it ended.
+      expect(currentVideo()).toHaveAccessibleName("CS2 highlight：Eco win");
+      expect(meta(/CS2/)).toHaveTextContent("3 / 3 · Eco win · 2026-10-03");
       expect(players()).toHaveLength(1);
       // Automatic moves leave the live region alone.
       expect(announced).toHaveTextContent("CS2（第 2 個，共 3 個）");
@@ -249,6 +289,7 @@ describe("GameCarousel (expanding)", () => {
         },
       ];
       render(<GameCarousel games={twoClips} />);
+      fireEvent.click(playButton("R6 highlight：Clip A"));
       await waitFor(() => expect(Player).toHaveBeenCalledTimes(1));
       expect(Player.mock.calls[0][0]).toBe(screen.getByTitle("R6 highlight：Clip A"));
 
@@ -258,8 +299,86 @@ describe("GameCarousel (expanding)", () => {
       act(() => handlers[0]({ data: 0 })); // ENDED
       const next = screen.getByTitle("R6 highlight：Clip B");
       expect(next.getAttribute("src")).toMatch(
-        /^https:\/\/www\.youtube-nocookie\.com\/embed\/bbbbbbbbbbb\?.*enablejsapi=1/,
+        /^https:\/\/www\.youtube-nocookie\.com\/embed\/bbbbbbbbbbb\?.*autoplay=1&enablejsapi=1/,
       );
+      // Play was pressed in this game, so the next YouTube video loads its player directly, with sound.
+      expect(next.getAttribute("src")).not.toContain("mute=1");
+    });
+
+    it("with reduced motion, loads the next YouTube video after play was pressed but does not start it", async () => {
+      mockReducedMotion(true);
+      const { Player, handlers } = mockYouTubeApi();
+      const twoClips: Game[] = [
+        {
+          id: "g11",
+          name: "R6",
+          summary: "",
+          videos: [
+            { id: "a", source: "youtube", title: "Clip A", recordedOn: "2026-10-01", youtubeId: "aaaaaaaaaaa" },
+            { id: "b", source: "youtube", title: "Clip B", recordedOn: "2026-10-02", youtubeId: "bbbbbbbbbbb" },
+          ],
+        },
+      ];
+      render(<GameCarousel games={twoClips} />);
+      fireEvent.click(playButton("R6 highlight：Clip A"));
+      await waitFor(() => expect(Player).toHaveBeenCalledTimes(1));
+
+      act(() => handlers[0]({ data: 0 })); // ENDED
+
+      expect(screen.getByTitle("R6 highlight：Clip B").getAttribute("src")).not.toContain("autoplay");
+    });
+
+    const mixed: Game[] = [
+      {
+        id: "g10",
+        name: "Valorant",
+        summary: "",
+        videos: [
+          upload("v1", "Opening"),
+          { id: "v2", source: "youtube", title: "Clip Y", recordedOn: "2026-10-02", youtubeId: "yyyyyyyyyyy" },
+          { id: "v3", source: "youtube", title: "Clip Z", recordedOn: "2026-10-03", youtubeId: "zzzzzzzzzzz" },
+        ],
+      },
+      games[0],
+    ];
+
+    it("moves on to a YouTube video's thumbnail, not its player, before play was pressed", () => {
+      render(<GameCarousel games={mixed} />);
+
+      fireEvent.ended(currentVideo());
+
+      expect(players()).toHaveLength(0);
+      expect(playButton("Valorant highlight：Clip Y")).toBeInTheDocument();
+      expect(meta(/Valorant/)).toHaveTextContent("2 / 3 · Clip Y · 2026-10-02");
+    });
+
+    it("loads further YouTube videos of the game directly once play was pressed, and asks again in another game", () => {
+      render(<GameCarousel games={mixed} />);
+      fireEvent.ended(currentVideo());
+      fireEvent.click(playButton("Valorant highlight：Clip Y"));
+
+      fireEvent.click(within(panel(/Valorant/)).getByRole("button", { name: "下一部" }));
+      expect(screen.getByTitle("Valorant highlight：Clip Z")).toBeInTheDocument();
+      expect(facades()).toHaveLength(0);
+
+      fireEvent.click(toggle("Assetto Corsa"));
+      expect(players()).toHaveLength(0);
+      expect(playButton("Assetto Corsa highlight：Hot lap")).toBeInTheDocument();
+
+      fireEvent.click(toggle("Valorant"));
+      fireEvent.click(within(panel(/Valorant/)).getByRole("button", { name: "第 2 部：Clip Y" }));
+      expect(facades()).toHaveLength(1);
+    });
+
+    it("still wraps around by hand: next on the last video goes to the first", () => {
+      render(<GameCarousel games={games} />);
+      fireEvent.click(toggle("CS2"));
+      const cs2 = panel(/CS2/);
+      fireEvent.click(within(cs2).getByRole("button", { name: "第 3 部：Eco win" }));
+
+      fireEvent.click(within(cs2).getByRole("button", { name: "下一部" }));
+
+      expect(currentVideo()).toHaveAccessibleName("CS2 highlight：Ace clutch");
     });
   });
 });

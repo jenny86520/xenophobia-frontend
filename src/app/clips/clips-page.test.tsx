@@ -1,4 +1,5 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { fetchClips } from "@/lib/member-session";
 import type { Clip, ClipList } from "@/types/clip";
 import ClipsPage from "./page";
@@ -80,11 +81,56 @@ describe("ClipsPage", () => {
     const item = within(screen.getByRole("list", { name: "精彩片段" })).getByRole("listitem");
     expect(within(item).getByRole("heading", { name: "殘局 1v3｜小明" })).toBeInTheDocument();
     expect(within(item).getByText(/CS2/)).toBeInTheDocument();
-    expect(item.querySelector("iframe")).toHaveAttribute("loading", "lazy");
-    expect(item.querySelector("iframe")?.getAttribute("src")).toContain("youtube-nocookie.com");
+    expect(within(item).getByRole("button", { name: "播放：殘局 1v3｜小明" })).toBeInTheDocument();
     expect(within(item).getByRole("button", { name: /讚\s*3/ })).toHaveAttribute("aria-pressed", "false");
     expect(within(item).getByRole("button", { name: /爛\s*1/ })).toBeInTheDocument();
     expect(within(item).getByRole("button", { name: "檢舉" })).toBeInTheDocument();
+  });
+
+  it("shows YouTube clips as thumbnails and loads only the pressed one's player, with sound", async () => {
+    await renderPage(
+      list({
+        items: [
+          clip(),
+          clip({ id: "v2", title: "Retake", youtubeId: "bbbbbbbbbbb", memberNickname: null }),
+          clip({
+            id: "v3",
+            source: "upload",
+            title: "Eco win",
+            url: "/media/videos/v3.mp4",
+            mimeType: "video/mp4",
+          } as Partial<Clip>),
+        ],
+        total: 3,
+      }),
+    );
+
+    expect(document.querySelectorAll("iframe")).toHaveLength(0);
+    expect(document.querySelectorAll("[data-youtube-facade]")).toHaveLength(2);
+    expect(document.querySelector('img[src="https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"]')).not.toBeNull();
+    const upload = screen.getByLabelText("Eco win｜小明") as HTMLVideoElement;
+    expect(upload.autoplay).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "播放：殘局 1v3｜小明" }));
+
+    const players = document.querySelectorAll("iframe");
+    expect(players).toHaveLength(1);
+    expect(players[0]).toHaveAttribute("title", "殘局 1v3｜小明");
+    expect(players[0].getAttribute("src")).toMatch(
+      /^https:\/\/www\.youtube-nocookie\.com\/embed\/dQw4w9WgXcQ\?.*autoplay=1/,
+    );
+    expect(players[0].getAttribute("src")).not.toContain("mute=1");
+    expect(screen.getByRole("button", { name: "播放：Retake" })).toBeInTheDocument();
+  });
+
+  it("keeps a lazily loaded player in <noscript> for members without JavaScript", async () => {
+    (fetchClips as jest.Mock).mockResolvedValue(list());
+    const html = renderToString(await ClipsPage({ searchParams: Promise.resolve({}) } as PageProps<"/clips">));
+
+    const noscript = html.match(/<noscript>([\s\S]*?)<\/noscript>/)?.[1] ?? "";
+    expect(noscript).toContain("youtube-nocookie.com/embed/dQw4w9WgXcQ");
+    expect(noscript).toContain('loading="lazy"');
+    expect(noscript).not.toContain("autoplay=1");
   });
 
   it("disables voting and says why while it is paused", async () => {
