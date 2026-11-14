@@ -260,11 +260,11 @@ describe("/matches/[id]", () => {
       expect(within(block).getByRole("button", { name: "邀請報名" })).toBeInTheDocument();
     });
 
-    it("points a member without friends to the 好友 tab", async () => {
+    it("opens the friends sidebar for a member without friends, on the match page", async () => {
       (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer());
       (fetchMatchFriends as jest.Mock).mockResolvedValue({ canInviteToGroup: false, friends: [] });
       await renderMatch();
-      expect(screen.getByRole("link", { name: /加好友/ })).toHaveAttribute("href", "/member?tab=friends");
+      expect(screen.getByRole("button", { name: "打開好友側欄加好友" })).toHaveAttribute("popovertarget", "friends-panel");
     });
 
     it("is not shown to visitors, guests or once sign-up has closed", async () => {

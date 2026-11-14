@@ -11,8 +11,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-/** Which waiting count a link shows: Member's pending items, or News's unread messages. */
-export type NavCount = "pending" | "news";
+/** Which waiting count a link shows: Member's ice creams waiting, or News's unread messages. */
+export type NavCount = "iceCreams" | "news";
 
 export type NavLink = {
   kind: "link";
@@ -56,7 +56,7 @@ export const NAV_ITEMS: readonly (NavLink | NavGroup)[] = [
       { kind: "link", href: "/guide", label: "Guide", lang: "en", icon: BookOpen },
     ],
   },
-  { kind: "link", href: "/member", label: "Member", lang: "en", icon: UserRound, count: "pending" },
+  { kind: "link", href: "/member", label: "Member", lang: "en", icon: UserRound, count: "iceCreams" },
 ];
 
 /** The home link the footer lists before the others. */

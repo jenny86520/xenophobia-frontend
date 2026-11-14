@@ -1,9 +1,9 @@
 import { claimQuestAction } from "@/app/member/actions";
-import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
 import type { Quest } from "@/types/quest";
-import { questHref, questIcon } from "@/utils/quests";
+import { questIcon } from "@/utils/quests";
 import { FriendActionButton } from "./friend-forms";
+import { QuestGoalLink } from "./quest-goal-link";
 
 /** What a quest row offers: claim it, go and do it, or nothing more. */
 function QuestAction({ quest }: { quest: Quest }) {
@@ -11,8 +11,7 @@ function QuestAction({ quest }: { quest: Quest }) {
     return <FriendActionButton action={claimQuestAction.bind(null, quest.code)} label="領取" primary />;
   }
   if (quest.state === "claimed") return <span className="text-body text-ink-secondary">已領取</span>;
-  const href = questHref(quest.code);
-  return href ? <TextLink href={href}>去完成</TextLink> : null;
+  return <QuestGoalLink code={quest.code} />;
 }
 
 /**

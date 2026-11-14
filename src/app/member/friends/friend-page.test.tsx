@@ -49,7 +49,8 @@ describe("/member/friends/[memberId]", () => {
     expect(steam).toHaveAttribute("target", "_blank");
     expect(screen.getByLabelText("備註")).toHaveValue("大學室友");
     expect(screen.getByLabelText("備註")).toHaveAttribute("maxlength", "50");
-    expect(screen.getByRole("link", { name: /好友/ })).toHaveAttribute("href", "/member?tab=friends");
+    // No link back: the friends sidebar every page has is the way back to the list.
+    expect(screen.queryByRole("link", { name: /好友/ })).not.toBeInTheDocument();
   });
 
   it("shows the friend's ice creams as cards without actions, each opening its life in a dialog", async () => {
@@ -129,7 +130,7 @@ describe("/member/friends/[memberId]", () => {
 
     expect(screen.getByRole("heading", { level: 1, name: "找不到這位好友" })).toBeInTheDocument();
     expect(screen.queryByLabelText("備註")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /好友/ })).toHaveAttribute("href", "/member?tab=friends");
+    expect(screen.queryByRole("link", { name: /好友/ })).not.toBeInTheDocument();
   });
 
   it("only explains how to become a member when signed out", async () => {

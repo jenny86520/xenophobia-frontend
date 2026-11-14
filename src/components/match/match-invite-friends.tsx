@@ -1,5 +1,5 @@
 import { MetaLabel } from "@/components/brand/meta-label";
-import { TextLink } from "@/components/brand/text-link";
+import { OpenFriendsButton } from "@/components/friends/open-friends-button";
 import { FriendName, friendHref } from "@/components/member/friend-name";
 import type { MatchFriends } from "@/types/friends";
 import { InviteFriendButton } from "./match-forms";
@@ -17,13 +17,15 @@ function friendState(friend: MatchFriends["friends"][number]): string[] {
 /**
  * The match page's 邀請好友 block, for signed-in members while the match is open. Each friend gets
  * 邀進小隊 (only when the member is in a group of this match that has room) and 邀請報名; a friend
- * already on the roster gets no buttons.
+ * already on the roster gets no buttons. Without friends, a button opens the friends sidebar right
+ * here (the room keeps refreshing behind it).
  */
 export function MatchInviteFriends({ matchId, friends }: { matchId: string; friends: MatchFriends }) {
   if (friends.friends.length === 0) {
     return (
       <p className="text-body text-ink-secondary">
-        還沒有好友。<TextLink href="/member?tab=friends">到會員頁「好友」分頁加好友</TextLink>
+        還沒有好友。
+        <OpenFriendsButton className="link-underline cursor-pointer text-ink">打開好友側欄加好友</OpenFriendsButton>
       </p>
     );
   }

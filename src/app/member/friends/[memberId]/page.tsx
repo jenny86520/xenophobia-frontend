@@ -18,18 +18,11 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-function BackToFriends() {
-  return (
-    <TextLink href="/member?tab=friends" className="text-body text-ink-secondary hover:text-ink">
-      <span aria-hidden="true">←</span> 好友
-    </TextLink>
-  );
-}
-
 /**
  * One friend's page, for a signed-in member: nickname, member code, Discord ID, the linked Steam
  * account and scrim rating, and the member's own private note. The backend answers only for an
- * active friend; anything else reads as not found.
+ * active friend; anything else reads as not found. There is no link back: the friends sidebar every
+ * page has is the way back to the list.
  */
 export default async function FriendPage({ params }: PageProps<"/member/friends/[memberId]">) {
   const { memberId } = await params;
@@ -60,14 +53,11 @@ export default async function FriendPage({ params }: PageProps<"/member/friends/
     return (
       <main id="main">
         <Section spacing="tight" labelledBy="page-title">
-          <BackToFriends />
-          <div className="mt-10">
-            <PageHeader
-              eyebrow="FRIEND"
-              title="找不到這位好友"
-              description="你們可能已經不是好友，或對方的帳號目前無法使用。"
-            />
-          </div>
+          <PageHeader
+            eyebrow="FRIEND"
+            title="找不到這位好友"
+            description="你們可能已經不是好友，或對方的帳號目前無法使用。"
+          />
         </Section>
       </main>
     );
@@ -84,8 +74,7 @@ export default async function FriendPage({ params }: PageProps<"/member/friends/
   return (
     <main id="main">
       <Section spacing="tight" labelledBy="page-title">
-        <BackToFriends />
-        <div className="mt-10">
+        <div>
           <PageHeader eyebrow={`FRIEND / ${friend.memberCode ?? "—"}`} title={friend.nickname} />
           {friend.memberTitle && <MemberTitleTag look={friend.memberTitle} className="mt-4 text-body" />}
         </div>

@@ -30,10 +30,10 @@ describe("QuestList", () => {
     expect(screen.getByRole("heading", { name: "新手任務" })).toBeInTheDocument();
     expect(row(container, "steam").getByText("+2 點")).toBeInTheDocument();
     expect(row(container, "steam").getByRole("button", { name: "領取" })).toBeInTheDocument();
-    expect(row(container, "friend").getByRole("link", { name: "去完成" })).toHaveAttribute(
-      "href",
-      "/member?tab=friends",
-    );
+    // Friends live in the sidebar, so this 去完成 opens it on the same page instead of linking away.
+    const friendGoal = row(container, "friend").getByRole("button", { name: "去完成" });
+    expect(friendGoal).toHaveAttribute("popovertarget", "friends-panel");
+    expect(row(container, "friend").queryByRole("link")).toBeNull();
     expect(row(container, "checkin").getByText("已領取")).toBeInTheDocument();
     expect(row(container, "checkin").queryByRole("button")).toBeNull();
   });

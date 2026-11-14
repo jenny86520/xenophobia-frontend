@@ -134,7 +134,8 @@ describe("/shop", () => {
     expect(steam).toHaveTextContent("新手任務");
     expect(steam).toHaveTextContent("+2 點");
     expect(within(steam).getByRole("button", { name: "領取" })).toBeInTheDocument();
-    expect(within(friend).getByRole("link", { name: "去完成" })).toHaveAttribute("href", "/member?tab=friends");
+    // Opens the friends sidebar right on the shop page.
+    expect(within(friend).getByRole("button", { name: "去完成" })).toHaveAttribute("popovertarget", "friends-panel");
     expect(firstCheckin).toHaveTextContent("已領取");
     expect(within(firstCheckin).queryByRole("button")).not.toBeInTheDocument();
   });

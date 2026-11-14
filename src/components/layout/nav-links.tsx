@@ -17,8 +17,11 @@ export function isCurrentPath(pathname: string, href: string): boolean {
 type NavLinksProps = {
   className?: string;
   linkClassName?: string;
-  /** Friend requests, scrim invites and ice creams waiting for the signed-in member, beside Member. */
-  memberPending?: number;
+  /**
+   * Ice creams waiting for the signed-in member, beside Member. Friend requests and scrim invites are
+   * counted on the friends sidebar's handle instead.
+   */
+  memberIceCreams?: number;
   /** Messages the signed-in member has not read yet, beside News and its group. */
   newsUnread?: number;
   /**
@@ -32,12 +35,12 @@ type NavLinksProps = {
 export function NavLinks({
   className,
   linkClassName,
-  memberPending = 0,
+  memberIceCreams = 0,
   newsUnread = 0,
   groups = "popover",
 }: NavLinksProps) {
   const pathname = usePathname() ?? "/";
-  const counts: Record<NavCount, number> = { pending: memberPending, news: newsUnread };
+  const counts: Record<NavCount, number> = { iceCreams: memberIceCreams, news: newsUnread };
   const link = (item: NavLink) => (
     <TextLink
       href={item.href}

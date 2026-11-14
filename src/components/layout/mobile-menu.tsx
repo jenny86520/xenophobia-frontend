@@ -10,7 +10,7 @@ import { NavLinks } from "./nav-links";
 type MobileMenuProps = {
   cta: { label: string; href: string } | null;
   /** Shown beside Member, as in the header. */
-  memberPending?: number;
+  memberIceCreams?: number;
   /** Shown beside News, as in the header. */
   newsUnread?: number;
 };
@@ -20,7 +20,7 @@ type MobileMenuProps = {
  * and returns focus to the trigger; we move initial focus to the first link and
  * close when any link is chosen.
  */
-export function MobileMenu({ cta, memberPending = 0, newsUnread = 0 }: MobileMenuProps) {
+export function MobileMenu({ cta, memberIceCreams = 0, newsUnread = 0 }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
   const navRef = useRef<HTMLElement>(null);
 
@@ -56,7 +56,7 @@ export function MobileMenu({ cta, memberPending = 0, newsUnread = 0 }: MobileMen
           <NavLinks
             className="flex-col gap-4"
             linkClassName="font-heading text-h1 text-ink"
-            memberPending={memberPending}
+            memberIceCreams={memberIceCreams}
             newsUnread={newsUnread}
             groups="heading"
           />

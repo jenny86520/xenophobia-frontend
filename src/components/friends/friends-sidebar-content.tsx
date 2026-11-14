@@ -6,97 +6,94 @@ import {
   removeFriendAction,
 } from "@/app/member/actions";
 import { CONFIRM_TRIGGER_CLASSES, ConfirmDialog } from "@/components/brand/confirm-dialog";
-import { formatCount, MetaLabel } from "@/components/brand/meta-label";
+import { MetaLabel } from "@/components/brand/meta-label";
 import { TextLink } from "@/components/brand/text-link";
-import { MATCH_STATUS_TEXT } from "@/components/match/match-status";
-import { MemberTabColumns } from "@/components/member/member-tabs";
-import type { FriendPerson, FriendsOverview, MatchInvite } from "@/types/friends";
-import { AddFriendForm, FriendActionButton } from "./friend-forms";
-import { FriendName, friendHref } from "./friend-name";
 import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
+import { MATCH_STATUS_TEXT } from "@/components/match/match-status";
+import { AddFriendForm, FriendActionButton } from "@/components/member/friend-forms";
+import { FriendName, friendHref } from "@/components/member/friend-name";
+import type { FriendPerson, FriendsOverview, MatchInvite } from "@/types/friends";
 
 /**
- * The member page's 好友 tab in two columns from 1024px: the friends in the main column, and on the
- * right the member's own number with the add form, then scrim invites, requests received and
- * requests sent. Below 1024px the two stack, friends first. Every action is a form, so all of it
- * works without JavaScript. Others are only shown by nickname, member code and whether Steam is linked;
- * a friend's nickname opens their page, and the member's own note follows it.
+ * Everything of the friends feature in one column, for the friends sidebar: what waits for the
+ * member first (scrim invites, requests received; left out when empty), then the friends, then the
+ * member's own number with the add form, then the requests sent (left out when empty). Every action
+ * is a form bound here, in a Server Component, so all of it works without JavaScript. Others are
+ * only shown by nickname, member code and whether Steam is linked; a friend's nickname opens their
+ * page, and the member's own note follows it.
  */
-export function MemberFriendsPanel({ overview }: { overview: FriendsOverview }) {
+export function FriendsSidebarContent({ overview }: { overview: FriendsOverview }) {
   return (
-    <MemberTabColumns
-      id="friends-title"
-      eyebrow={`Friends / ${formatCount(overview.friends.length)}`}
-      title="好友"
-      main={
-        <>
-          <FriendsSection
-            id="friend-list-title"
-            title="好友清單"
-            hideTitle
-            empty="目前沒有好友，在右側輸入朋友的會員編號就能送出邀請。"
-          >
-            {overview.friends.map((friend) => (
-              <PersonRow key={friend.memberId} person={friend} href={friendHref(friend.memberId)} memo={friend.note}>
-                <RemoveFriendButton memberId={friend.memberId} nickname={friend.nickname} />
-              </PersonRow>
-            ))}
-          </FriendsSection>
-        </>
-      }
-      side={
-        <>
-          <div className="flex flex-col gap-6 border-b border-line pb-8">
-            <dl className="flex flex-col gap-1">
-              <dt>
-                <MetaLabel>我的會員編號</MetaLabel>
-              </dt>
-              <dd className="font-mono text-h2 text-ink tabular-nums">{overview.memberCode ?? "—"}</dd>
-            </dl>
-            <p className="text-body text-ink-secondary">把會員編號告訴朋友，或輸入朋友的會員編號送出好友邀請。</p>
-            <AddFriendForm />
-          </div>
+    <div className="flex flex-col gap-8">
+      {overview.matchInvites.length > 0 && (
+        <FriendsSection id="friends-panel-match-invites" title="內戰場次邀請">
+          {overview.matchInvites.map((invite) => (
+            <MatchInviteRow key={invite.id} invite={invite} />
+          ))}
+        </FriendsSection>
+      )}
 
-          <FriendsSection id="match-invites-title" title="內戰場次邀請" empty="目前沒有內戰場次邀請。">
-            {overview.matchInvites.map((invite) => (
-              <MatchInviteRow key={invite.id} invite={invite} />
-            ))}
-          </FriendsSection>
+      {overview.incoming.length > 0 && (
+        <FriendsSection id="friends-panel-incoming" title="收到的好友邀請">
+          {overview.incoming.map((request) => (
+            <PersonRow key={request.id} person={request.member}>
+              <FriendActionButton
+                action={answerFriendRequestAction.bind(null, request.id, "accept")}
+                label="接受"
+                primary
+              />
+              <FriendActionButton action={answerFriendRequestAction.bind(null, request.id, "decline")} label="拒絕" />
+            </PersonRow>
+          ))}
+        </FriendsSection>
+      )}
 
-          <FriendsSection id="incoming-title" title="收到的好友邀請" empty="沒有收到好友邀請。">
-            {overview.incoming.map((request) => (
-              <PersonRow key={request.id} person={request.member}>
-                <FriendActionButton
-                  action={answerFriendRequestAction.bind(null, request.id, "accept")}
-                  label="接受"
-                  primary
-                />
-                <FriendActionButton action={answerFriendRequestAction.bind(null, request.id, "decline")} label="拒絕" />
-              </PersonRow>
-            ))}
-          </FriendsSection>
+      <FriendsSection
+        id="friends-panel-list"
+        title="好友清單"
+        empty="目前沒有好友，在下方輸入朋友的會員編號就能送出邀請。"
+      >
+        {overview.friends.map((friend) => (
+          <PersonRow key={friend.memberId} person={friend} href={friendHref(friend.memberId)} memo={friend.note}>
+            <RemoveFriendButton memberId={friend.memberId} nickname={friend.nickname} />
+          </PersonRow>
+        ))}
+      </FriendsSection>
 
-          <FriendsSection id="outgoing-title" title="送出的好友邀請" empty="沒有等待回覆的邀請。">
-            {overview.outgoing.map((request) => (
-              <PersonRow key={request.id} person={request.member} note="等待對方回覆">
-                <FriendActionButton
-                  action={answerFriendRequestAction.bind(null, request.id, "withdraw")}
-                  label="收回"
-                />
-              </PersonRow>
-            ))}
-          </FriendsSection>
-        </>
-      }
-    />
+      <section aria-labelledby="friends-panel-add" className="flex flex-col gap-4">
+        <h3 id="friends-panel-add" className="font-heading text-h3 text-ink">
+          加好友
+        </h3>
+        <dl className="flex flex-col gap-1">
+          <dt>
+            <MetaLabel>我的會員編號</MetaLabel>
+          </dt>
+          <dd className="font-mono text-h2 text-ink tabular-nums">{overview.memberCode ?? "—"}</dd>
+        </dl>
+        <p className="text-body text-ink-secondary">把會員編號告訴朋友，或輸入朋友的會員編號送出好友邀請。</p>
+        <AddFriendForm />
+      </section>
+
+      {overview.outgoing.length > 0 && (
+        <FriendsSection id="friends-panel-outgoing" title="送出的好友邀請">
+          {overview.outgoing.map((request) => (
+            <PersonRow key={request.id} person={request.member} note="等待對方回覆">
+              <FriendActionButton
+                action={answerFriendRequestAction.bind(null, request.id, "withdraw")}
+                label="收回"
+              />
+            </PersonRow>
+          ))}
+        </FriendsSection>
+      )}
+    </div>
   );
 }
 
-/** A titled list; an empty one says so in words (nobody there is a real state, not missing content). */
 /**
  * 刪除 on a friend's row: a second confirmation saying what goes with the friendship (the two are
- * no longer friends, pending scrim invites between them lapse, both notes are deleted). Native
- * popover, so it works without JavaScript.
+ * no longer friends, pending scrim invites between them lapse, both notes are deleted). A native
+ * popover opened from inside the sidebar, so the sidebar stays open behind it.
  */
 function RemoveFriendButton({ memberId, nickname }: { memberId: string; nickname: string }) {
   const dialog = `remove-friend-${memberId}`;
@@ -119,25 +116,23 @@ function RemoveFriendButton({ memberId, nickname }: { memberId: string; nickname
   );
 }
 
+/** A titled list with its count; an empty one says so in words (nobody there is a real state, not missing content). */
 function FriendsSection({
   id,
   title,
   empty,
-  hideTitle,
   children,
 }: {
   id: string;
   title: string;
-  empty: string;
-  /** Keeps the title for assistive tech only (the friend list sits right under the tab's own heading). */
-  hideTitle?: boolean;
+  empty?: string;
   children: ReactNode[];
 }) {
   return (
     <section aria-labelledby={id} className="flex flex-col gap-4">
-      <h3 id={id} className={hideTitle ? "sr-only" : "font-heading text-h3 text-ink"}>
+      <h3 id={id} className="font-heading text-h3 text-ink">
         {title}
-        {!hideTitle && children.length > 0 && (
+        {children.length > 0 && (
           <span className="ml-3 font-mono text-label text-ink-secondary tabular-nums">{children.length}</span>
         )}
       </h3>

@@ -27,7 +27,8 @@ import { fetchShop } from "@/lib/public-content-client";
 import type { ShopCosmetic } from "@/types/cosmetic";
 import type { ShopQuest } from "@/types/quest";
 import { cosmeticTerms } from "@/utils/cosmetics";
-import { questHref, questIcon } from "@/utils/quests";
+import { questIcon } from "@/utils/quests";
+import { QuestGoalLink } from "@/components/member/quest-goal-link";
 import {
   COSMETICS_SHELF_ID,
   cosmeticGroups,
@@ -61,8 +62,7 @@ function questAction(quest: ShopQuest, signIn: (label: string) => ReactNode) {
   }
   if (quest.state === "claimed")
     return <ShelfStatus kind="done">已領取</ShelfStatus>;
-  const href = questHref(quest.code);
-  return href ? <TextLink href={href}>去完成</TextLink> : null;
+  return <QuestGoalLink code={quest.code} />;
 }
 
 /** A cosmetic card's action: buy, 已擁有 (collectibles), 已售完, or a sign-in for visitors. */

@@ -194,24 +194,32 @@ export async function fetchMemberFriendProfile(memberId: string): Promise<Friend
   return (await response.json()) as FriendProfile;
 }
 
-export async function fetchMemberFriends(): Promise<FriendsOverview | null> {
-  const token = await memberToken();
-  if (!token) return null;
-  const path = "/api/member/friends";
-  const response = await memberFetch(path, {}, token);
-  if (response.status === 401) return null;
-  if (!response.ok) throw new Error(`Backend request failed: GET ${path} -> HTTP ${response.status}`);
-  return (await response.json()) as FriendsOverview;
-}
+/**
+ * The friends sidebar's data: friends, requests both ways and scrim invites. The root layout reads it
+ * on every page, so it never throws: no session, a refused token or any failure is null, and the
+ * layout then leaves the sidebar out. Cached per request.
+ */
+export const fetchMemberFriends = cache(async (): Promise<FriendsOverview | null> => {
+  try {
+    const token = await memberToken();
+    if (!token) return null;
+    const response = await memberFetch("/api/member/friends", {}, token);
+    if (!response.ok) return null;
+    return (await response.json()) as FriendsOverview;
+  } catch {
+    return null;
+  }
+});
 
-/** What waits for the member: everything (the header badge) and per member-page tab. */
+/** What waits for the member: everything, the friends sidebar's part and the ice creams' part. */
 export type PendingSummary = { pending: number; friends: number; iceCreams: number };
 
 const NOTHING_PENDING: PendingSummary = { pending: 0, friends: 0, iceCreams: 0 };
 
 /**
- * What waits for the member, counted by the backend: `pending` for the header, `friends` (friend
- * requests and scrim invites) and `iceCreams` (gifts, redemption requests, new tokens) for the tabs.
+ * What waits for the member, counted by the backend: `friends` (friend requests and scrim invites)
+ * for the friends sidebar's handle, `iceCreams` (gifts, redemption requests, new tokens) for the
+ * header's Member and the 冰炫風 tab; `pending` (both) is no longer shown.
  * Never throws: no session or a backend failure is all 0, so the layout always renders. Cached per
  * request (the layout and the member page both read it).
  */

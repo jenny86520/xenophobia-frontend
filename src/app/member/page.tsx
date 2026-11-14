@@ -9,7 +9,6 @@ import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 import { ProfileForm } from "@/components/member/member-forms";
 import { MemberMatchesPanel } from "@/components/match/member-matches-panel";
 import { MemberTabPanel, MemberTabs } from "@/components/member/member-tabs";
-import { MemberFriendsPanel } from "@/components/member/member-friends-panel";
 import { LegalConsentPanel } from "@/components/member/legal-consent-panel";
 import { MemberCosmeticsPanel } from "@/components/member/member-cosmetics-panel";
 import { MemberIceCreamsPanel } from "@/components/member/member-ice-creams-panel";
@@ -18,7 +17,6 @@ import { MemberVideosPanel } from "@/components/member/member-videos-panel";
 import { MemberSteam } from "@/components/player/member-steam";
 import {
   fetchMemberCosmetics,
-  fetchMemberFriends,
   fetchMemberIceCreams,
   fetchMemberLegalChanges,
   fetchMemberMatches,
@@ -37,17 +35,19 @@ import { logoutAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Member",
-  description: "XenoPhobiA 會員頁：個人資料、參加的活動、內戰場次、好友、投稿影片、點數與冰炫風。",
+  description: "XenoPhobiA 會員頁：個人資料、參加的活動、內戰場次、投稿影片、點數與冰炫風。",
 };
 
 /**
  * Members-only: the nickname, sign-out and Steam row, then tabs (?tab=) for the profile (details and
- * nickname form, the default), joined parties, scrims, friends, video submissions, points and ice creams; everyone else sees how to become a member. Only the open tab's data is fetched.
+ * nickname form, the default), joined parties, scrims, video submissions, points, ice creams and
+ * cosmetics; friends live in the sidebar every page has, so ?tab=friends is unknown (the profile).
+ * Everyone else sees how to become a member. Only the open tab's data is fetched.
  * While the member must agree to renewed terms, the consent panel (with what changed) replaces the tabs.
  */
-/** Each tab shows only its own waiting items; the header shows them all. */
+/** The ice creams waiting for the member, beside their tab (friends are counted on the sidebar's handle). */
 function tabCounts(summary: PendingSummary): Partial<Record<MemberTab, number>> {
-  return { friends: summary.friends, "ice-creams": summary.iceCreams };
+  return { "ice-creams": summary.iceCreams };
 }
 
 export default async function MemberPage({ searchParams }: PageProps<"/member">) {
@@ -158,17 +158,6 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: QueryVal
         <ProfileForm name={profile.name} nickname={profile.nickname} />
       </MemberTabPanel>
     );
-  }
-
-  if (tab === "friends") {
-    const overview = (await fetchMemberFriends()) ?? {
-      memberCode: profile.memberCode,
-      friends: [],
-      incoming: [],
-      outgoing: [],
-      matchInvites: [],
-    };
-    return <MemberFriendsPanel overview={overview} />;
   }
 
   if (tab === "matches") {

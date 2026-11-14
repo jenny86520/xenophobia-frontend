@@ -4,7 +4,8 @@ describe("parseMemberTab", () => {
   it("reads a known tab and falls back to the profile", () => {
     expect(parseMemberTab("videos")).toBe("videos");
     expect(parseMemberTab("parties")).toBe("parties");
-    expect(parseMemberTab("friends")).toBe("friends");
+    // Friends moved to the sidebar every page has; the old tab is unknown now.
+    expect(parseMemberTab("friends")).toBe("profile");
     expect(parseMemberTab("points")).toBe("points");
     expect(parseMemberTab(undefined)).toBe("profile");
     expect(parseMemberTab("abc")).toBe("profile");

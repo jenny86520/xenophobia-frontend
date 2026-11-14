@@ -9,6 +9,7 @@ jest.mock("next/headers", () => ({
 
 import {
   MEMBER_COOKIE,
+  fetchMemberFriends,
   fetchMemberLegalChanges,
   fetchMemberProfile,
   fetchMemberVideoSubmissions,
@@ -102,6 +103,38 @@ describe("fetchMemberProfile", () => {
     cookieStore.get.mockReturnValue({ value: "jwt" });
     respond(500);
     await expect(fetchMemberProfile()).rejects.toThrow("HTTP 500");
+  });
+});
+
+describe("fetchMemberFriends", () => {
+  const overview = { memberCode: "XPA-0001", friends: [], incoming: [], outgoing: [], matchInvites: [] };
+
+  it("returns the overview with the member's token", async () => {
+    cookieStore.get.mockReturnValue({ value: "jwt" });
+    respond(200, overview);
+
+    await expect(fetchMemberFriends()).resolves.toEqual(overview);
+    const [url, init] = (global.fetch as jest.Mock).mock.calls[0] as [string, RequestInit];
+    expect(url).toMatch(/\/api\/member\/friends$/);
+    expect(new Headers(init.headers).get("Authorization")).toBe("Bearer jwt");
+  });
+
+  it("is null without a session, without calling the backend", async () => {
+    respond(200, overview);
+    await expect(fetchMemberFriends()).resolves.toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it("is null when the token is refused or the backend fails, never throwing", async () => {
+    cookieStore.get.mockReturnValue({ value: "jwt" });
+    respond(401);
+    await expect(fetchMemberFriends()).resolves.toBeNull();
+
+    respond(500);
+    await expect(fetchMemberFriends()).resolves.toBeNull();
+
+    global.fetch = jest.fn().mockRejectedValue(new Error("down")) as unknown as typeof fetch;
+    await expect(fetchMemberFriends()).resolves.toBeNull();
   });
 });
 

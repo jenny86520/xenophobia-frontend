@@ -141,8 +141,8 @@ describe("SiteHeader", () => {
     await waitFor(() => expect(document.activeElement).toBe(trigger));
   });
 
-  it("shows how many friend requests and invites wait beside Member, in words for screen readers", async () => {
-    render(<SiteHeader brandName="XenoPhobiA" cta={null} memberPending={3} />);
+  it("shows how many ice creams wait beside Member, in words for screen readers", async () => {
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} memberIceCreams={3} />);
 
     const nav = screen.getByRole("navigation", { name: "主要導覽" });
     const member = within(nav).getByRole("link", { name: /^Member/ });
@@ -160,7 +160,7 @@ describe("SiteHeader", () => {
   });
 
   it("shows no count when nothing is waiting", () => {
-    render(<SiteHeader brandName="XenoPhobiA" cta={null} memberPending={0} />);
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} memberIceCreams={0} />);
 
     const nav = screen.getByRole("navigation", { name: "主要導覽" });
     expect(within(nav).getByRole("link", { name: "Member" })).toHaveTextContent(/^Member$/);
