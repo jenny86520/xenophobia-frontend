@@ -565,10 +565,17 @@ describe("/member", () => {
       // Each nickname opens the friend's page; the member's own note follows it.
       expect(within(hua).getByRole("link", { name: "小華" })).toHaveAttribute("href", "/member/friends/m2");
       expect(hua).toHaveTextContent("備註：大學室友");
-      expect(mei).not.toHaveTextContent("備註");
+      expect(mei).not.toHaveTextContent("備註：");
       expect(hua).not.toHaveTextContent("尚未綁定 Steam");
       expect(mei).toHaveTextContent("尚未綁定 Steam");
-      expect(within(mei).getByRole("checkbox", { name: /確認刪除好友「小美」/ })).toBeRequired();
+      // Unfriending asks again in a dialog that says what goes with it; only its button submits.
+      expect(within(mei).queryByRole("checkbox")).not.toBeInTheDocument();
+      expect(within(mei).getByRole("button", { name: "刪除" })).toHaveAttribute("popovertarget", "remove-friend-m3");
+      const unfriend = within(mei).getByRole("dialog", { name: "刪除好友" });
+      expect(unfriend).toHaveTextContent("要刪除好友「小美」嗎？");
+      expect(unfriend).toHaveTextContent("內戰場次邀請一併失效");
+      expect(within(unfriend).getByRole("button", { name: "確認刪除" })).toHaveAttribute("type", "submit");
+      expect(within(unfriend).getByRole("button", { name: "取消" })).toHaveAttribute("type", "button");
       expect(fetchMemberVideoSubmissions).not.toHaveBeenCalled();
     });
 
@@ -740,7 +747,7 @@ describe("/member", () => {
       createCost: 3,
       create: { allowed: true, reason: null },
       held: [
-        token(12, { actions: ["gift", "delete"] }),
+        token(12, { actions: ["gift", "delete"], deleteRefund: 3 }),
         token(3, { issuer: { nickname: "管理員" }, actions: ["gift", "requestRedeem"] }),
         token(14, {
           status: "gifting",
@@ -776,11 +783,11 @@ describe("/member", () => {
       expect(within(gift).getByRole("form", { name: "把冰炫風 #12送給好友" })).toBeInTheDocument();
       expect(within(gift).getByRole("option", { name: "小華" })).toBeInTheDocument();
       expect(within(cards[0]).getByRole("button", { name: "刪除" })).toHaveAttribute("popovertarget", "ice-delete-i12");
-      expect(
-        within(within(cards[0]).getByRole("dialog", { name: "刪除冰炫風 #12" })).getByLabelText(
-          "確認刪除冰炫風 #12（點數不退）",
-        ),
-      ).toBeInTheDocument();
+      const remove = within(cards[0]).getByRole("dialog", { name: "刪除冰炫風 #12" });
+      expect(remove).toHaveTextContent("要刪除冰炫風 #12嗎？");
+      expect(remove).toHaveTextContent("建立時付的 3 點會退還給你");
+      expect(within(remove).queryByRole("checkbox")).not.toBeInTheDocument();
+      expect(within(remove).getByRole("button", { name: "確認刪除" })).toHaveAttribute("type", "submit");
       expect(within(cards[0]).queryByRole("button", { name: "兌換" })).not.toBeInTheDocument();
       // Redeeming asks again, naming the issuer.
       expect(within(cards[1]).getByText("管理員 發行")).toBeInTheDocument();
@@ -823,6 +830,48 @@ describe("/member", () => {
       // Nothing new, so nothing is marked as seen.
       expect(screen.queryByText("新")).not.toBeInTheDocument();
       expect(markIceCreamsSeenAction).not.toHaveBeenCalled();
+    });
+
+    it("shows the scrim room showcase and offers the held tokens for each place", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberIceCreams as jest.Mock).mockResolvedValue(
+        iceCreams({
+          showcase: ["i3", "i12"],
+          toConfirm: [token(30, { status: "confirming", confirmExpiresAt: "2026-11-09T04:00:00.000Z" })],
+        }),
+      );
+      render(await MemberPage(memberProps("ice-creams")));
+
+      const section = screen.getByRole("region", { name: "比賽室展示" });
+      const shown = within(section).getByRole("list", { name: "展示中的冰炫風" });
+      expect(within(shown).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+        "冰炫風 #3",
+        "冰炫風 #12",
+      ]);
+      const form = within(section).getByRole("form", { name: "設定比賽室展示" });
+      const first = within(form).getByRole("combobox", { name: /第 1 支/ });
+      expect(first).toHaveValue("i3");
+      expect(within(form).getByRole("combobox", { name: /第 2 支/ })).toHaveValue("i12");
+      expect(within(form).getByRole("combobox", { name: /第 3 支/ })).toHaveValue("");
+      expect(within(first).getAllByRole("option").map((option) => option.textContent)).toEqual([
+        "不展示",
+        "冰炫風 #12・預設杯",
+        "冰炫風 #3・預設杯",
+        "冰炫風 #14・預設杯",
+        "冰炫風 #30・預設杯",
+      ]);
+      expect(within(form).getByRole("button", { name: "儲存展示" })).toBeInTheDocument();
+    });
+
+    it("says when nothing is shown", async () => {
+      (fetchMemberProfile as jest.Mock).mockResolvedValue(profile);
+      (fetchMemberIceCreams as jest.Mock).mockResolvedValue(iceCreams({ held: [], showcase: [] }));
+      render(await MemberPage(memberProps("ice-creams")));
+
+      const section = screen.getByRole("region", { name: "比賽室展示" });
+      expect(section).toHaveTextContent("還沒有展示的冰炫風");
+      expect(section).toHaveTextContent("先拿到一支冰炫風才能展示");
+      expect(within(section).queryByRole("form")).not.toBeInTheDocument();
     });
 
     it("marks tokens from the admins as new and tells the backend they were seen", async () => {

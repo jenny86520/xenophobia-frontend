@@ -863,6 +863,39 @@
       margin: 0;
     }
   }
+  /*
+   * A shown ice cream's card in the scrim room (IceShowcaseStrip): a native popover above its cup,
+   * anchored where CSS anchor positioning is supported, else centred like the dialogs. Same
+   * surface as the nav group menu.
+   */
+  .ice-showcase-card {
+    inset: auto;
+    bottom: anchor(top);
+    left: anchor(center);
+    translate: -50% 0;
+    margin: 0 0 0.5rem;
+    min-width: 11rem;
+    padding: 1rem 1.25rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    border: 1px solid var(--xpa-line);
+    border-radius: var(--radius);
+    background-color: var(--xpa-surface-elevated);
+    color: var(--xpa-ink);
+  }
+  .ice-showcase-card:popover-open {
+    display: flex;
+  }
+  @supports not (anchor-name: --a) {
+    .ice-showcase-card {
+      inset: 0;
+      translate: none;
+      margin: auto;
+      height: fit-content;
+      width: fit-content;
+    }
+  }
   .nav-group-trigger[data-current] > .link-underline,
   .nav-group-trigger:hover > .link-underline,
   .nav-group-trigger:focus-visible > .link-underline {

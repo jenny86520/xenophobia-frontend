@@ -18,6 +18,14 @@ export type ShopCosmetic = {
   look: CosmeticLook;
   owned: boolean | null;
   stock: number | null;
+  /** Copies sold at most site-wide; null = unlimited (older backends send nothing). */
+  stockLimit?: number | null;
+  /** Copies left to sell; null = unlimited (older backends send nothing). */
+  remaining?: number | null;
+  /** Last Taiwan day on sale (YYYY-MM-DD); null = no end. */
+  saleEndsOn?: string | null;
+  /** Every copy is sold: no buy button. */
+  soldOut?: boolean;
 };
 
 export type OwnedCosmetic = {

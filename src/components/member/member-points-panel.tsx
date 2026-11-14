@@ -10,7 +10,7 @@ import type { MemberPoints, PointCampaignProgress } from "@/types/member";
 import type { Quest } from "@/types/quest";
 import { formatTaipeiDateTime } from "@/utils/datetime";
 import { pointsTabHref } from "@/utils/member-tabs";
-import { formatPointAmount, pointKindLabel } from "@/utils/point-kinds";
+import { formatPointAmount, pointEntryLabel } from "@/utils/point-kinds";
 import { CheckInPanel } from "./check-in-panel";
 import { MemberTabColumns } from "./member-tabs";
 import { QuestList } from "./quest-list";
@@ -141,7 +141,7 @@ export function MemberPointsPanel({
               {entries.items.map((entry) => (
                 <li key={entry.id} className="flex items-baseline justify-between gap-4 border-b border-line py-3">
                   <div className="flex flex-col gap-1">
-                    <span className="text-body text-ink">{pointKindLabel(entry.kind)}</span>
+                    <span className="text-body text-ink">{pointEntryLabel(entry)}</span>
                     <MetaLabel>{formatTaipeiDateTime(entry.createdAt)}</MetaLabel>
                   </div>
                   <span className="font-mono text-lead text-ink">{formatPointAmount(entry.amount)}</span>

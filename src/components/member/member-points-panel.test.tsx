@@ -30,6 +30,18 @@ describe("MemberPointsPanel", () => {
     expect(container.querySelector("progress")).toBeNull();
   });
 
+  it("names ledger rows instead of showing codes, with what a purchase bought", () => {
+    const items = [
+      { id: "e2", amount: -5, kind: "cosmetic_purchase", createdAt: "2026-11-09T02:00:00.000Z", detail: "聖誕杯" },
+      { id: "e3", amount: 3, kind: "ice_delete_refund", createdAt: "2026-11-09T03:00:00.000Z", detail: null },
+    ];
+    render(<MemberPointsPanel points={points({ entries: { items, total: 2, page: 1, pageSize: 20 } })} />);
+
+    expect(screen.getByText("購買外觀・聖誕杯")).toBeInTheDocument();
+    expect(screen.getByText("刪除冰炫風退回")).toBeInTheDocument();
+    expect(screen.queryByText(/cosmetic_purchase|ice_delete_refund/)).toBeNull();
+  });
+
   it("lists the newbie quests between the check-in and the shop link", () => {
     render(
       <MemberPointsPanel

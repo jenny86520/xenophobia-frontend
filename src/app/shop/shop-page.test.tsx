@@ -167,6 +167,45 @@ describe("/shop", () => {
       expect(cup.querySelector("svg[data-cup='cup.classic']")).not.toBeNull();
     });
 
+    it("asks before buying: the price and no refund in a dialog holding the only submit", async () => {
+      await renderPage(shop({ cosmetics }), true);
+      const [, frame, cup] = shelf("外觀");
+      const open = within(frame).getByRole("button", { name: "購買" });
+      expect(open).toHaveAttribute("type", "button");
+      const dialog = document.getElementById(open.getAttribute("popovertarget") ?? "");
+      expect(dialog).toHaveAttribute("popover", "auto");
+      expect(dialog).toHaveTextContent("要用 40 點購買「霓虹框」嗎？");
+      expect(dialog).toHaveTextContent("購買後不能退點");
+      expect(within(dialog!).getByRole("button", { name: "確認購買" })).toHaveAttribute("type", "submit");
+      expect(within(dialog!).getByRole("button", { name: "取消" })).toHaveAttribute("type", "button");
+      const cupDialog = document.getElementById(
+        within(cup).getByRole("button", { name: "購買" }).getAttribute("popovertarget") ?? "",
+      );
+      expect(cupDialog).toHaveTextContent("每個冰炫風杯只能換到一支冰炫風上");
+    });
+
+    it("tags limited items, meters what is left and marks sold-out ones without a buy button", async () => {
+      const limited: NonNullable<Shop["cosmetics"]> = [
+        { ...cosmetics[2], stockLimit: 20, remaining: 3, saleEndsOn: "2026-12-31", soldOut: false },
+        { ...cosmetics[1], id: "f2", name: "跨年框", stockLimit: 5, remaining: 0, saleEndsOn: null, soldOut: true },
+        { ...cosmetics[1], id: "f3", name: "常駐框", stockLimit: null, remaining: null, saleEndsOn: null, soldOut: false },
+      ];
+      await renderPage(shop({ cosmetics: limited }), true);
+      const [cup, frame, plain] = shelf("外觀");
+      expect(within(cup).getByText("限量 20 份")).toBeInTheDocument();
+      expect(cup.querySelector("[data-stock-meter]")).toHaveTextContent("剩餘3 / 20 份");
+      expect(cup).toHaveTextContent("12/31 停售");
+      expect(cup).not.toHaveAttribute("data-sold-out");
+
+      expect(within(frame).getByText("限量 5 份")).toBeInTheDocument();
+      expect(frame).toHaveAttribute("data-sold-out", "true");
+      expect(within(frame).getAllByText("已售完").length).toBeGreaterThan(0);
+      expect(within(frame).queryByRole("button")).not.toBeInTheDocument();
+
+      expect(plain.querySelector("[data-stock-meter]")).toBeNull();
+      expect(within(plain).queryByText(/限量/)).not.toBeInTheDocument();
+    });
+
     it("asks visitors to sign in and says when nothing is on sale", async () => {
       await renderPage(shop({ cosmetics }), false);
       for (const card of shelf("外觀")) {

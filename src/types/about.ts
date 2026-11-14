@@ -18,8 +18,11 @@ export type ContactInfo = { id: string; label: string; type: string; value: stri
 
 /** One of a game's featured highlight videos (the admin picks up to five and their order). */
 export type GameVideo =
-  | { id: string; source: "youtube"; title: string; recordedOn: string; youtubeId: string }
-  | { id: string; source: "upload"; title: string; recordedOn: string; url: string; mimeType: string };
+  | ({ id: string; source: "youtube"; title: string; recordedOn: string; youtubeId: string } & VideoMember)
+  | ({ id: string; source: "upload"; title: string; recordedOn: string; url: string; mimeType: string } & VideoMember);
+
+/** The nickname of the member a video is credited to (the submitter); null or missing when none. */
+type VideoMember = { memberNickname?: string | null };
 
 /** `videos`: the featured videos in play order; empty when the game has none. */
 export type Game = { id: string; name: string; summary: string; videos: GameVideo[] };

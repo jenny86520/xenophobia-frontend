@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { GameVideo } from "@/types/about";
+import { videoTitle } from "@/utils/video-title";
 
 type GameVideoControlsProps = {
   videos: GameVideo[];
@@ -37,7 +38,7 @@ export function GameVideoControls({ videos, active, onSelect }: GameVideoControl
               key={video.id}
               type="button"
               className={`${BUTTON} font-mono text-meta tabular-nums ${current ? "border-line-strong bg-surface-elevated text-signal" : ""}`}
-              aria-label={`第 ${index + 1} 部：${video.title}`}
+              aria-label={`第 ${index + 1} 部：${videoTitle(video)}`}
               aria-current={current ? "true" : undefined}
               onClick={() => onSelect(index)}
             >

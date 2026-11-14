@@ -1,4 +1,5 @@
 import type { CosmeticLook } from "./cosmetic";
+import type { IceShowcaseItem } from "./ice-cream";
 /** Scrim match types, as the backend's /api/matches routes return them. */
 
 export type MatchStatus =
@@ -140,6 +141,8 @@ export type MatchPlayer = {
   memberTitle?: CosmeticLook | null;
   /** The equipped scrim-room frame; null for guests and when none. */
   frame?: CosmeticLook | null;
+  /** The ice creams the member shows (at most three, in order); empty or missing for guests. */
+  iceShowcase?: IceShowcaseItem[];
 };
 
 /** One player's change in one rated match: the team result plus the personal part. */
@@ -215,6 +218,7 @@ export type CandidateSide = {
     rating?: number;
     memberTitle?: CosmeticLook | null;
     frame?: CosmeticLook | null;
+    iceShowcase?: IceShowcaseItem[];
   }[];
   suggestedCaptain: string;
 };

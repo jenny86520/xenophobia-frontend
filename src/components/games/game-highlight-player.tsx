@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { loadYouTubeApi } from "@/lib/youtube-iframe-api";
 import type { GameVideo } from "@/types/about";
 import { mediaUrl, youtubeEmbedUrl } from "@/utils/media";
+import { videoTitle } from "@/utils/video-title";
 
 type GameHighlightPlayerProps = {
   gameName: string;
@@ -19,7 +20,7 @@ type GameHighlightPlayerProps = {
  * video id, so switching videos (or panels) unmounts it, which stops playback.
  */
 export function GameHighlightPlayer({ gameName, video, autoplay, onEnded }: GameHighlightPlayerProps) {
-  const label = `${gameName} highlight：${video.title}`;
+  const label = `${gameName} highlight：${videoTitle(video)}`;
   // Latest callback without re-attaching the YouTube listener on every render.
   const onEndedRef = useRef(onEnded);
   useEffect(() => {

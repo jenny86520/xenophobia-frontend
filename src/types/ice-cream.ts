@@ -40,6 +40,8 @@ export type IceCream = {
   canChangeCup?: boolean;
   /** Given by the admins or claimed in the shop, and not yet seen on the 冰炫風 tab. */
   isNew: boolean;
+  /** Points the viewing member gets back if they delete it now (0 when they cannot). */
+  deleteRefund?: number;
 };
 
 /** GET /api/member/ice-creams. */
@@ -58,6 +60,18 @@ export type MemberIceCreams = {
   friends: { memberId: string; nickname: string }[];
   /** Cups the member bought and has not used yet (offered by 換杯子). */
   cupStock?: CupStock[];
+  /** Ids of the tokens shown in the scrim room, in order. */
+  showcase?: string[];
+};
+
+/** One token a member shows in the scrim room (spec ice-creams): nothing about its life or state. */
+export type IceShowcaseItem = {
+  id: string;
+  serial: number;
+  /** null = the default cup. */
+  cup: CupView | null;
+  /** 管理員, the issuer's nickname, or 已離開的會員. */
+  issuerName: string;
 };
 
 /** A token on the 冰炫風 tab, with its life so far for its detail dialog. */
@@ -81,7 +95,10 @@ export type IceEvent = {
 export type IceAlbumPage = { items: IceCreamHistory[]; total: number; page: number; pageSize: number };
 
 /** GET /api/ice-creams/:id. */
-export type IceCreamHistory = { iceCream: Omit<IceCream, "actions" | "isNew" | "canChangeCup">; events: IceEvent[] };
+export type IceCreamHistory = {
+  iceCream: Omit<IceCream, "actions" | "isNew" | "canChangeCup" | "deleteRefund">;
+  events: IceEvent[];
+};
 
 /** GET /api/shop. */
 export type Shop = {

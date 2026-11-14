@@ -1,11 +1,17 @@
 import type { ReactNode } from "react";
-import { acceptMatchInviteAction, answerFriendRequestAction, dismissMatchInviteAction } from "@/app/member/actions";
+import {
+  acceptMatchInviteAction,
+  answerFriendRequestAction,
+  dismissMatchInviteAction,
+  removeFriendAction,
+} from "@/app/member/actions";
+import { CONFIRM_TRIGGER_CLASSES, ConfirmDialog } from "@/components/brand/confirm-dialog";
 import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { TextLink } from "@/components/brand/text-link";
 import { MATCH_STATUS_TEXT } from "@/components/match/match-status";
 import { MemberTabColumns } from "@/components/member/member-tabs";
 import type { FriendPerson, FriendsOverview, MatchInvite } from "@/types/friends";
-import { AddFriendForm, FriendActionButton, RemoveFriendForm } from "./friend-forms";
+import { AddFriendForm, FriendActionButton } from "./friend-forms";
 import { FriendName, friendHref } from "./friend-name";
 import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 
@@ -32,15 +38,7 @@ export function MemberFriendsPanel({ overview }: { overview: FriendsOverview }) 
           >
             {overview.friends.map((friend) => (
               <PersonRow key={friend.memberId} person={friend} href={friendHref(friend.memberId)} memo={friend.note}>
-                {/* A disclosure keeps the confirm form out of the way; it opens without JavaScript. */}
-                <details className="group">
-                  <summary className="cursor-pointer text-body text-ink-secondary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none">
-                    刪除好友
-                  </summary>
-                  <div className="mt-3">
-                    <RemoveFriendForm memberId={friend.memberId} nickname={friend.nickname} />
-                  </div>
-                </details>
+                <RemoveFriendButton memberId={friend.memberId} nickname={friend.nickname} />
               </PersonRow>
             ))}
           </FriendsSection>
@@ -95,6 +93,32 @@ export function MemberFriendsPanel({ overview }: { overview: FriendsOverview }) 
 }
 
 /** A titled list; an empty one says so in words (nobody there is a real state, not missing content). */
+/**
+ * 刪除 on a friend's row: a second confirmation saying what goes with the friendship (the two are
+ * no longer friends, pending scrim invites between them lapse, both notes are deleted). Native
+ * popover, so it works without JavaScript.
+ */
+function RemoveFriendButton({ memberId, nickname }: { memberId: string; nickname: string }) {
+  const dialog = `remove-friend-${memberId}`;
+  return (
+    <>
+      <button type="button" popoverTarget={dialog} className={CONFIRM_TRIGGER_CLASSES}>
+        刪除
+      </button>
+      <ConfirmDialog
+        id={dialog}
+        title="刪除好友"
+        confirm={<FriendActionButton action={removeFriendAction.bind(null, memberId)} label="確認刪除" primary />}
+      >
+        <p className="text-ink">要刪除好友「{nickname}」嗎？</p>
+        <p>
+          你們兩人都不再是好友，之後要重新送出邀請；你們之間還沒處理的內戰場次邀請一併失效，互相寫的好友備註也一併刪除。
+        </p>
+      </ConfirmDialog>
+    </>
+  );
+}
+
 function FriendsSection({
   id,
   title,

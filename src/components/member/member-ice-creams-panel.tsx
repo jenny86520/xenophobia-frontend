@@ -1,11 +1,13 @@
 import { TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
-import { changeCupAction, iceCreamStepAction, redeemIceCreamAction } from "@/app/member/actions";
+import { changeCupAction, deleteIceCreamAction, iceCreamStepAction, redeemIceCreamAction } from "@/app/member/actions";
+import { ConfirmDialog } from "@/components/brand/confirm-dialog";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { GuideButton } from "@/components/guide/guide-button";
 import { PopoverDialog } from "@/components/brand/popover-dialog";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
+import { IceCreamIcon } from "@/components/brand/ice-cream-icon";
 import {
   CARD_BUTTON_CLASSES,
   IceCreamCard,
@@ -18,7 +20,7 @@ import type { IceCream, MemberIceCream, MemberIceCreams } from "@/types/ice-crea
 import { formatTaipeiDateTime } from "@/utils/datetime";
 import { ICE_STATUS_TEXT, iceCreamName } from "@/utils/ice-cream-events";
 import { FriendActionButton } from "./friend-forms";
-import { ChangeCupForm, CreateIceCreamForm, DeleteIceCreamForm, GiftIceCreamForm } from "./ice-cream-forms";
+import { ChangeCupForm, CreateIceCreamForm, GiftIceCreamForm, IceShowcaseForm } from "./ice-cream-forms";
 import { MarkIceCreamsSeen } from "./mark-ice-creams-seen";
 import { MemberTabColumns } from "./member-tabs";
 
@@ -261,7 +263,7 @@ function heldState(ice: IceCream): string {
 /**
  * A token the member holds, as a card (clicking it opens its life) with what they may do with it
  * (the backend's `actions`). Giving, asking to redeem and deleting each open a dialog: the friend picker, a second
- * confirmation naming the issuer, or the ticked delete. Native popovers, so no JavaScript needed.
+ * confirmation naming the issuer, or a confirmation naming the refund. Native popovers, so no JavaScript needed.
  */
 function HeldCard({
   ice,
@@ -312,9 +314,20 @@ function HeldCard({
             </PopoverDialog>
           )}
           {can("delete") && (
-            <PopoverDialog id={dialog("delete")} title={`刪除${name}`}>
-              <DeleteIceCreamForm id={ice.id} serial={ice.serial} />
-            </PopoverDialog>
+            <ConfirmDialog
+              id={dialog("delete")}
+              title={`刪除${name}`}
+              cancelLabel="先留著"
+              confirm={
+                <FriendActionButton action={deleteIceCreamAction.bind(null, ice.id)} label="確認刪除" primary />
+              }
+            >
+              <p className="text-ink">要刪除{name}嗎？</p>
+              <p>
+                刪了就回不來了。
+                {(ice.deleteRefund ?? 0) > 0 ? `建立時付的 ${ice.deleteRefund} 點會退還給你。` : "這支沒有可以退的點數。"}
+              </p>
+            </ConfirmDialog>
           )}
         </>
       }
@@ -345,6 +358,47 @@ function HeldCard({
         )}
       </div>
     </IceCreamCard>
+  );
+}
+
+/**
+ * 比賽室展示: the tokens shown beside the member's name in the scrim room (at most three, in order)
+ * and the form choosing them from the ones they hold. Tokens that left their hand are already gone
+ * from the backend's list.
+ */
+function ShowcaseSection({ iceCreams }: { iceCreams: MemberIceCreams }) {
+  const mine = [...iceCreams.held, ...iceCreams.toConfirm];
+  const byId = new Map(mine.map((ice) => [ice.id, ice]));
+  const shown = (iceCreams.showcase ?? []).flatMap((id) => byId.get(id) ?? []);
+  return (
+    <section aria-labelledby="ice-showcase-title" className="flex flex-col gap-4 border-t border-line pt-6">
+      <Heading level={3} id="ice-showcase-title">
+        比賽室展示
+      </Heading>
+      <p className="text-body text-ink-secondary">
+        挑最多三支手上的冰炫風，掛在內戰比賽室你的名字旁邊炫耀。送出去、吃掉或刪掉的會自己下架。
+      </p>
+      {shown.length === 0 ? (
+        <p className="text-body text-ink-secondary">還沒有展示的冰炫風，比賽室裡只看得到你的名字。</p>
+      ) : (
+        <ol aria-label="展示中的冰炫風" className="flex flex-wrap gap-4">
+          {shown.map((ice) => (
+            <li key={ice.id} className="flex items-center gap-2 text-body text-ink">
+              <IceCreamIcon className="size-8 text-ink-secondary" look={ice.cup} />
+              {iceCreamName(ice.serial)}
+            </li>
+          ))}
+        </ol>
+      )}
+      {mine.length === 0 ? (
+        <p className="text-body text-ink-secondary">冰庫是空的，先拿到一支冰炫風才能展示。</p>
+      ) : (
+        <IceShowcaseForm
+          candidates={mine.map((ice) => ({ id: ice.id, serial: ice.serial, cupName: ice.cup?.name ?? null }))}
+          showcase={shown.map((ice) => ice.id)}
+        />
+      )}
+    </section>
   );
 }
 
@@ -399,6 +453,7 @@ export function MemberIceCreamsPanel({
                 <HeldCard key={ice.id} ice={ice} friends={iceCreams.friends} cupStock={iceCreams.cupStock ?? []} />
               ))}
             </CardSection>
+            <ShowcaseSection iceCreams={iceCreams} />
           </>
         }
         side={

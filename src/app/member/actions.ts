@@ -334,14 +334,8 @@ export async function answerFriendRequestAction(
 }
 
 /** Unfriends after the box is ticked (no confirmation dialog without JavaScript). */
-export async function removeFriendAction(
-  memberId: string,
-  _: MemberActionState,
-  form: FormData,
-): Promise<MemberActionState> {
-  if (form.get("confirm") !== "on") {
-    return { ok: false, message: "請先勾選確認", fields: { confirm: "請先勾選確認" } };
-  }
+/** Unfriends; the confirmation is the dialog the button sits in. `memberId` is bound on the server. */
+export async function removeFriendAction(memberId: string): Promise<MemberActionState> {
   const sent = await friendRequest(`/api/member/friends/${encodeURIComponent(memberId)}`, {
     method: "DELETE",
   });
@@ -428,6 +422,25 @@ export async function giftIceCreamAction(id: string, _: MemberActionState, form:
 }
 
 /** Uses one cup from the member's stock on a token they hold (spec member-cosmetics); the token id is bound. */
+/**
+ * Saves the scrim room showcase from the 第 1～3 支 selects (empty = none), in that order. The backend
+ * checks every token is still the member's and answers refusals keyed `ids`.
+ */
+export async function saveIceShowcaseAction(_: MemberActionState, form: FormData): Promise<MemberActionState> {
+  const ids = form
+    .getAll("showcase")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+  const sent = await friendRequest("/api/member/ice-creams/showcase", {
+    method: "PUT",
+    body: JSON.stringify({ ids }),
+  });
+  if ("state" in sent) return sent.state;
+  if (!sent.response.ok) return errorState(sent.response, "儲存失敗，請稍後再試");
+  revalidatePath("/member");
+  return { ok: true, message: ids.length > 0 ? "已儲存比賽室展示。" : "已清空比賽室展示。" };
+}
+
 export async function changeCupAction(id: string, _: MemberActionState, form: FormData): Promise<MemberActionState> {
   const result = await iceCreamRequest(
     `/api/member/ice-creams/${encodeURIComponent(id)}/cup`,
@@ -486,14 +499,8 @@ export async function redeemIceCreamAction(id: string, method: "points" | "physi
 }
 
 /** The issuer deletes a token they hold, once the box is ticked (no refund). */
-export async function deleteIceCreamAction(
-  id: string,
-  _: MemberActionState,
-  form: FormData,
-): Promise<MemberActionState> {
-  if (form.get("confirm") !== "on") {
-    return { ok: false, message: "請先勾選確認", fields: { confirm: "請先勾選確認" } };
-  }
+/** Deletes a token the issuer holds (the backend refunds its cost); confirmed in its dialog. */
+export async function deleteIceCreamAction(id: string): Promise<MemberActionState> {
   const result = await iceCreamRequest(
     `/api/member/ice-creams/${encodeURIComponent(id)}`,
     { method: "DELETE" },

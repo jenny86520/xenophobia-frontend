@@ -60,6 +60,26 @@ describe("GameCarousel (expanding)", () => {
     delete window.YT;
   });
 
+  it("puts the credited member's nickname after a video's title, in the text, the player and the buttons", async () => {
+    const credited: Game[] = [
+      {
+        id: "g8",
+        name: "CS2",
+        summary: "",
+        videos: [
+          { ...upload("m1", "殘局 1v3"), memberNickname: "小明" },
+          { ...upload("m2", "Ace clutch"), memberNickname: null },
+        ],
+      },
+    ];
+    render(<GameCarousel games={credited} />);
+
+    expect(within(panel(/CS2/)).getByText(/殘局 1v3｜小明 · 2026-10-03/)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText("CS2 highlight：殘局 1v3｜小明")).toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "第 1 部：殘局 1v3｜小明" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "第 2 部：Ace clutch" })).toBeInTheDocument();
+  });
+
   it("labels the carousel and every panel, and expands the first panel by default", () => {
     render(<GameCarousel games={games} />);
 

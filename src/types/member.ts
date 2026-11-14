@@ -183,6 +183,8 @@ export type PointEntry = {
   /** Ledger kind code (checkin, streak_bonus, …); the site names it. */
   kind: string;
   createdAt: string;
+  /** What a cosmetic purchase bought (the item's current name); null otherwise. */
+  detail?: string | null;
 };
 
 /** GET /api/member/points. */

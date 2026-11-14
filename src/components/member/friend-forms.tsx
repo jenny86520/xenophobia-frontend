@@ -2,10 +2,10 @@
 
 import { UserPlus } from "lucide-react";
 import { useActionState } from "react";
-import { removeFriendAction, sendFriendRequestAction, updateFriendNoteAction } from "@/app/member/actions";
+import { sendFriendRequestAction, updateFriendNoteAction } from "@/app/member/actions";
 import { cn } from "@/lib/utils";
 import type { MemberActionState } from "@/types/member";
-import { CheckboxField, FormField, FormMessage, SubmitButton } from "./form-controls";
+import { FormField, FormMessage, SubmitButton } from "./form-controls";
 
 /**
  * Forms of the 好友 tab. Each is a <form action> bound to a Server Action, so all of them work
@@ -95,21 +95,3 @@ export function FriendActionButton({
   );
 }
 
-/** Unfriending needs its box ticked first. */
-export function RemoveFriendForm({ memberId, nickname }: { memberId: string; nickname: string }) {
-  const [state, action, pending] = useActionState<MemberActionState, FormData>(
-    removeFriendAction.bind(null, memberId),
-    {},
-  );
-  return (
-    <form action={action} className="flex flex-col items-start gap-3">
-      <CheckboxField id={`remove-friend-${memberId}`} name="confirm" required error={state.fields?.confirm}>
-        確認刪除好友「{nickname}」
-      </CheckboxField>
-      <button type="submit" disabled={pending} className={secondaryButtonClasses}>
-        {pending ? "處理中…" : "刪除好友"}
-      </button>
-      <FormMessage state={state.fields?.confirm ? {} : state} />
-    </form>
-  );
-}

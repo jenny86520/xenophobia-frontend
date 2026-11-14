@@ -6,6 +6,7 @@ import { Placeholder } from "@/components/brand/placeholder";
 import type { Game } from "@/types/about";
 import { GameHighlightPlayer } from "./game-highlight-player";
 import { GameVideoControls } from "./game-video-controls";
+import { videoTitle } from "@/utils/video-title";
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
@@ -77,7 +78,7 @@ export function GameCarousel({ games }: { games: Game[] }) {
   function selectVideo(index: number) {
     const videos = games[active].videos;
     setActiveVideo(index);
-    setAnnouncement(`第 ${index + 1} 部，共 ${videos.length} 部：${videos[index].title}`);
+    setAnnouncement(`第 ${index + 1} 部，共 ${videos.length} 部：${videoTitle(videos[index])}`);
   }
 
   function playNext() {
@@ -143,7 +144,7 @@ export function GameCarousel({ games }: { games: Game[] }) {
                       ) : video ? (
                         <div className="absolute inset-0 flex flex-col items-start justify-end gap-2 border border-line p-5">
                           <MetaLabel className="text-ink-secondary">▶ Highlight</MetaLabel>
-                          <span className="text-body text-ink">{video.title}</span>
+                          <span className="text-body text-ink">{videoTitle(video)}</span>
                         </div>
                       ) : (
                         <Placeholder
@@ -166,7 +167,7 @@ export function GameCarousel({ games }: { games: Game[] }) {
                     {video && (
                       <MetaLabel>
                         {videos.length > 1 && `${videoIndex + 1} / ${videos.length} · `}
-                        {video.title} · {video.recordedOn}
+                        {videoTitle(video)} · {video.recordedOn}
                       </MetaLabel>
                     )}
                   </div>

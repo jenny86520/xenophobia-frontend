@@ -30,6 +30,7 @@ import {
   dismissMatchInviteAction,
   equipCosmeticAction,
   removeFriendAction,
+  saveIceShowcaseAction,
   sendFriendRequestAction,
   loginAction,
   registerAction,
@@ -418,14 +419,14 @@ describe("friend actions", () => {
     expect(calledWith()[1].method).toBe("DELETE");
   });
 
-  it("refuses to unfriend until the box is ticked", async () => {
+  it("unfriends (the dialog around its button is the confirmation)", async () => {
     respond(204);
 
-    const state = await removeFriendAction("m2", {}, form({}));
+    const state = await removeFriendAction("m2");
 
-    expect(state.fields).toEqual({ confirm: "請先勾選確認" });
-    expect(global.fetch).not.toHaveBeenCalled();
-    expect((await removeFriendAction("m2", {}, form({ confirm: "on" }))).ok).toBe(true);
+    expect(state).toMatchObject({ ok: true, message: "已刪除好友。" });
+    expect(calledWith()[0]).toMatch(/\/api\/member\/friends\/m2$/);
+    expect(calledWith()[1].method).toBe("DELETE");
   });
 
   it("opens the match after joining a group from an invite", async () => {
@@ -596,7 +597,7 @@ describe("ice cream actions", () => {
     expect(call()[0]).toMatch(/\/i1\/dispute$/);
   });
 
-  it("shows the backend's refusal, needs the box ticked to delete, and handles a lost session", async () => {
+  it("shows the backend's refusal, deletes without a ticked box, and handles a lost session", async () => {
     respond(409, { message: "這支冰炫風已經退回" });
     await expect(iceCreamStepAction("i1", "accept")).resolves.toEqual({
       ok: false,
@@ -605,8 +606,9 @@ describe("ice cream actions", () => {
     });
 
     respond(200, token);
-    await expect(deleteIceCreamAction("i1", {}, form({}))).resolves.toMatchObject({ fields: { confirm: "請先勾選確認" } });
-    expect(global.fetch).not.toHaveBeenCalled();
+    await expect(deleteIceCreamAction("i1")).resolves.toMatchObject({ ok: true });
+    expect(call()[0]).toMatch(/\/api\/member\/ice-creams\/i1$/);
+    expect(call()[1].method).toBe("DELETE");
 
     respond(401, {});
     await expect(createIceCreamAction()).rejects.toThrow("REDIRECT /member/login");
@@ -653,6 +655,24 @@ describe("cosmetic actions", () => {
     respond(200, { owned: [], cups: [] });
     await expect(equipCosmeticAction("frame", null)).resolves.toEqual({ ok: true, message: "已卸下。" });
     expect(sentBody()).toEqual({ kind: "frame", itemId: null });
+  });
+
+  it("saves the showcase in the order of its places, skipping empty ones, and shows refusals by field", async () => {
+    respond(200, { showcase: ["b", "a"] });
+    const data = new FormData();
+    for (const value of ["b", "", "a"]) data.append("showcase", value);
+
+    await expect(saveIceShowcaseAction({}, data)).resolves.toEqual({ ok: true, message: "已儲存比賽室展示。" });
+    expect(call()[0]).toMatch(/\/api\/member\/ice-creams\/showcase$/);
+    expect(call()[1].method).toBe("PUT");
+    expect(sentBody()).toEqual({ ids: ["b", "a"] });
+
+    jest.clearAllMocks();
+    respond(400, { message: ["只能展示你手上的冰炫風"], fields: { ids: "只能展示你手上的冰炫風" } });
+    await expect(saveIceShowcaseAction({}, data)).resolves.toMatchObject({
+      ok: false,
+      fields: { ids: "只能展示你手上的冰炫風" },
+    });
   });
 
   it("changes a cup onto a token and names the cup", async () => {

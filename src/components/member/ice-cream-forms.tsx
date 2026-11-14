@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { createIceCreamAction, deleteIceCreamAction, giftIceCreamAction } from "@/app/member/actions";
+import { createIceCreamAction, giftIceCreamAction, saveIceShowcaseAction } from "@/app/member/actions";
 import { IceCreamIcon } from "@/components/brand/ice-cream-icon";
 import type { CupStock } from "@/types/cosmetic";
 import type { MemberActionState } from "@/types/member";
 import { iceCreamName } from "@/utils/ice-cream-events";
 import { secondaryButtonClasses } from "./friend-forms";
-import { CheckboxField, FormMessage, SubmitButton } from "./form-controls";
+import { FormMessage, SelectField, SubmitButton } from "./form-controls";
 
 /**
  * Forms of the 冰炫風 tab. Plain <form action> elements bound to Server Actions, so they work
@@ -67,22 +67,6 @@ export function GiftIceCreamForm({
         </button>
       </div>
       <FormMessage state={state} />
-    </form>
-  );
-}
-
-/** Deleting (inside its dialog) still needs its box ticked; the 3 points are not refunded. */
-export function DeleteIceCreamForm({ id, serial }: { id: string; serial: number }) {
-  const [state, action, pending] = useActionState<MemberActionState, FormData>(deleteIceCreamAction.bind(null, id), {});
-  return (
-    <form action={action} className="flex flex-col items-start gap-2">
-      <CheckboxField id={`delete-ice-${id}`} name="confirm" required error={state.fields?.confirm}>
-        確認刪除{iceCreamName(serial)}（點數不退）
-      </CheckboxField>
-      <button type="submit" disabled={pending} className={secondaryButtonClasses}>
-        {pending ? "處理中…" : "確認刪除"}
-      </button>
-      <FormMessage state={state.fields?.confirm ? {} : state} />
     </form>
   );
 }
@@ -148,6 +132,52 @@ export function ChangeCupForm({
         </button>
       </div>
       <FormMessage state={state} />
+    </form>
+  );
+}
+
+/** How many tokens the scrim room shows (the backend refuses more). */
+const SHOWCASE_SLOTS = 3;
+
+/**
+ * 比賽室展示: one select per place (第 1～3 支), each offering the tokens the member holds, so the
+ * order is the places' and it works without JavaScript. The backend checks the picks (a token that
+ * left meanwhile, the same one twice) and its message shows here.
+ */
+export function IceShowcaseForm({
+  candidates,
+  showcase,
+}: {
+  candidates: { id: string; serial: number; cupName: string | null }[];
+  showcase: string[];
+}) {
+  const [state, action, pending] = useActionState<MemberActionState, FormData>(saveIceShowcaseAction, {});
+  const options = candidates.map((ice) => ({
+    value: ice.id,
+    label: `${iceCreamName(ice.serial)}・${ice.cupName ?? "預設杯"}`,
+  }));
+  return (
+    <form action={action} aria-label="設定比賽室展示" className="flex flex-col gap-4">
+      <div className="grid gap-4 sm:grid-cols-3">
+        {Array.from({ length: SHOWCASE_SLOTS }, (_, index) => (
+          <SelectField
+            key={`${index}-${showcase[index] ?? ""}`}
+            id={`ice-showcase-${index + 1}`}
+            name="showcase"
+            label={`第 ${index + 1} 支`}
+            placeholder="不展示"
+            options={options}
+            defaultValue={showcase[index] ?? ""}
+          />
+        ))}
+      </div>
+      {state.fields?.ids && <p className="text-caption text-destructive">{state.fields.ids}</p>}
+      <div>
+        <SubmitButton pending={pending} className="px-4 py-2">
+          儲存展示
+        </SubmitButton>
+      </div>
+      <FormMessage state={state.fields?.ids ? {} : state} />
     </form>
   );
 }
