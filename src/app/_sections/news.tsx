@@ -41,7 +41,10 @@ export function News({ items, index }: { items: NewsItem[]; index: number }) {
                       <NewsMeta item={item} />
                     </span>
                     <h3 className="min-w-0 flex-1 font-heading text-h3 text-ink">{item.title}</h3>
-                    <ArrowRight aria-hidden="true" className="list-row-arrow mt-1 hidden size-5 shrink-0 text-ink-muted md:block" />
+                    <ArrowRight
+                      aria-hidden="true"
+                      className="list-row-arrow mt-1 hidden size-5 shrink-0 text-ink-muted md:block"
+                    />
                   </Link>
                 </li>
               ))}

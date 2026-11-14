@@ -14,7 +14,9 @@ let memberCookie: string | undefined;
 jest.mock("next/headers", () => ({
   headers: () => Promise.resolve(requestHeaders),
   cookies: () =>
-    Promise.resolve({ get: (name: string) => (name === "xpa_member" && memberCookie ? { value: memberCookie } : undefined) }),
+    Promise.resolve({
+      get: (name: string) => (name === "xpa_member" && memberCookie ? { value: memberCookie } : undefined),
+    }),
 }));
 
 beforeEach(() => {

@@ -89,7 +89,10 @@ export default async function PartyDetailPage({ params }: PageProps<"/party/[id]
     {
       label: "Date",
       icon: CalendarDays,
-      value: party.endDate && party.endDate !== party.startDate ? `${party.startDate} – ${party.endDate}` : party.startDate || UNDECIDED,
+      value:
+        party.endDate && party.endDate !== party.startDate
+          ? `${party.startDate} – ${party.endDate}`
+          : party.startDate || UNDECIDED,
     },
     { label: "Time", icon: Clock, value: formatPartyTimeOfDay(party) || UNDECIDED },
     { label: "Type", icon: Tag, value: party.category },

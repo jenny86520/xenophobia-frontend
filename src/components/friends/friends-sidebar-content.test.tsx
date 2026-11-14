@@ -86,7 +86,9 @@ describe("FriendsSidebarContent", () => {
     expect(within(incoming).getByRole("button", { name: "接受" })).toBeInTheDocument();
     expect(within(incoming).getByRole("button", { name: "拒絕" })).toBeInTheDocument();
 
-    expect(within(screen.getByRole("list", { name: /送出的好友邀請/ })).getByRole("button", { name: "收回" })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("list", { name: /送出的好友邀請/ })).getByRole("button", { name: "收回" }),
+    ).toBeInTheDocument();
 
     expect(screen.getByText("XPA-0001")).toBeInTheDocument();
     expect(screen.getByLabelText(/朋友的會員編號/)).toHaveAttribute("name", "memberNumber");

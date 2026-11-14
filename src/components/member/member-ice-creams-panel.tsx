@@ -67,12 +67,7 @@ function DetailDialog({ ice, cupStock }: { ice: MemberIceCream; cupStock?: CupSt
   return (
     <IceCreamDetailDialog id={detailId(ice)} history={{ iceCream: ice, events: ice.events }}>
       {ice.canChangeCup && cupStock && (
-        <ChangeCupForm
-          id={ice.id}
-          serial={ice.serial}
-          stock={cupStock}
-          change={changeCupAction.bind(null, ice.id)}
-        />
+        <ChangeCupForm id={ice.id} serial={ice.serial} stock={cupStock} change={changeCupAction.bind(null, ice.id)} />
       )}
     </IceCreamDetailDialog>
   );
@@ -82,7 +77,12 @@ function DetailDialog({ ice, cupStock }: { ice: MemberIceCream; cupStock?: CupSt
 function IncomingCard({ ice }: { ice: MemberIceCream }) {
   return (
     <IceCreamCard
-      cover={{ serial: ice.serial, issuer: ice.issuer.nickname, state: `「${ice.holder?.nickname}」塞給你的`, cup: ice.cup }}
+      cover={{
+        serial: ice.serial,
+        issuer: ice.issuer.nickname,
+        state: `「${ice.holder?.nickname}」塞給你的`,
+        cup: ice.cup,
+      }}
       detailsId={detailId(ice)}
       dialogs={<DetailDialog ice={ice} />}
     >
@@ -318,14 +318,14 @@ function HeldCard({
               id={dialog("delete")}
               title={`刪除${name}`}
               cancelLabel="先留著"
-              confirm={
-                <FriendActionButton action={deleteIceCreamAction.bind(null, ice.id)} label="確認刪除" primary />
-              }
+              confirm={<FriendActionButton action={deleteIceCreamAction.bind(null, ice.id)} label="確認刪除" primary />}
             >
               <p className="text-ink">要刪除{name}嗎？</p>
               <p>
                 刪了就回不來了。
-                {(ice.deleteRefund ?? 0) > 0 ? `建立時付的 ${ice.deleteRefund} 點會退還給你。` : "這支沒有可以退的點數。"}
+                {(ice.deleteRefund ?? 0) > 0
+                  ? `建立時付的 ${ice.deleteRefund} 點會退還給你。`
+                  : "這支沒有可以退的點數。"}
               </p>
             </ConfirmDialog>
           )}

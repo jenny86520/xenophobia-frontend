@@ -7,33 +7,20 @@ import { MetaLabel } from "@/components/brand/meta-label";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
-import {
-  JoinGroupForm,
-  LeaveButton,
-  SignUpButtons,
-} from "@/components/match/match-forms";
+import { JoinGroupForm, LeaveButton, SignUpButtons } from "@/components/match/match-forms";
 import { MatchInviteFriends } from "@/components/match/match-invite-friends";
 import { MatchManage } from "@/components/match/match-manage";
 import { MatchRoom } from "@/components/match/match-room";
 import { MatchStatusLabel } from "@/components/match/match-status";
 import { SteamLoginLink } from "@/components/player/steam-login-link";
-import {
-  fetchManagedMatch,
-  fetchMatchFriends,
-  fetchMatchServers,
-  fetchViewerMatch,
-} from "@/lib/player-actor";
+import { fetchManagedMatch, fetchMatchFriends, fetchMatchServers, fetchViewerMatch } from "@/lib/player-actor";
 import { fetchMatchDetail } from "@/lib/public-content-client";
 import type { ViewerMatch } from "@/types/match";
 
-export async function generateMetadata({
-  params,
-}: PageProps<"/matches/[id]">): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<"/matches/[id]">): Promise<Metadata> {
   const { id } = await params;
   const match = await fetchMatchDetail(id).catch(() => null);
-  return match
-    ? { title: match.title, description: `${match.game.name} 內戰場次` }
-    : { title: "找不到場次" };
+  return match ? { title: match.title, description: `${match.game.name} 內戰場次` } : { title: "找不到場次" };
 }
 
 /** What the signed-in viewer may do now; the backend still decides when they try. */
@@ -54,12 +41,8 @@ function SignUp({ match }: { match: ViewerMatch }) {
         {viewer.inviteCode && (
           <p className="text-body text-ink-secondary">
             你的小隊邀請碼：
-            <span className="ml-2 font-mono text-lead tracking-widest text-ink">
-              {viewer.inviteCode}
-            </span>
-            <span className="block text-caption text-ink-muted">
-              把邀請碼給隊友，小隊最多 5 人。
-            </span>
+            <span className="ml-2 font-mono text-lead tracking-widest text-ink">{viewer.inviteCode}</span>
+            <span className="block text-caption text-ink-muted">把邀請碼給隊友，小隊最多 5 人。</span>
           </p>
         )}
         {match.status === "lobby" && <LeaveButton matchId={match.id} />}
@@ -79,37 +62,23 @@ function SignUp({ match }: { match: ViewerMatch }) {
  * happens now) and, for the member who created it, the management area. Signed-in viewers see
  * ratings and their own sign-up.
  */
-export default async function MatchPage({
-  params,
-  searchParams,
-}: PageProps<"/matches/[id]">) {
+export default async function MatchPage({ params, searchParams }: PageProps<"/matches/[id]">) {
   const { id } = await params;
   const { candidate } = await searchParams;
   const viewerMatch = await fetchViewerMatch(id);
   const match = viewerMatch ?? (await fetchMatchDetail(id));
   if (!match) notFound();
-  const managed = viewerMatch?.viewer.canManage
-    ? await fetchManagedMatch(id)
-    : null;
+  const managed = viewerMatch?.viewer.canManage ? await fetchManagedMatch(id) : null;
   // Only signed-in members have friends, and invites only make sense while sign-up is open.
-  const friends =
-    viewerMatch && match.status === "lobby"
-      ? await fetchMatchFriends(id)
-      : null;
+  const friends = viewerMatch && match.status === "lobby" ? await fetchMatchFriends(id) : null;
   const shown = managed ?? match;
   // The start form lists the scrim servers only while there is something to start.
-  const servers =
-    managed && match.status === "veto_complete"
-      ? await fetchMatchServers(id)
-      : null;
+  const servers = managed && match.status === "veto_complete" ? await fetchMatchServers(id) : null;
 
   return (
     <main id="main">
       <Section spacing="tight" labelledBy="page-title">
-        <TextLink
-          href="/matches"
-          className="text-body text-ink-secondary hover:text-ink"
-        >
+        <TextLink href="/matches" className="text-body text-ink-secondary hover:text-ink">
           <span aria-hidden="true">←</span> 內戰場次
         </TextLink>
         <header className="mt-10 flex flex-col gap-6">
@@ -125,9 +94,7 @@ export default async function MatchPage({
             {match.party && (
               <span className="text-body text-ink-secondary">
                 派對：
-                <TextLink href={`/party/${match.party.id}`}>
-                  {match.party.title}
-                </TextLink>
+                <TextLink href={`/party/${match.party.id}`}>{match.party.title}</TextLink>
               </span>
             )}
           </p>
@@ -196,10 +163,7 @@ export default async function MatchPage({
             candidate={candidate}
             servers={servers}
             demoHref={
-              viewerMatch?.viewer.canDownloadDemo &&
-              shown.status === "completed"
-                ? `/matches/${shown.id}/demo`
-                : null
+              viewerMatch?.viewer.canDownloadDemo && shown.status === "completed" ? `/matches/${shown.id}/demo` : null
             }
           />
         </Container>

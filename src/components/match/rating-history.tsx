@@ -20,7 +20,11 @@ export function RatingHistoryList({ changes, label }: { changes: RatingHistory["
         >
           <span className="flex flex-col gap-0.5">
             <span className="text-body text-ink">
-              {change.match ? <TextLink href={`/matches/${change.match.id}`}>{change.match.title}</TextLink> : "管理員調整"}
+              {change.match ? (
+                <TextLink href={`/matches/${change.match.id}`}>{change.match.title}</TextLink>
+              ) : (
+                "管理員調整"
+              )}
             </span>
             <span className="text-caption text-ink-secondary">
               {formatTaipeiDateTime(change.at)}

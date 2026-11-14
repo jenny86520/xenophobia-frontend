@@ -24,7 +24,10 @@ export function ContactList({ contacts }: { contacts: ContactInfo[] }) {
       {contacts.map((item) => {
         const href = contactHref(item);
         return (
-          <div key={item.id} className="grid grid-cols-1 gap-1 border-t border-line py-5 md:grid-cols-[12rem_1fr] md:gap-6">
+          <div
+            key={item.id}
+            className="grid grid-cols-1 gap-1 border-t border-line py-5 md:grid-cols-[12rem_1fr] md:gap-6"
+          >
             <dt>
               <MetaLabel className="inline-flex items-center gap-1.5">
                 <ContactIcon type={item.type} />

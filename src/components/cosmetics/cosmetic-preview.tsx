@@ -22,7 +22,11 @@ function PreviewBody({ kind, look }: { kind: string; look: CosmeticLook }) {
   if (kind === "frame") {
     const frame = frameProps(look);
     return (
-      <span data-frame={frame["data-frame"]} style={frame.style} className={cn("px-3 py-2 text-body text-ink", frame.className)}>
+      <span
+        data-frame={frame["data-frame"]}
+        style={frame.style}
+        className={cn("px-3 py-2 text-body text-ink", frame.className)}
+      >
         你的名字
       </span>
     );

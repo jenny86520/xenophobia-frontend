@@ -46,7 +46,11 @@ export function EditorialList({ items, summaryLabel, descriptionLabel, className
             {item.description ? (
               <p className="max-w-[65ch] whitespace-pre-line">{item.description}</p>
             ) : (
-              <Placeholder name={`${item.placeholderKey}.description`} label={descriptionLabel} className="max-w-[65ch]" />
+              <Placeholder
+                name={`${item.placeholderKey}.description`}
+                label={descriptionLabel}
+                className="max-w-[65ch]"
+              />
             )}
           </AccordionContent>
         </AccordionItem>

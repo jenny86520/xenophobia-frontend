@@ -16,13 +16,7 @@ export function PartyCoverBackdrop({ coverUrl }: PartyCoverBackdropProps) {
   return (
     <div aria-hidden="true" data-cover-backdrop className="pointer-events-none absolute inset-0 -z-10">
       {/* eslint-disable-next-line @next/next/no-img-element -- original upload on the backend origin; next/image would proxy it for no gain */}
-      <img
-        src={mediaUrl(coverUrl)}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        className="size-full object-cover"
-      />
+      <img src={mediaUrl(coverUrl)} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
       <div data-cover-scrim className="cover-scrim absolute inset-0" />
     </div>
   );

@@ -11,13 +11,7 @@ import { reportClipAction, voteClipAction } from "@/app/member/actions";
 import { fetchClips } from "@/lib/member-session";
 import { cn } from "@/lib/utils";
 import type { ClipSort } from "@/types/clip";
-import {
-  CLIP_SORT_LABELS,
-  clipsHref,
-  parseClipQuery,
-  reportBlockedReason,
-  voteBlockedReason,
-} from "@/utils/clips";
+import { CLIP_SORT_LABELS, clipsHref, parseClipQuery, reportBlockedReason, voteBlockedReason } from "@/utils/clips";
 import { videoTitle } from "@/utils/video-title";
 
 export const metadata: Metadata = {
@@ -80,10 +74,7 @@ export default async function ClipsPage({ searchParams }: PageProps<"/clips">) {
                   key={game.id ?? "all"}
                   href={clipsHref({ ...query, gameId: game.id, page: 1 })}
                   current={current}
-                  className={cn(
-                    "text-body",
-                    current ? "text-ink" : "text-ink-secondary hover:text-ink",
-                  )}
+                  className={cn("text-body", current ? "text-ink" : "text-ink-secondary hover:text-ink")}
                 >
                   {game.name}
                 </TextLink>
@@ -98,10 +89,7 @@ export default async function ClipsPage({ searchParams }: PageProps<"/clips">) {
                   key={sort}
                   href={clipsHref({ ...query, sort, page: 1 })}
                   current={current}
-                  className={cn(
-                    "text-caption",
-                    current ? "text-ink" : "text-ink-secondary hover:text-ink",
-                  )}
+                  className={cn("text-caption", current ? "text-ink" : "text-ink-secondary hover:text-ink")}
                 >
                   {CLIP_SORT_LABELS[sort]}
                 </TextLink>
@@ -110,20 +98,14 @@ export default async function ClipsPage({ searchParams }: PageProps<"/clips">) {
           </nav>
         </div>
         {(voteBlocked || reportBlocked) && (
-          <p
-            role="note"
-            className="mt-4 border-l-2 border-line-strong pl-3 text-caption text-ink-secondary"
-          >
+          <p role="note" className="mt-4 border-l-2 border-line-strong pl-3 text-caption text-ink-secondary">
             {[voteBlocked, reportBlocked].filter(Boolean).join("；")}
           </p>
         )}
         {list.items.length === 0 ? (
           <p className="mt-8 text-body text-ink-secondary">還沒有影片。</p>
         ) : (
-          <ul
-            aria-label="精彩片段"
-            className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 xl:grid-cols-3"
-          >
+          <ul aria-label="精彩片段" className="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 xl:grid-cols-3">
             {list.items.map((clip) => (
               <li key={clip.id} className="flex flex-col gap-3">
                 <ClipPlayer video={clip} />
@@ -131,9 +113,7 @@ export default async function ClipsPage({ searchParams }: PageProps<"/clips">) {
                   <MetaLabel>
                     {clip.game.name}・{clip.recordedOn}
                   </MetaLabel>
-                  <h2 className="font-heading text-h3 text-ink">
-                    {videoTitle(clip)}
-                  </h2>
+                  <h2 className="font-heading text-h3 text-ink">{videoTitle(clip)}</h2>
                 </div>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <ClipVoteForm
@@ -157,14 +137,9 @@ export default async function ClipsPage({ searchParams }: PageProps<"/clips">) {
           </ul>
         )}
         {pages > 1 && (
-          <nav
-            aria-label="精彩片段分頁"
-            className="mt-10 flex items-center justify-between gap-4 text-body"
-          >
+          <nav aria-label="精彩片段分頁" className="mt-10 flex items-center justify-between gap-4 text-body">
             {query.page > 1 ? (
-              <TextLink href={clipsHref({ ...query, page: query.page - 1 })}>
-                上一頁
-              </TextLink>
+              <TextLink href={clipsHref({ ...query, page: query.page - 1 })}>上一頁</TextLink>
             ) : (
               <span />
             )}
@@ -172,9 +147,7 @@ export default async function ClipsPage({ searchParams }: PageProps<"/clips">) {
               {query.page} / {pages}
             </MetaLabel>
             {query.page < pages ? (
-              <TextLink href={clipsHref({ ...query, page: query.page + 1 })}>
-                下一頁
-              </TextLink>
+              <TextLink href={clipsHref({ ...query, page: query.page + 1 })}>下一頁</TextLink>
             ) : (
               <span />
             )}

@@ -39,9 +39,7 @@ export function PlayerLineItems({
       <MemberTitleTag look={player.memberTitle} />
       <IceShowcaseStrip items={player.iceShowcase} idPrefix={idPrefix} />
       {rating !== undefined && (
-        <span className="ml-2 font-mono text-label whitespace-nowrap text-ink-secondary tabular-nums">
-          {rating}
-        </span>
+        <span className="ml-2 font-mono text-label whitespace-nowrap text-ink-secondary tabular-nums">{rating}</span>
       )}
     </span>
   );

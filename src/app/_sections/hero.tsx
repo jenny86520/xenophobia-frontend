@@ -47,7 +47,11 @@ export function Hero({ profile, nextParty }: HeroProps) {
   const mmdd = nextParty ? nextParty.startDate.slice(5).replace("-", "/") : null;
 
   return (
-    <section aria-labelledby="hero-title" id="hero" className="relative flex min-h-svh flex-col justify-center overflow-clip py-section-loose">
+    <section
+      aria-labelledby="hero-title"
+      id="hero"
+      className="relative flex min-h-svh flex-col justify-center overflow-clip py-section-loose"
+    >
       <HeroBand />
       <HeroGrain />
       <ColumnGuides />
@@ -99,7 +103,10 @@ export function Hero({ profile, nextParty }: HeroProps) {
           {nextParty && (
             <div className="col-span-4 flex flex-col gap-3 self-end border-t border-line pt-4 md:col-span-6 lg:col-span-4 lg:col-start-9">
               <span className="inline-flex items-center gap-2">
-                <span aria-hidden="true" className="size-2 rounded-full bg-signal shadow-glow motion-safe:animate-pulse" />
+                <span
+                  aria-hidden="true"
+                  className="size-2 rounded-full bg-signal shadow-glow motion-safe:animate-pulse"
+                />
                 <MetaLabel>{nextParty.startTime ? "Countdown" : "Next"}</MetaLabel>
               </span>
               {/* Without a time there is nothing to count down to: the date in the countdown's place

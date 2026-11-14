@@ -8,8 +8,7 @@ import { videoTitle } from "@/utils/video-title";
  */
 export function ClipPlayer({ video }: { video: GameVideo }) {
   const label = videoTitle(video);
-  const embed =
-    video.source === "youtube" ? youtubeEmbedUrl(video.youtubeId, false) : null;
+  const embed = video.source === "youtube" ? youtubeEmbedUrl(video.youtubeId, false) : null;
   return (
     <div className="relative aspect-video w-full overflow-clip rounded-sm bg-black">
       {video.source === "youtube" ? (

@@ -15,7 +15,9 @@ describe("RegistrationButton", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "參加" }));
 
-    await waitFor(() => expect(mockedAction).toHaveBeenCalledWith("p1", "join", "s1", expect.anything(), expect.anything()));
+    await waitFor(() =>
+      expect(mockedAction).toHaveBeenCalledWith("p1", "join", "s1", expect.anything(), expect.anything()),
+    );
     expect(screen.queryByRole("status")).toBeNull();
     expect(screen.queryByText(/已報名|已取消報名/)).toBeNull();
   });

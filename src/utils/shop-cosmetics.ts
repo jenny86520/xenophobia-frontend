@@ -32,14 +32,8 @@ export function cosmeticGroups<T extends Groupable>(
   items: readonly T[],
 ): CosmeticGroup<T>[] {
   const known = new Set(categories.map((category) => category.id));
-  const keyOf = (item: T) =>
-    item.categoryId && known.has(item.categoryId)
-      ? item.categoryId
-      : OTHER_CATEGORY;
-  return [
-    ...categories.map((c) => ({ key: c.id, label: c.name })),
-    { key: OTHER_CATEGORY, label: OTHER_LABEL },
-  ]
+  const keyOf = (item: T) => (item.categoryId && known.has(item.categoryId) ? item.categoryId : OTHER_CATEGORY);
+  return [...categories.map((c) => ({ key: c.id, label: c.name })), { key: OTHER_CATEGORY, label: OTHER_LABEL }]
     .map((group) => ({
       ...group,
       items: items.filter((item) => keyOf(item) === group.key),
@@ -56,10 +50,7 @@ export function parseShopCategory(
 }
 
 /** `owned=hide` counts only for a signed-in member. */
-export function parseHideOwned(
-  value: string | string[] | undefined,
-  signedIn: boolean,
-): boolean {
+export function parseHideOwned(value: string | string[] | undefined, signedIn: boolean): boolean {
   return signedIn && value === "hide";
 }
 
@@ -77,18 +68,13 @@ export function shownGroups<T extends Ownable>(
     .filter((group) => current === "all" || group.key === current)
     .map((group) => ({
       ...group,
-      items: hideOwned
-        ? group.items.filter((item) => item.owned !== true)
-        : group.items,
+      items: hideOwned ? group.items.filter((item) => item.owned !== true) : group.items,
     }))
     .filter((group) => group.items.length > 0);
 }
 
 /** The URL of a tab with the owned toggle, always landing on the cosmetics shelf. */
-export function shopCosmeticsHref(
-  category: ShopCategoryTab,
-  hideOwned: boolean,
-): string {
+export function shopCosmeticsHref(category: ShopCategoryTab, hideOwned: boolean): string {
   const query = new URLSearchParams();
   if (category !== "all") query.set("category", category);
   if (hideOwned) query.set("owned", "hide");

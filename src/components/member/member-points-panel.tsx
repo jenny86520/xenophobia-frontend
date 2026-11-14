@@ -39,9 +39,7 @@ function CampaignCard({
         </Heading>
         <InfoDialog id="campaign-rules" title="簽到規則">
           <p>每天（台灣時間）可以簽到一次，每次獲得 1 點。</p>
-          <p>
-            活動期間連續簽到滿 {campaign.requiredDays} 天，另外獲得 1 點，然後重新計算；漏簽一天也會重新計算。
-          </p>
+          <p>活動期間連續簽到滿 {campaign.requiredDays} 天，另外獲得 1 點，然後重新計算；漏簽一天也會重新計算。</p>
         </InfoDialog>
       </div>
       <StampCard

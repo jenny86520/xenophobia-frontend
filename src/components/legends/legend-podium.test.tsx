@@ -66,7 +66,11 @@ describe("LegendPodium titles", () => {
             rank: 1,
             nickname: "阿明",
             points: 29,
-            memberTitle: { template: "title.basic", params: { text: "派對常客", textColor: "#ffd166" }, imageUrl: null },
+            memberTitle: {
+              template: "title.basic",
+              params: { text: "派對常客", textColor: "#ffd166" },
+              imageUrl: null,
+            },
           },
           { rank: 2, nickname: "小華", points: 18, memberTitle: null },
         ]}

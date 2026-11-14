@@ -592,11 +592,16 @@ export function VetoResetForm({ matchId }: { matchId: string }) {
 
 /** The start form: scrim servers that are free (one in use by another match is named, not offered). */
 export function ServerStartForm({ matchId, servers }: { matchId: string; servers: ScrimServerOption[] }) {
-  const [state, action, pending] = useActionState<MatchActionState, FormData>(serverStartAction.bind(null, matchId), {});
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(
+    serverStartAction.bind(null, matchId),
+    {},
+  );
   const free = servers.filter((server) => !server.inUse);
   const busy = servers.filter((server) => server.inUse);
   if (servers.length === 0) {
-    return <p className="text-body text-ink-secondary">還沒有內戰用的伺服器，請管理員在後台伺服器設定中開啟「用於內戰」。</p>;
+    return (
+      <p className="text-body text-ink-secondary">還沒有內戰用的伺服器，請管理員在後台伺服器設定中開啟「用於內戰」。</p>
+    );
   }
   return (
     <form action={action} className="flex max-w-sm flex-col gap-4">
@@ -634,7 +639,10 @@ export function ServerAbortForm({ matchId }: { matchId: string }) {
 
 /** Manual scores, when the server cannot report them (or to correct a result). */
 export function MatchResultForm({ matchId, completed }: { matchId: string; completed: boolean }) {
-  const [state, action, pending] = useActionState<MatchActionState, FormData>(matchResultAction.bind(null, matchId), {});
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(
+    matchResultAction.bind(null, matchId),
+    {},
+  );
   return (
     <form action={action} className="flex max-w-sm flex-col gap-4">
       <div className="grid grid-cols-2 gap-4">

@@ -140,14 +140,14 @@ export function IceCreamDetailDialog({
       <div className="flex items-center gap-4">
         <IceCreamIcon className="size-14 shrink-0 text-ink-secondary" look={iceCream.cup} />
         <dl className="grid flex-1 grid-cols-1 gap-x-6 sm:grid-cols-2">
-        {details.map((item) => (
-          <div key={item.label} className="flex flex-col gap-1 py-2">
-            <dt>
-              <MetaLabel>{item.label}</MetaLabel>
-            </dt>
-            <dd className="text-lead text-ink">{item.value}</dd>
-          </div>
-        ))}
+          {details.map((item) => (
+            <div key={item.label} className="flex flex-col gap-1 py-2">
+              <dt>
+                <MetaLabel>{item.label}</MetaLabel>
+              </dt>
+              <dd className="text-lead text-ink">{item.value}</dd>
+            </div>
+          ))}
         </dl>
       </div>
       {children}

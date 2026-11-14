@@ -66,9 +66,7 @@ export function RegistrationStatusLine({
           已報名
         </span>
       )}
-      {state.deadline && (
-        <span className="text-ink-secondary">截止：{formatDeadline(state.deadline)}（台灣時間）</span>
-      )}
+      {state.deadline && <span className="text-ink-secondary">截止：{formatDeadline(state.deadline)}（台灣時間）</span>}
     </p>
   );
 }

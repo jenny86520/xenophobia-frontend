@@ -239,7 +239,10 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: QueryVal
               {party.subParties.length > 0 && (
                 <ul aria-label={`「${party.title}」報名的子派對`} className="flex flex-col gap-1 pl-4">
                   {party.subParties.map((sub) => (
-                    <li key={sub.id} className="flex flex-wrap items-baseline justify-between gap-x-6 text-body text-ink-secondary">
+                    <li
+                      key={sub.id}
+                      className="flex flex-wrap items-baseline justify-between gap-x-6 text-body text-ink-secondary"
+                    >
                       <span>{sub.title}</span>
                       <MetaLabel>{formatSubPartyRange(sub.startDateTime, sub.endDateTime)}</MetaLabel>
                     </li>

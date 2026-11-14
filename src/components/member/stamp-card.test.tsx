@@ -58,7 +58,10 @@ describe("StampCard", () => {
       <StampCard streak={0} requiredDays={60} checkedInToday={false} ledgerPage={1} requestedCard={1} />,
     );
     expect(screen.queryByRole("link", { name: "上一張" })).toBeNull();
-    expect(screen.getByRole("link", { name: "下一張" })).toHaveAttribute("href", "/member?tab=points&card=2#stamp-card");
+    expect(screen.getByRole("link", { name: "下一張" })).toHaveAttribute(
+      "href",
+      "/member?tab=points&card=2#stamp-card",
+    );
 
     rerender(<StampCard streak={0} requiredDays={60} checkedInToday={false} ledgerPage={1} requestedCard={6} />);
     expect(screen.queryByRole("link", { name: "下一張" })).toBeNull();

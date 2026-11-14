@@ -31,8 +31,6 @@ describe("partyFiltersHref", () => {
     expect(partyFiltersHref({ status: "active", format: "online", category: "all", order: "desc" })).toBe(
       "/party?status=active&format=online",
     );
-    expect(partyFiltersHref({ status: "all", format: "all", category: "all", order: "asc" })).toBe(
-      "/party?order=asc",
-    );
+    expect(partyFiltersHref({ status: "all", format: "all", category: "all", order: "asc" })).toBe("/party?order=asc");
   });
 });

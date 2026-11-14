@@ -21,10 +21,7 @@ import { MatchAutoRefresh } from "./veto-live";
 import { VetoPanel } from "./veto-panel";
 import { PlayerLineItems } from "@/components/match/player-line";
 
-const ON_SERVER_OR_DONE: readonly MatchStatus[] = [
-  ...SERVER_LIVE_STATUSES,
-  "completed",
-];
+const ON_SERVER_OR_DONE: readonly MatchStatus[] = [...SERVER_LIVE_STATUSES, "completed"];
 /** Nothing changes any more, so the room stops refreshing. */
 const FINISHED: readonly MatchStatus[] = ["completed", "cancelled"];
 
@@ -43,15 +40,10 @@ function StatsLine({ stats }: { stats: MatchPlayerStats }) {
 /** A player's change in this rated match: the points first, then where they came from. */
 function RatingChangeLine({ change }: { change: RatingChange }) {
   return (
-    <span
-      className="flex flex-wrap items-baseline gap-x-2 text-caption text-ink-secondary"
-      data-rating-change
-    >
+    <span className="flex flex-wrap items-baseline gap-x-2 text-caption text-ink-secondary" data-rating-change>
       <span>
         評分
-        <span className="ml-1 font-mono text-label text-ink tabular-nums">
-          {signedPoints(change.delta)}
-        </span>
+        <span className="ml-1 font-mono text-label text-ink tabular-nums">{signedPoints(change.delta)}</span>
       </span>
       <span>（{ratingBreakdown(change)}）</span>
     </span>
@@ -75,15 +67,9 @@ function TeamColumn({
   /** Who may rename this team now: its captain, a manager, or nobody. */
   rename: "captain" | "manager" | null;
 }) {
-  const ids = [...team.playerIds].sort(
-    (a, b) => Number(b === team.captainId) - Number(a === team.captainId),
-  );
+  const ids = [...team.playerIds].sort((a, b) => Number(b === team.captainId) - Number(a === team.captainId));
   return (
-    <section
-      aria-labelledby={`team-${side}-title`}
-      className="flex flex-col gap-3"
-      data-team={side}
-    >
+    <section aria-labelledby={`team-${side}-title`} className="flex flex-col gap-3" data-team={side}>
       <Heading level={3} id={`team-${side}-title`}>
         {team.name}
       </Heading>
@@ -104,22 +90,10 @@ function TeamColumn({
           if (!player) return null;
           const stats = statsOf.get(id);
           return (
-            <li
-              key={id}
-              {...frameRow(
-                player.frame,
-                "flex flex-col gap-1 border-b border-line py-3",
-              )}
-            >
-              <PlayerLineItems
-                player={player}
-                idPrefix={`team-${id}`}
-                rating={player.rating}
-              />
+            <li key={id} {...frameRow(player.frame, "flex flex-col gap-1 border-b border-line py-3")}>
+              <PlayerLineItems player={player} idPrefix={`team-${id}`} rating={player.rating} />
               {stats && <StatsLine stats={stats} />}
-              {player.ratingChange && (
-                <RatingChangeLine change={player.ratingChange} />
-              )}
+              {player.ratingChange && <RatingChangeLine change={player.ratingChange} />}
             </li>
           );
         })}
@@ -146,16 +120,11 @@ function MatchStage({
   return (
     <div className="flex flex-col gap-8 lg:min-h-96" data-stage>
       <p className="text-lead text-ink">
-        總分差{" "}
-        <span className="font-mono tabular-nums">{match.teams.difference}</span>
+        總分差 <span className="font-mono tabular-nums">{match.teams.difference}</span>
       </p>
-      {match.status === "cancelled" && (
-        <p className="text-lead text-ink">這場已取消。</p>
-      )}
+      {match.status === "cancelled" && <p className="text-lead text-ink">這場已取消。</p>}
       {match.status === "teams_confirmed" && (
-        <p className="text-body text-ink-secondary">
-          隊伍已確認，等待開始 Ban 圖。
-        </p>
+        <p className="text-body text-ink-secondary">隊伍已確認，等待開始 Ban 圖。</p>
       )}
       {onServer && match.server && (
         <section aria-labelledby="server-title" className="flex flex-col gap-4">
@@ -183,18 +152,10 @@ function MatchStage({
           <Heading level={3} id="veto-title">
             Ban 圖
           </Heading>
-          <VetoPanel
-            matchId={match.id}
-            status={match.status}
-            veto={match.veto}
-            canBan={canBan}
-            teamNames={teamNames}
-          />
+          <VetoPanel matchId={match.id} status={match.status} veto={match.veto} canBan={canBan} teamNames={teamNames} />
         </section>
       )}
-      {managed && (
-        <StageActions match={managed} candidate={candidate} servers={servers} />
-      )}
+      {managed && <StageActions match={managed} candidate={candidate} servers={servers} />}
     </div>
   );
 }
@@ -233,56 +194,27 @@ export function MatchRoom(props: MatchRoomProps) {
     return (
       <div className="flex flex-col gap-10">
         <MatchAutoRefresh active={refresh} />
-        {match.status === "cancelled" && (
-          <p className="text-lead text-ink">這場已取消。</p>
-        )}
+        {match.status === "cancelled" && <p className="text-lead text-ink">這場已取消。</p>}
         <MatchRoster match={match} />
         {/* Everyone follows the draft; only the manager's own cards (StageActions) choose one. */}
-        {!managed &&
-          match.status === "team_draft" &&
-          match.candidates &&
-          match.candidates.length > 0 && (
-            <section
-              aria-labelledby="candidates-title"
-              className="flex flex-col gap-3"
-            >
-              <Heading level={3} id="candidates-title">
-                分隊候選
-              </Heading>
-              <p className="text-body text-ink-secondary">
-                管理者正在從這些方案中選擇分隊；總分差越小越平均。
-              </p>
-              <CandidateList
-                matchId={match.id}
-                candidates={match.candidates}
-                selected={null}
-                selectable={false}
-              />
-            </section>
-          )}
-        {managed && (
-          <StageActions
-            match={managed}
-            candidate={candidate}
-            servers={servers}
-          />
+        {!managed && match.status === "team_draft" && match.candidates && match.candidates.length > 0 && (
+          <section aria-labelledby="candidates-title" className="flex flex-col gap-3">
+            <Heading level={3} id="candidates-title">
+              分隊候選
+            </Heading>
+            <p className="text-body text-ink-secondary">管理者正在從這些方案中選擇分隊；總分差越小越平均。</p>
+            <CandidateList matchId={match.id} candidates={match.candidates} selected={null} selectable={false} />
+          </section>
         )}
+        {managed && <StageActions match={managed} candidate={candidate} servers={servers} />}
       </div>
     );
   }
 
-  const players = new Map(
-    match.entries.flatMap((entry) => entry.players).map((p) => [p.playerId, p]),
-  );
+  const players = new Map(match.entries.flatMap((entry) => entry.players).map((p) => [p.playerId, p]));
   const statsOf = new Map((stats ?? []).map((row) => [row.playerId, row]));
   const renameOf = (side: "A" | "B") =>
-    !match.teamNamesOpen
-      ? null
-      : managed
-        ? "manager"
-        : props.captainOf === side
-          ? "captain"
-          : null;
+    !match.teamNamesOpen ? null : managed ? "manager" : props.captainOf === side ? "captain" : null;
   return (
     // minmax(0, …) on every column: a plain 1fr grows to its content (the map list, the radar) and
     // pushes the page sideways on a phone. The middle is the widest, for the maps around the radar;

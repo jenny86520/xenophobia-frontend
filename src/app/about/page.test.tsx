@@ -74,20 +74,24 @@ describe("AboutPage", () => {
     });
 
     const section = screen.getByRole("region", { name: "未來規劃" });
-    expect(within(section).getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
-      "會員系統",
-      "點數商店",
-      "每日簽到",
-    ]);
+    expect(
+      within(section)
+        .getAllByRole("heading", { level: 3 })
+        .map((h) => h.textContent),
+    ).toEqual(["會員系統", "點數商店", "每日簽到"]);
     expect(within(section).getByText("會員登入與參加活動")).toBeInTheDocument();
     expect(Array.from(section.querySelectorAll("[data-status]")).map((b) => b.textContent)).toEqual([
       "IN PROGRESS",
       "PLANNED",
       "LIVE",
     ]);
-    section.querySelectorAll("[data-status] svg").forEach((icon) => expect(icon).toHaveAttribute("aria-hidden", "true"));
+    section
+      .querySelectorAll("[data-status] svg")
+      .forEach((icon) => expect(icon).toHaveAttribute("aria-hidden", "true"));
 
-    const sections = Array.from(container.querySelectorAll("main > section")).map((s) => s.getAttribute("aria-labelledby"));
+    const sections = Array.from(container.querySelectorAll("main > section")).map((s) =>
+      s.getAttribute("aria-labelledby"),
+    );
     // Mission, milestones, games, highlights, contact, then the roadmap last.
     expect(sections.slice(1)).toEqual([
       "mission-title",

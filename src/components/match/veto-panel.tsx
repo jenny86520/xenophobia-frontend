@@ -109,7 +109,10 @@ export function VetoPanel({
                             alt=""
                             loading="lazy"
                             decoding="async"
-                            className={cn("media-reveal size-full object-cover", map.bannedBy && "opacity-50 grayscale")}
+                            className={cn(
+                              "media-reveal size-full object-cover",
+                              map.bannedBy && "opacity-50 grayscale",
+                            )}
                           />
                         ) : (
                           <div data-map-fallback className="map-card-fallback size-full" />

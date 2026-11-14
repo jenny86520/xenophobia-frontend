@@ -76,7 +76,9 @@ function ResultRow({ match }: { match: CompletedMatch }) {
         <div className="col-span-4 flex flex-col gap-1 md:col-span-4 lg:col-span-5">
           <h3 className="font-heading text-h3 text-ink">{match.title}</h3>
           <MetaLabel>
-            {[match.party?.title, match.completedAt && formatTaipeiDateTime(match.completedAt)].filter(Boolean).join("・")}
+            {[match.party?.title, match.completedAt && formatTaipeiDateTime(match.completedAt)]
+              .filter(Boolean)
+              .join("・")}
           </MetaLabel>
         </div>
         <div className="col-span-4 flex flex-col gap-1 md:col-span-4 lg:col-span-6">
@@ -130,7 +132,9 @@ export default async function Cs2GamePage() {
             <Ladder entries={ladder} />
           ) : (
             <div className="flex flex-col gap-4">
-              <p className="text-body text-ink-secondary">評分只給已登入的人看：以 Steam 登入，或登入會員後就能看到排行。</p>
+              <p className="text-body text-ink-secondary">
+                評分只給已登入的人看：以 Steam 登入，或登入會員後就能看到排行。
+              </p>
               <div className="flex flex-wrap items-center gap-6">
                 <SteamLoginLink intent="guest" label="以 Steam 登入" />
                 <TextLink href="/member/login">會員登入</TextLink>

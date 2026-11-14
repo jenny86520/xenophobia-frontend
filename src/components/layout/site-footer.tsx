@@ -36,7 +36,17 @@ function ContactLine({ contact }: { contact: ContactInfo }) {
   );
 }
 
-function Column({ title, id, className, children }: { title: string; id: string; className: string; children: React.ReactNode }) {
+function Column({
+  title,
+  id,
+  className,
+  children,
+}: {
+  title: string;
+  id: string;
+  className: string;
+  children: React.ReactNode;
+}) {
   return (
     <section aria-labelledby={id} className={className}>
       <h2 id={id}>
@@ -89,7 +99,9 @@ export function SiteFooter({ brandName, about, version }: SiteFooterProps) {
               <Column title="Contact" id="footer-contact" className="col-span-4 md:col-span-3 lg:col-span-2">
                 {contacts.length > 0 ? (
                   <ul className="flex flex-col gap-3">
-                    {contacts.map((c) => <ContactLine key={c.id} contact={c} />)}
+                    {contacts.map((c) => (
+                      <ContactLine key={c.id} contact={c} />
+                    ))}
                   </ul>
                 ) : (
                   <Placeholder name="contact.any" label="聯絡資訊" />
@@ -101,7 +113,10 @@ export function SiteFooter({ brandName, about, version }: SiteFooterProps) {
                   <ul className="flex flex-col gap-3">
                     {socials.map((link) => (
                       <li key={link.id}>
-                        <TextLink href={link.url} className="inline-flex items-center gap-2 text-ink-secondary hover:text-ink">
+                        <TextLink
+                          href={link.url}
+                          className="inline-flex items-center gap-2 text-ink-secondary hover:text-ink"
+                        >
                           <SocialIcon platform={link.platform} />
                           {socialLinkName(link)}
                         </TextLink>

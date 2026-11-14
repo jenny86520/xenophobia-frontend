@@ -120,14 +120,7 @@ describe("PartyDetailPage", () => {
     const { container } = await renderPage();
 
     const terms = Array.from(container.querySelectorAll("dt"));
-    expect(terms.map((dt) => dt.textContent)).toEqual([
-      "Location",
-      "Date",
-      "Time",
-      "Type",
-      "Created_by",
-      "Updated_by",
-    ]);
+    expect(terms.map((dt) => dt.textContent)).toEqual(["Location", "Date", "Time", "Type", "Created_by", "Updated_by"]);
     for (const dt of terms) expect(dt.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
     const [sub] = screen.getAllByRole("listitem");
     expect(sub.querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(2);
@@ -384,7 +377,9 @@ describe("sub-party registration", () => {
   const subRow = () => screen.getByRole("heading", { level: 3, name: "After party" }).closest("li") as HTMLElement;
 
   beforeEach(() => {
-    mockedFetchPartyDetail.mockReset().mockResolvedValue({ ...party, subParties: [subParty], registration: openSummary });
+    mockedFetchPartyDetail
+      .mockReset()
+      .mockResolvedValue({ ...party, subParties: [subParty], registration: openSummary });
     mockedFetchMemberRegistration.mockReset().mockResolvedValue(null);
   });
 
@@ -441,7 +436,9 @@ describe("sub-party registration", () => {
     // Behind an ⓘ beside 取消參加, not as a sentence in the column.
     const info = within(block).getByRole("button", { name: "「取消參加會一併取消子派對」說明" });
     expect(info).toHaveAttribute("popovertarget", "leave-sub-parties");
-    expect(document.getElementById("leave-sub-parties")).toHaveTextContent("取消參加時，會一併取消你報名的 1 個子派對。");
+    expect(document.getElementById("leave-sub-parties")).toHaveTextContent(
+      "取消參加時，會一併取消你報名的 1 個子派對。",
+    );
     expect(within(block).queryByRole("heading", { name: "報名" })).toBeNull();
   });
 });
@@ -553,7 +550,15 @@ describe("party matches block", () => {
     mockedFetchPartyDetail.mockResolvedValue({
       ...party,
       subParties: [
-        { id: "s1", title: "Opening", description: "", startDateTime: "", endDateTime: "", location: "", coverUrl: null },
+        {
+          id: "s1",
+          title: "Opening",
+          description: "",
+          startDateTime: "",
+          endDateTime: "",
+          location: "",
+          coverUrl: null,
+        },
       ],
     });
     (fetchMemberRegistration as jest.Mock).mockResolvedValue(null);

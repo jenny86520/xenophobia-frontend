@@ -51,7 +51,10 @@ export function LegendLeaders({ boards }: { boards: LegendBoard[] }) {
                 ) : (
                   <span className="text-body text-ink-secondary">還沒有會員上榜</span>
                 )}
-                <ArrowRight aria-hidden="true" className="list-row-arrow mt-1 hidden size-5 shrink-0 text-ink-muted md:block" />
+                <ArrowRight
+                  aria-hidden="true"
+                  className="list-row-arrow mt-1 hidden size-5 shrink-0 text-ink-muted md:block"
+                />
               </Link>
             </li>
           );

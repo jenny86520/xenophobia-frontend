@@ -28,7 +28,8 @@ export function frameProps(look: CosmeticLook | null | undefined): FrameProps {
     return {
       "data-frame": look.template,
       style: colors,
-      className: `rounded-sm px-2 ${border} border-(--skin-main) ${look.params.glow === true ? "shadow-[0_0_12px_var(--skin-accent)]" : ""}`.trim(),
+      className:
+        `rounded-sm px-2 ${border} border-(--skin-main) ${look.params.glow === true ? "shadow-[0_0_12px_var(--skin-accent)]" : ""}`.trim(),
     };
   }
   if (look.template === "frame.pulse") {

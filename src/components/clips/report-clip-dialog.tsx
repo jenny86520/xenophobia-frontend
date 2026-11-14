@@ -27,10 +27,7 @@ export function ReportClipDialog({
   canReport,
   disabledReason,
 }: {
-  report: (
-    state: MemberActionState,
-    form: FormData,
-  ) => Promise<MemberActionState>;
+  report: (state: MemberActionState, form: FormData) => Promise<MemberActionState>;
   videoId: string;
   title: string;
   reported: boolean;
@@ -38,10 +35,7 @@ export function ReportClipDialog({
   /** Reporting is paused or not in the member's role: the button is disabled with this reason. */
   disabledReason: string | null;
 }) {
-  const [state, action, pending] = useActionState<MemberActionState, FormData>(
-    report,
-    {},
-  );
+  const [state, action, pending] = useActionState<MemberActionState, FormData>(report, {});
   const dialogId = `report-clip-${videoId}`;
   const answered = useRef(state);
   useEffect(() => {
@@ -65,8 +59,7 @@ export function ReportClipDialog({
   const detailId = `${dialogId}-detail`;
   const detailError = state.fields?.detail;
   const categoryError = state.fields?.category;
-  const chosenCategory =
-    state.values?.category ?? REPORT_CATEGORY_OPTIONS[0].value;
+  const chosenCategory = state.values?.category ?? REPORT_CATEGORY_OPTIONS[0].value;
   return (
     <div className="flex flex-col items-start gap-2">
       <button
@@ -87,16 +80,11 @@ export function ReportClipDialog({
         <form action={action} className="flex flex-col gap-4">
           <fieldset
             className="flex flex-col gap-2"
-            aria-describedby={
-              categoryError ? `${dialogId}-category-error` : undefined
-            }
+            aria-describedby={categoryError ? `${dialogId}-category-error` : undefined}
           >
             <legend className="mb-2 text-body text-ink">原因分類</legend>
             {REPORT_CATEGORY_OPTIONS.map((option) => (
-              <label
-                key={option.value}
-                className="flex items-center gap-2 text-body text-ink"
-              >
+              <label key={option.value} className="flex items-center gap-2 text-body text-ink">
                 <input
                   type="radio"
                   name="category"
@@ -109,10 +97,7 @@ export function ReportClipDialog({
               </label>
             ))}
             {categoryError && (
-              <p
-                id={`${dialogId}-category-error`}
-                className="text-caption text-destructive"
-              >
+              <p id={`${dialogId}-category-error`} className="text-caption text-destructive">
                 {categoryError}
               </p>
             )}
@@ -122,10 +107,7 @@ export function ReportClipDialog({
               <label htmlFor={detailId} className="text-body text-ink">
                 說明
               </label>
-              <span
-                aria-hidden="true"
-                className="font-mono text-meta text-signal"
-              >
+              <span aria-hidden="true" className="font-mono text-meta text-signal">
                 必填
               </span>
             </div>
@@ -137,10 +119,7 @@ export function ReportClipDialog({
               rows={4}
               defaultValue={state.values?.detail}
               aria-invalid={detailError ? true : undefined}
-              aria-describedby={[
-                `${detailId}-hint`,
-                detailError ? `${detailId}-error` : null,
-              ]
+              aria-describedby={[`${detailId}-hint`, detailError ? `${detailId}-error` : null]
                 .filter(Boolean)
                 .join(" ")}
               className={cn(
@@ -153,10 +132,7 @@ export function ReportClipDialog({
               寫下你看到的問題，最多 {DETAIL_MAX} 字。只有管理員看得到。
             </p>
             {detailError && (
-              <p
-                id={`${detailId}-error`}
-                className="text-caption text-destructive"
-              >
+              <p id={`${detailId}-error`} className="text-caption text-destructive">
                 {detailError}
               </p>
             )}
@@ -179,9 +155,7 @@ export function ReportClipDialog({
       </PopoverDialog>
       {/* Without JavaScript the page reloads with the dialog closed: repeat the refusal beside the
           button (plain text; the alert is the one inside the dialog). */}
-      {!state.ok && state.message && (
-        <p className="text-caption text-destructive">{state.message}</p>
-      )}
+      {!state.ok && state.message && <p className="text-caption text-destructive">{state.message}</p>}
     </div>
   );
 }

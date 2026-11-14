@@ -12,7 +12,11 @@ type MetaLabelProps = {
  * Only for values derived from real data, never decorative system messages.
  */
 export function MetaLabel({ children, className, id }: MetaLabelProps) {
-  return <span id={id} className={cn("font-mono text-meta text-ink-muted uppercase", className)}>{children}</span>;
+  return (
+    <span id={id} className={cn("font-mono text-meta text-ink-muted uppercase", className)}>
+      {children}
+    </span>
+  );
 }
 
 /** Zero-padded count for metadata labels: 2 -> "02". */

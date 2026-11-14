@@ -57,16 +57,20 @@ type BackendAnswer = { status: number; contentType: string | undefined; body: st
 function relay(url: URL, headers: Record<string, string>, body: ReadableStream<Uint8Array> | null) {
   return new Promise<BackendAnswer>((resolve, reject) => {
     let answered = false;
-    const outgoing = (url.protocol === "https:" ? https : http).request(url, { method: "POST", headers }, (incoming) => {
-      answered = true;
-      let text = "";
-      incoming.setEncoding("utf8");
-      incoming.on("data", (chunk: string) => (text += chunk));
-      incoming.on("end", () =>
-        resolve({ status: incoming.statusCode ?? 502, contentType: incoming.headers["content-type"], body: text }),
-      );
-      incoming.on("error", reject);
-    });
+    const outgoing = (url.protocol === "https:" ? https : http).request(
+      url,
+      { method: "POST", headers },
+      (incoming) => {
+        answered = true;
+        let text = "";
+        incoming.setEncoding("utf8");
+        incoming.on("data", (chunk: string) => (text += chunk));
+        incoming.on("end", () =>
+          resolve({ status: incoming.statusCode ?? 502, contentType: incoming.headers["content-type"], body: text }),
+        );
+        incoming.on("error", reject);
+      },
+    );
     outgoing.on("error", (error) => {
       if (!answered) reject(error);
     });

@@ -65,10 +65,7 @@ export function FormField({
         <label htmlFor={id} className="text-body text-ink">
           {label}
         </label>
-        <span
-          aria-hidden="true"
-          className={cn("font-mono text-meta", requiredTag ? "text-signal" : "text-ink-muted")}
-        >
+        <span aria-hidden="true" className={cn("font-mono text-meta", requiredTag ? "text-signal" : "text-ink-muted")}>
           {requiredTag ? "必填" : "選填"}
         </span>
       </div>
@@ -201,7 +198,15 @@ export function CheckboxField({ id, name, children, required, defaultChecked, er
 }
 
 /** Primary submit button in the CTA style. */
-export function SubmitButton({ pending, children, className }: { pending: boolean; children: ReactNode; className?: string }) {
+export function SubmitButton({
+  pending,
+  children,
+  className,
+}: {
+  pending: boolean;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <button
       type="submit"

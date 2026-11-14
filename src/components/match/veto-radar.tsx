@@ -70,7 +70,7 @@ export function VetoRadar({ veto }: { veto: MatchVeto }) {
 /** What the radar shows, in words: each team's line style and what the values mean. */
 export function VetoRadarLegend({ veto, teamNames }: { veto: MatchVeto; teamNames: { A: string; B: string } }) {
   return (
-  <figcaption className="flex flex-col items-center gap-2 text-center">
+    <figcaption className="flex flex-col items-center gap-2 text-center">
       <span className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-caption text-ink">
         <span className="inline-flex items-center gap-2">
           <svg aria-hidden="true" viewBox="0 0 24 4" className="h-1 w-6">
@@ -95,6 +95,6 @@ export function VetoRadarLegend({ veto, teamNames }: { veto: MatchVeto; teamName
         )}
         。
       </span>
-  </figcaption>
+    </figcaption>
   );
 }

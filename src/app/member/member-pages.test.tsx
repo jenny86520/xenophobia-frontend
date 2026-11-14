@@ -547,7 +547,14 @@ describe("/member", () => {
       (fetchGuide as jest.Mock).mockImplementation((ref: string) =>
         Promise.resolve(
           ref === "checkin"
-            ? { ref: "checkin", title: "每日簽到", content: "每天按一次。", imageUrl: null, imageAlt: "每日簽到", video: null }
+            ? {
+                ref: "checkin",
+                title: "每日簽到",
+                content: "每天按一次。",
+                imageUrl: null,
+                imageAlt: "每日簽到",
+                video: null,
+              }
             : null,
         ),
       );
@@ -741,22 +748,21 @@ describe("/member", () => {
 
       const section = screen.getByRole("region", { name: "比賽室展示" });
       const shown = within(section).getByRole("list", { name: "展示中的冰炫風" });
-      expect(within(shown).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
-        "冰炫風 #3",
-        "冰炫風 #12",
-      ]);
+      expect(
+        within(shown)
+          .getAllByRole("listitem")
+          .map((item) => item.textContent),
+      ).toEqual(["冰炫風 #3", "冰炫風 #12"]);
       const form = within(section).getByRole("form", { name: "設定比賽室展示" });
       const first = within(form).getByRole("combobox", { name: /第 1 支/ });
       expect(first).toHaveValue("i3");
       expect(within(form).getByRole("combobox", { name: /第 2 支/ })).toHaveValue("i12");
       expect(within(form).getByRole("combobox", { name: /第 3 支/ })).toHaveValue("");
-      expect(within(first).getAllByRole("option").map((option) => option.textContent)).toEqual([
-        "不展示",
-        "冰炫風 #12・預設杯",
-        "冰炫風 #3・預設杯",
-        "冰炫風 #14・預設杯",
-        "冰炫風 #30・預設杯",
-      ]);
+      expect(
+        within(first)
+          .getAllByRole("option")
+          .map((option) => option.textContent),
+      ).toEqual(["不展示", "冰炫風 #12・預設杯", "冰炫風 #3・預設杯", "冰炫風 #14・預設杯", "冰炫風 #30・預設杯"]);
       expect(within(form).getByRole("button", { name: "儲存展示" })).toBeInTheDocument();
     });
 
@@ -1059,12 +1065,18 @@ describe("/member 收藏 tab", () => {
           id: "f1",
           kind: "frame",
           name: "霓虹框",
-          look: { template: "frame.line", params: { mainColor: "#00e5ff", borderStyle: "solid", glow: false }, imageUrl: null },
+          look: {
+            template: "frame.line",
+            params: { mainColor: "#00e5ff", borderStyle: "solid", glow: false },
+            imageUrl: null,
+          },
           onSale: true,
           equipped: false,
         },
       ],
-      cups: [{ item: { id: "c1", name: "聖誕杯", template: "cup.classic", params: { lineColor: "#ffffff" } }, count: 2 }],
+      cups: [
+        { item: { id: "c1", name: "聖誕杯", template: "cup.classic", params: { lineColor: "#ffffff" } }, count: 2 },
+      ],
     });
 
     render(await MemberPage(memberProps("cosmetics")));
@@ -1075,7 +1087,9 @@ describe("/member 收藏 tab", () => {
     expect(within(titles[0]).getByRole("button", { name: "卸下" })).toBeInTheDocument();
     expect(titles[1]).toHaveTextContent("已下架");
     expect(within(titles[1]).getByRole("button", { name: "裝備" })).toBeInTheDocument();
-    expect(within(screen.getByRole("list", { name: "比賽室框" })).getByRole("button", { name: "裝備" })).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("list", { name: "比賽室框" })).getByRole("button", { name: "裝備" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("還沒有集點卡外觀。")).toBeInTheDocument();
     expect(within(screen.getByRole("list", { name: "冰炫風杯" })).getByRole("listitem")).toHaveTextContent("聖誕杯× 2");
   });

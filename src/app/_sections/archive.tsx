@@ -45,7 +45,13 @@ export function Archive({ milestones, index, layout = "split" }: ArchiveProps) {
   return (
     <Section labelledBy="archive-title" ruled className="reveal" id="archive">
       <EditorialGrid className="gap-y-8">
-        <div className={stacked ? "col-span-full flex flex-col gap-4 border-b border-line pb-8" : "col-span-4 flex flex-col gap-4 md:col-span-8 lg:sticky lg:top-8 lg:col-span-4 lg:self-start"}>
+        <div
+          className={
+            stacked
+              ? "col-span-full flex flex-col gap-4 border-b border-line pb-8"
+              : "col-span-4 flex flex-col gap-4 md:col-span-8 lg:sticky lg:top-8 lg:col-span-4 lg:self-start"
+          }
+        >
           <Eyebrow index={index}>Archive</Eyebrow>
           <Heading level={2} id="archive-title">
             里程碑
@@ -53,9 +59,7 @@ export function Archive({ milestones, index, layout = "split" }: ArchiveProps) {
         </div>
         <div className={stacked ? "col-span-full" : "col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5"}>
           {milestones.length > 0 ? (
-            <ArchiveTimeline
-              items={groupByDate(milestones)}
-            />
+            <ArchiveTimeline items={groupByDate(milestones)} />
           ) : (
             <Placeholder name="milestones" label="里程碑" className="min-h-32" />
           )}

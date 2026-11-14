@@ -41,5 +41,10 @@ describe("radarRings", () => {
 });
 
 it("writes SVG points", () => {
-  expect(toPoints([{ x: 1, y: 2 }, { x: 3.5, y: 4 }])).toBe("1,2 3.5,4");
+  expect(
+    toPoints([
+      { x: 1, y: 2 },
+      { x: 3.5, y: 4 },
+    ]),
+  ).toBe("1,2 3.5,4");
 });

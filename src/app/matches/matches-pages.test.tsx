@@ -264,7 +264,10 @@ describe("/matches/[id]", () => {
       (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer());
       (fetchMatchFriends as jest.Mock).mockResolvedValue({ canInviteToGroup: false, friends: [] });
       await renderMatch();
-      expect(screen.getByRole("button", { name: "打開好友側欄加好友" })).toHaveAttribute("popovertarget", "friends-panel");
+      expect(screen.getByRole("button", { name: "打開好友側欄加好友" })).toHaveAttribute(
+        "popovertarget",
+        "friends-panel",
+      );
     });
 
     it("is not shown to visitors, guests or once sign-up has closed", async () => {
@@ -295,7 +298,11 @@ describe("/matches/[id]", () => {
     expect(within(teamA).getByText("總分 1500・平均 1500")).toBeInTheDocument();
     // The captain leads the team although 訪客C comes first in the team's ids.
     const teamB = within(room).getByRole("region", { name: "B 隊" });
-    expect(within(teamB).getAllByRole("listitem").map((li) => li.textContent)).toEqual(["隊長小明", "訪客C"]);
+    expect(
+      within(teamB)
+        .getAllByRole("listitem")
+        .map((li) => li.textContent),
+    ).toEqual(["隊長小明", "訪客C"]);
     // DOM order A, stage, B (left to right); on narrow screens the stage moves up first.
     const stage = container.querySelector("[data-stage]")!.parentElement!;
     const columns = [...stage.parentElement!.children].map((el) =>
@@ -489,7 +496,10 @@ describe("/matches/[id] drafting and team names", () => {
   });
 
   it("gives the manager a rename form on both teams, and nobody one once the match is on the server", async () => {
-    const confirmed = { ...teamed({ ...base, status: "teams_confirmed" }, { A: "紅龍", B: "B 隊" }), teamNamesOpen: true };
+    const confirmed = {
+      ...teamed({ ...base, status: "teams_confirmed" }, { A: "紅龍", B: "B 隊" }),
+      teamNamesOpen: true,
+    };
     (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer({ canManage: true }, confirmed));
     (fetchManagedMatch as jest.Mock).mockResolvedValue({
       ...withRatings(confirmed),
@@ -827,7 +837,11 @@ describe("/matches/[id] on the game server", () => {
       viewer(
         {
           entryId: "e1",
-          connect: { address: "cs.example.com:27015", password: "pw123", url: "steam://connect/cs.example.com:27015/pw123" },
+          connect: {
+            address: "cs.example.com:27015",
+            password: "pw123",
+            url: "steam://connect/cs.example.com:27015/pw123",
+          },
         },
         waiting,
       ),

@@ -1,7 +1,8 @@
 import { stampCard, stampProgressText } from "./stamp-card";
 
 const days = (view: ReturnType<typeof stampCard>) => view.slots.map((slot) => slot.day);
-const stamped = (view: ReturnType<typeof stampCard>) => view.slots.filter((slot) => slot.stamped).map((slot) => slot.day);
+const stamped = (view: ReturnType<typeof stampCard>) =>
+  view.slots.filter((slot) => slot.stamped).map((slot) => slot.day);
 const today = (view: ReturnType<typeof stampCard>) => view.slots.find((slot) => slot.today)?.day ?? null;
 const bonus = (view: ReturnType<typeof stampCard>) => view.slots.filter((slot) => slot.bonus).map((slot) => slot.day);
 

@@ -29,8 +29,27 @@ export function RegisterForm() {
   const error = (name: string) => state.fields?.[name];
   return (
     <form action={action} className="flex max-w-xl flex-col gap-6">
-      <FormField id="name" name="name" label="稱呼" autoComplete="off" required maxLength={50} defaultValue={value("name")} error={error("name")} hint="讓管理員辨識你，不必填真名。"/>
-      <FormField id="nickname" name="nickname" label="暱稱" required maxLength={30} defaultValue={value("nickname")} error={error("nickname")} hint="在網站上將顯示這個名稱，後續可自行修改。" />
+      <FormField
+        id="name"
+        name="name"
+        label="稱呼"
+        autoComplete="off"
+        required
+        maxLength={50}
+        defaultValue={value("name")}
+        error={error("name")}
+        hint="讓管理員辨識你，不必填真名。"
+      />
+      <FormField
+        id="nickname"
+        name="nickname"
+        label="暱稱"
+        required
+        maxLength={30}
+        defaultValue={value("nickname")}
+        error={error("nickname")}
+        hint="在網站上將顯示這個名稱，後續可自行修改。"
+      />
       <FormField
         id="username"
         name="username"
@@ -43,9 +62,37 @@ export function RegisterForm() {
         error={error("username")}
         hint="3 到 30 個英數字，可用 . _ -，登入時不分大小寫。"
       />
-      <FormField id="discordId" name="discordId" label="Discord ID" required maxLength={50} defaultValue={value("discordId")} error={error("discordId")} hint="參加活動將以此帳號來識別。"/>
-      <FormField id="email" name="email" label="Email" type="email" autoComplete="email" required defaultValue={value("email")} error={error("email")} hint="開通後，設定密碼的信會寄到這裡。" />
-      <FormField id="phone" name="phone" label="手機" type="tel" autoComplete="tel" defaultValue={value("phone")} error={error("phone")} hint="方便管理員聯絡用。" />
+      <FormField
+        id="discordId"
+        name="discordId"
+        label="Discord ID"
+        required
+        maxLength={50}
+        defaultValue={value("discordId")}
+        error={error("discordId")}
+        hint="參加活動將以此帳號來識別。"
+      />
+      <FormField
+        id="email"
+        name="email"
+        label="Email"
+        type="email"
+        autoComplete="email"
+        required
+        defaultValue={value("email")}
+        error={error("email")}
+        hint="開通後，設定密碼的信會寄到這裡。"
+      />
+      <FormField
+        id="phone"
+        name="phone"
+        label="手機"
+        type="tel"
+        autoComplete="tel"
+        defaultValue={value("phone")}
+        error={error("phone")}
+        hint="方便管理員聯絡用。"
+      />
       <CheckboxField
         id="acceptTerms"
         name="acceptTerms"
@@ -68,7 +115,14 @@ export function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, EMPTY);
   return (
     <form action={action} className="flex max-w-md flex-col gap-6">
-      <FormField id="login-username" name="username" label="帳號" autoComplete="username" required defaultValue={state.values?.username ?? ""} />
+      <FormField
+        id="login-username"
+        name="username"
+        label="帳號"
+        autoComplete="username"
+        required
+        defaultValue={state.values?.username ?? ""}
+      />
       <PasswordField id="login-password" name="password" label="密碼" autoComplete="current-password" required />
       <FormMessage state={state} />
       <SubmitButton pending={pending} className="self-start">

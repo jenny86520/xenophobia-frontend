@@ -60,7 +60,8 @@ const BOARD_COPY: Record<string, BoardCopy> = {
   },
   "checkin-streak": {
     tagline: "天天報到，一天都沒漏。",
-    rules: "計算會員最長連續每天簽到的天數（台灣時間）。跟簽到活動無關：換期或拿到連續簽到獎勵都不中斷，只有漏簽一天才重新計算。",
+    rules:
+      "計算會員最長連續每天簽到的天數（台灣時間）。跟簽到活動無關：換期或拿到連續簽到獎勵都不中斷，只有漏簽一天才重新計算。",
   },
   "video-likes": {
     tagline: "片子一上架，讚就一直來。",
@@ -84,7 +85,14 @@ function OverallTab({ legends }: { legends: Legends }) {
         aria-labelledby={boardHeadingId("overall")}
         className="col-span-4 flex min-w-0 flex-col gap-10 md:col-span-8 lg:col-span-7"
       >
-        <LegendBoardHeader code="overall" title={title} metric="總排行" unit="分" countsTowardOverall {...OVERALL_COPY} />
+        <LegendBoardHeader
+          code="overall"
+          title={title}
+          metric="總排行"
+          unit="分"
+          countsTowardOverall
+          {...OVERALL_COPY}
+        />
         {entries.length === 0 ? (
           <EmptyBoard />
         ) : (

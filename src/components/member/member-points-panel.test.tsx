@@ -75,7 +75,10 @@ describe("MemberPointsPanel", () => {
     render(<MemberPointsPanel points={points({ campaign: { ...campaign, requiredDays: 60 }, entries })} card={4} />);
 
     expect(screen.getByRole("link", { name: "較新的紀錄" })).toHaveAttribute("href", "/member?tab=points&card=4");
-    expect(screen.getByRole("link", { name: "較早的紀錄" })).toHaveAttribute("href", "/member?tab=points&page=3&card=4");
+    expect(screen.getByRole("link", { name: "較早的紀錄" })).toHaveAttribute(
+      "href",
+      "/member?tab=points&page=3&card=4",
+    );
     expect(screen.getByRole("navigation", { name: "集點卡分頁" })).toHaveTextContent("第 4 / 6 張");
   });
 });

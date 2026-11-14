@@ -1,17 +1,11 @@
-import type {
-  ClipAccess,
-  ClipSort,
-  ClipVote,
-  ReportCategory,
-} from "@/types/clip";
+import type { ClipAccess, ClipSort, ClipVote, ReportCategory } from "@/types/clip";
 
 /** What /clips shows, read from its URL; anything unknown falls back to the defaults. */
 export type ClipQuery = { gameId: string | null; sort: ClipSort; page: number };
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
-const one = (value: string | string[] | undefined) =>
-  typeof value === "string" ? value : undefined;
+const one = (value: string | string[] | undefined) => (typeof value === "string" ? value : undefined);
 
 export function parseClipQuery(params: SearchParams): ClipQuery {
   const gameId = one(params.game);
@@ -66,9 +60,6 @@ export function reportBlockedReason(access: ClipAccess): string | null {
  * What pressing a vote button sends: the same vote again takes it back (null), the other one
  * switches straight to it.
  */
-export function nextVote(
-  current: ClipVote | null,
-  pressed: ClipVote,
-): ClipVote | null {
+export function nextVote(current: ClipVote | null, pressed: ClipVote): ClipVote | null {
   return current === pressed ? null : pressed;
 }

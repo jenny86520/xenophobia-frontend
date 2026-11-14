@@ -17,7 +17,13 @@ describe("titles beside nicknames", () => {
       <ParticipantList
         labelledBy="x"
         participants={[
-          { nickname: "阿明", discordId: "ming", registeredAt: "2026-11-01T00:00:00Z", guest: false, memberTitle: title },
+          {
+            nickname: "阿明",
+            discordId: "ming",
+            registeredAt: "2026-11-01T00:00:00Z",
+            guest: false,
+            memberTitle: title,
+          },
           { nickname: "路人", discordId: "", registeredAt: "2026-11-02T00:00:00Z", guest: true, memberTitle: null },
         ]}
       />,

@@ -283,13 +283,21 @@ export async function serverStartAction(
   );
 }
 
-export async function serverAbortAction(matchId: string, _: MatchActionState, form: FormData): Promise<MatchActionState> {
+export async function serverAbortAction(
+  matchId: string,
+  _: MatchActionState,
+  form: FormData,
+): Promise<MatchActionState> {
   if (!confirmed(form)) return NOT_CONFIRMED;
   return asManager(matchId, "/server/abort", { method: "POST" }, () => "已中止，可以重新開打。");
 }
 
 /** Scores typed in by the manager; the backend checks the range. */
-export async function matchResultAction(matchId: string, _: MatchActionState, form: FormData): Promise<MatchActionState> {
+export async function matchResultAction(
+  matchId: string,
+  _: MatchActionState,
+  form: FormData,
+): Promise<MatchActionState> {
   if (!confirmed(form)) return keepValues(NOT_CONFIRMED, form);
   const score = (name: string) => {
     const text = String(form.get(name) ?? "").trim();

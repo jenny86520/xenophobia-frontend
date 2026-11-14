@@ -46,9 +46,7 @@ describe("formatSubPartyRange", () => {
     process.env.TZ = "UTC";
     try {
       expect(formatSubPartyRange("2026-11-01T19:00:00+08:00")).toBe("11/01 19:00");
-      expect(formatSubPartyRange("2026-11-01T19:00:00+08:00", "2026-11-01T23:00:00+08:00")).toBe(
-        "11/01 19:00 – 23:00",
-      );
+      expect(formatSubPartyRange("2026-11-01T19:00:00+08:00", "2026-11-01T23:00:00+08:00")).toBe("11/01 19:00 – 23:00");
       expect(formatSubPartyRange("2026-11-01T22:00:00+08:00", "2026-11-02T02:00:00+08:00")).toBe(
         "11/01 22:00 – 11/02 02:00",
       );

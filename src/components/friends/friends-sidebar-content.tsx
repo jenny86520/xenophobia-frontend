@@ -78,10 +78,7 @@ export function FriendsSidebarContent({ overview }: { overview: FriendsOverview 
         <FriendsSection id="friends-panel-outgoing" title="送出的好友邀請">
           {overview.outgoing.map((request) => (
             <PersonRow key={request.id} person={request.member} note="等待對方回覆">
-              <FriendActionButton
-                action={answerFriendRequestAction.bind(null, request.id, "withdraw")}
-                label="收回"
-              />
+              <FriendActionButton action={answerFriendRequestAction.bind(null, request.id, "withdraw")} label="收回" />
             </PersonRow>
           ))}
         </FriendsSection>

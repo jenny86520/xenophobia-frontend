@@ -37,9 +37,7 @@ export function boardsIn<T extends { code: string }>(tab: LegendTab, boards: T[]
 
 /** 總排行 always, then each tab that has at least one board. */
 export function visibleTabs(boards: Array<{ code: string }>): LegendTab[] {
-  return LEGEND_TABS.map((tab) => tab.value).filter(
-    (tab) => tab === "overall" || boardsIn(tab, boards).length > 0,
-  );
+  return LEGEND_TABS.map((tab) => tab.value).filter((tab) => tab === "overall" || boardsIn(tab, boards).length > 0);
 }
 
 /** The tab named by `?tab=`; anything missing, unknown or without boards is 總排行. */

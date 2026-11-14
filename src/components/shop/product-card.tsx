@@ -30,13 +30,7 @@ type ProductCardProps = {
  * 「剩 3 / 20 份」 in large figures with a thin bar of what is left. The text is what assistive tech
  * reads; the bar is decoration (aria-hidden), so colour is never the only signal.
  */
-function StockMeter({
-  remaining,
-  limit,
-}: {
-  remaining: number;
-  limit: number;
-}) {
+function StockMeter({ remaining, limit }: { remaining: number; limit: number }) {
   const left = Math.max(0, Math.min(remaining, limit));
   const percent = limit > 0 ? Math.round((left / limit) * 100) : 0;
   return (
@@ -44,25 +38,11 @@ function StockMeter({
       <p className="flex items-baseline justify-between gap-3 text-caption text-ink-secondary">
         <span>剩餘</span>
         <span className="font-mono tabular-nums">
-          <span
-            className={cn(
-              "text-lead",
-              left === 0 ? "text-ink-muted" : "text-ink",
-            )}
-          >
-            {left}
-          </span>{" "}
-          / {limit} 份
+          <span className={cn("text-lead", left === 0 ? "text-ink-muted" : "text-ink")}>{left}</span> / {limit} 份
         </span>
       </p>
-      <span
-        aria-hidden="true"
-        className="block h-1 w-full overflow-hidden rounded-sm bg-line"
-      >
-        <span
-          className="block h-full bg-signal"
-          style={{ width: `${percent}%` }}
-        />
+      <span aria-hidden="true" className="block h-1 w-full overflow-hidden rounded-sm bg-line">
+        <span className="block h-full bg-signal" style={{ width: `${percent}%` }} />
       </span>
     </div>
   );
@@ -98,12 +78,7 @@ export function ProductCard({
           stock && "pb-16",
         )}
       >
-        <div
-          className={cn(
-            "flex scale-110 items-center justify-center",
-            soldOut && "opacity-40 grayscale",
-          )}
-        >
+        <div className={cn("flex scale-110 items-center justify-center", soldOut && "opacity-40 grayscale")}>
           {picture ?? <IceCreamIcon className="size-14" />}
         </div>
         {tag && <Badge className="absolute top-3 left-3">{tag}</Badge>}
@@ -120,10 +95,7 @@ export function ProductCard({
               {name}
             </span>
             <span
-              className={cn(
-                "shrink-0 font-mono text-lead tabular-nums",
-                soldOut ? "text-ink-muted" : "text-signal",
-              )}
+              className={cn("shrink-0 font-mono text-lead tabular-nums", soldOut ? "text-ink-muted" : "text-signal")}
             >
               {price}
             </span>
@@ -140,23 +112,11 @@ export function ProductCard({
  * A card's settled state in place of its button: done (已擁有, 已兌換, 已領取) with a check, or
  * 已售完 with a slashed circle. The word carries the meaning; the icon is decoration.
  */
-export function ShelfStatus({
-  kind,
-  children,
-}: {
-  kind: "done" | "soldOut";
-  children: ReactNode;
-}) {
+export function ShelfStatus({ kind, children }: { kind: "done" | "soldOut"; children: ReactNode }) {
   const Icon = kind === "done" ? Check : CircleSlash;
   return (
     <span className="inline-flex items-center gap-2 text-body text-ink-secondary">
-      <Icon
-        aria-hidden="true"
-        className={cn(
-          "size-4",
-          kind === "done" ? "text-signal" : "text-ink-muted",
-        )}
-      />
+      <Icon aria-hidden="true" className={cn("size-4", kind === "done" ? "text-signal" : "text-ink-muted")} />
       {children}
     </span>
   );
@@ -166,13 +126,7 @@ export function ShelfStatus({
  * A grid of product cards named by a heading: one card per row on phones, up to four side by side
  * on wide screens.
  */
-export function ProductGrid({
-  labelledBy,
-  children,
-}: {
-  labelledBy: string;
-  children: ReactNode;
-}) {
+export function ProductGrid({ labelledBy, children }: { labelledBy: string; children: ReactNode }) {
   return (
     <ul
       aria-labelledby={labelledBy}

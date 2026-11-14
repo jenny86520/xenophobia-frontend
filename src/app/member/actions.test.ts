@@ -57,7 +57,8 @@ const form = (values: Record<string, string>) => {
   return data;
 };
 
-const sentBody = () => JSON.parse(String(((global.fetch as jest.Mock).mock.calls[0][1] as RequestInit).body)) as unknown;
+const sentBody = () =>
+  JSON.parse(String(((global.fetch as jest.Mock).mock.calls[0][1] as RequestInit).body)) as unknown;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -68,7 +69,9 @@ describe("loginAction", () => {
   it("stores the token in the httpOnly cookie and goes to the member page", async () => {
     respond(200, { accessToken: "new-jwt", expiresIn: 604800 });
 
-    await expect(loginAction({}, form({ username: "ming", password: "secret-123" }))).rejects.toThrow("REDIRECT /member");
+    await expect(loginAction({}, form({ username: "ming", password: "secret-123" }))).rejects.toThrow(
+      "REDIRECT /member",
+    );
     expect(sentBody()).toEqual({ username: "ming", password: "secret-123" });
     expect(cookieStore.set).toHaveBeenCalledWith(
       "xpa_member",
@@ -152,20 +155,45 @@ describe("registerAction", () => {
 
     const state = await registerAction(
       {},
-      form({ name: "王小明", nickname: "小明", username: "ming", discordId: "m#1", email: "m@x.com", phone: "0912345678", password: "no" }),
+      form({
+        name: "王小明",
+        nickname: "小明",
+        username: "ming",
+        discordId: "m#1",
+        email: "m@x.com",
+        phone: "0912345678",
+        password: "no",
+      }),
     );
 
-    expect(sentBody()).toEqual({ name: "王小明", nickname: "小明", username: "ming", discordId: "m#1", email: "m@x.com", phone: "0912345678" });
+    expect(sentBody()).toEqual({
+      name: "王小明",
+      nickname: "小明",
+      username: "ming",
+      discordId: "m#1",
+      email: "m@x.com",
+      phone: "0912345678",
+    });
     expect(state).toMatchObject({ ok: false, fields: { username: "username is already taken" } });
   });
 
   it("sends acceptTerms only when the box is ticked, and keeps it for the form", async () => {
-    const fields = { name: "王小明", nickname: "小明", username: "ming", discordId: "m#1", email: "m@x.com", phone: "" };
+    const fields = {
+      name: "王小明",
+      nickname: "小明",
+      username: "ming",
+      discordId: "m#1",
+      email: "m@x.com",
+      phone: "",
+    };
     respond(201, { status: "pending" });
     await registerAction({}, form({ ...fields, acceptTerms: "on" }));
     expect(sentBody()).toEqual({ ...fields, acceptTerms: true });
 
-    respond(400, { message: ["請閱讀並同意使用條款與隱私權政策"], fields: { acceptTerms: "請閱讀並同意使用條款與隱私權政策" } });
+    respond(400, {
+      message: ["請閱讀並同意使用條款與隱私權政策"],
+      fields: { acceptTerms: "請閱讀並同意使用條款與隱私權政策" },
+    });
     const state = await registerAction({}, form(fields));
     expect(sentBody()).toEqual(fields);
     expect(state).toMatchObject({ ok: false, fields: { acceptTerms: "請閱讀並同意使用條款與隱私權政策" } });
@@ -230,7 +258,11 @@ describe("member actions with a session", () => {
   it("returns field errors with what was typed", async () => {
     respond(400, { message: ["name must be shorter than or equal to 50 characters"], fields: { name: "太長了" } });
     const state = await updateProfileAction({}, form({ name: "x".repeat(51), nickname: "阿明" }));
-    expect(state).toMatchObject({ ok: false, fields: { name: "太長了" }, values: { name: "x".repeat(51), nickname: "阿明" } });
+    expect(state).toMatchObject({
+      ok: false,
+      fields: { name: "太長了" },
+      values: { name: "x".repeat(51), nickname: "阿明" },
+    });
     expect(mockRevalidate).not.toHaveBeenCalled();
   });
 
@@ -254,12 +286,18 @@ describe("member actions with a session", () => {
     expect(mockRevalidate).toHaveBeenCalledWith("/party/p1");
 
     respond(409, { message: "請先報名主派對" });
-    await expect(registrationAction("p1", "join", "s1")).resolves.toMatchObject({ ok: false, message: "請先報名主派對" });
+    await expect(registrationAction("p1", "join", "s1")).resolves.toMatchObject({
+      ok: false,
+      message: "請先報名主派對",
+    });
   });
 
   it("passes a refusal through unchanged", async () => {
     respond(403, { message: "此活動限定特定角色報名" });
-    await expect(registrationAction("p1", "join")).resolves.toMatchObject({ ok: false, message: "此活動限定特定角色報名" });
+    await expect(registrationAction("p1", "join")).resolves.toMatchObject({
+      ok: false,
+      message: "此活動限定特定角色報名",
+    });
   });
 
   it("drops the cookie and goes to login when the session is gone", async () => {

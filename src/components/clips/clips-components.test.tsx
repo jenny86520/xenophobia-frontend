@@ -24,9 +24,7 @@ describe("ClipVoteForm", () => {
   });
 
   it("is one plain form with named submit buttons, so it works without JavaScript", () => {
-    const { container } = render(
-      <ClipVoteForm vote={noop} likes={0} dislikes={0} myVote={null} disabled={false} />,
-    );
+    const { container } = render(<ClipVoteForm vote={noop} likes={0} dislikes={0} myVote={null} disabled={false} />);
     const buttons = container.querySelectorAll("form button[type=submit][name=vote]");
     expect(buttons).toHaveLength(2);
   });

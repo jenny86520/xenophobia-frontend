@@ -107,7 +107,9 @@ describe("VideoSubmissionForms", () => {
       const box = document.querySelector(id) as HTMLInputElement;
       expect(box).toHaveAttribute("name", "rightsConfirmed");
       expect(box).toBeRequired();
-      expect(box.labels?.[0]).toHaveTextContent("我擁有這部影片的權利，並同意通過的影片公開在網站上、上傳至官網 YouTube 頻道");
+      expect(box.labels?.[0]).toHaveTextContent(
+        "我擁有這部影片的權利，並同意通過的影片公開在網站上、上傳至官網 YouTube 頻道",
+      );
     }
     const termsButtons = screen.getAllByRole("button", { name: "使用條款" });
     expect(termsButtons).toHaveLength(2);

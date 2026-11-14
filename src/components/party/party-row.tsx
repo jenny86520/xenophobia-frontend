@@ -22,9 +22,7 @@ type PartyRowProps = (
  * dimmed backdrop behind the row.
  */
 export function PartyRow({ party, showLifecycleBadge, metaFields, titleAs: Title = "h3" }: PartyRowProps) {
-  const lifecycle = showLifecycleBadge
-    ? resolvePartyLifecycleStatus((party as PartyListItem).status)
-    : undefined;
+  const lifecycle = showLifecycleBadge ? resolvePartyLifecycleStatus((party as PartyListItem).status) : undefined;
 
   return (
     <li className="list-row relative isolate overflow-hidden border-t border-line">

@@ -12,8 +12,22 @@ const veto = (overrides: Partial<MatchVeto> = {}): MatchVeto => ({
   stepSeconds: 30,
   startedAt: "2026-10-26T10:00:00.000Z",
   maps: [
-    { key: "de_ancient", name: "Ancient", imageUrl: "/media/images/a.jpg", bannedBy: "B", step: 1, wins: { A: 0, B: 2 } },
-    { key: "de_mirage", name: "Mirage", imageUrl: "/media/images/m.jpg", bannedBy: null, step: null, wins: { A: 3, B: 1 } },
+    {
+      key: "de_ancient",
+      name: "Ancient",
+      imageUrl: "/media/images/a.jpg",
+      bannedBy: "B",
+      step: 1,
+      wins: { A: 0, B: 2 },
+    },
+    {
+      key: "de_mirage",
+      name: "Mirage",
+      imageUrl: "/media/images/m.jpg",
+      bannedBy: null,
+      step: null,
+      wins: { A: 3, B: 1 },
+    },
     { key: "de_nuke", name: "Nuke", imageUrl: null, bannedBy: null, step: null, wins: { A: 0, B: 0 } },
   ],
   bans: [

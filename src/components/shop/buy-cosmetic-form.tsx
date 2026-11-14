@@ -59,10 +59,7 @@ export function BuyCosmeticForm({
       <button
         type="button"
         popoverTarget={dialogId}
-        className={ctaPrimaryClasses(
-          "default",
-          "w-full cursor-pointer justify-center",
-        )}
+        className={ctaPrimaryClasses("default", "w-full cursor-pointer justify-center")}
       >
         購買
       </button>
@@ -82,9 +79,7 @@ export function BuyCosmeticForm({
         </p>
         <p>
           購買後不能退點。
-          {kind === "cup"
-            ? "每個冰炫風杯只能換到一支冰炫風上。"
-            : "買到的外觀永久保留。"}
+          {kind === "cup" ? "每個冰炫風杯只能換到一支冰炫風上。" : "買到的外觀永久保留。"}
         </p>
       </ConfirmDialog>
       <FormMessage state={state} />

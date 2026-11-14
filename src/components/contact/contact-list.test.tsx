@@ -20,7 +20,9 @@ describe("ContactList", () => {
     const email = screen.getByRole("link", { name: textIs("team@x.team") });
     expect(email).toHaveAttribute("href", "mailto:team@x.team");
     expect(email.querySelectorAll("wbr")).toHaveLength(2);
-    const discord = screen.getByRole("link", { name: (_, link) => link.textContent?.startsWith("https://discord.gg/x") ?? false });
+    const discord = screen.getByRole("link", {
+      name: (_, link) => link.textContent?.startsWith("https://discord.gg/x") ?? false,
+    });
     expect(discord).toHaveAttribute("rel", "noopener noreferrer");
     expect(discord).toHaveAttribute("target", "_blank");
     expect(screen.getByText((_, el) => el?.tagName === "DD" && el.textContent === "@xpa").closest("a")).toBeNull();

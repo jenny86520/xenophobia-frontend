@@ -10,7 +10,10 @@ describe("News (home)", () => {
     render(
       <News
         index={5}
-        items={[item("n2", "冬季派對報名開始", "2026-11-08T04:00:00.000Z"), item("n1", "新成員加入", "2026-11-01T04:00:00.000Z")]}
+        items={[
+          item("n2", "冬季派對報名開始", "2026-11-08T04:00:00.000Z"),
+          item("n1", "新成員加入", "2026-11-01T04:00:00.000Z"),
+        ]}
       />,
     );
     const rows = within(screen.getByRole("list", { name: "最新消息" })).getAllByRole("listitem");

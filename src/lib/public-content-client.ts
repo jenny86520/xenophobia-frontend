@@ -2,12 +2,7 @@ import { connection } from "next/server";
 import { cache } from "react";
 import { forwardedForHeader } from "@/lib/forwarded-for";
 import { memberToken } from "@/lib/member-session";
-import type {
-  MembersOnlyParty,
-  PartyDetail,
-  PartyListItem,
-  UpcomingPartyResponse,
-} from "@/types/party";
+import type { MembersOnlyParty, PartyDetail, PartyListItem, UpcomingPartyResponse } from "@/types/party";
 import type { AboutContent } from "@/types/about";
 import type { LegalDocument, LegalKey } from "@/types/legal";
 import type { Legends } from "@/types/legends";
@@ -74,9 +69,8 @@ async function getRequiredJson<T>(path: string, options?: RequestOptions): Promi
 // React.cache de-duplicates identical calls within one server request
 // (e.g. the layout and a page both reading /api/about).
 
-export const fetchUpcomingParty = cache(
-  (): Promise<UpcomingPartyResponse> =>
-    getRequiredJson<UpcomingPartyResponse>("/api/parties/upcoming", { asMember: true }),
+export const fetchUpcomingParty = cache((): Promise<UpcomingPartyResponse> =>
+  getRequiredJson<UpcomingPartyResponse>("/api/parties/upcoming", { asMember: true }),
 );
 
 export const fetchPartyList = cache(
@@ -112,43 +106,35 @@ export const fetchPartyDetail = cache(async (id: string): Promise<PartyDetail | 
   return (await response.json()) as PartyDetail;
 });
 
-export const fetchAboutContent = cache(
-  (): Promise<AboutContent> => getRequiredJson<AboutContent>("/api/about"),
-);
+export const fetchAboutContent = cache((): Promise<AboutContent> => getRequiredJson<AboutContent>("/api/about"));
 
 /** Scrim matches, open ones first; only a party's when partyId is given. */
-export const fetchMatches = cache(
-  (partyId?: string): Promise<MatchList> =>
-    getRequiredJson<MatchList>(
-      `/api/matches?pageSize=50${partyId ? `&partyId=${encodeURIComponent(partyId)}` : ""}`,
-      { asMember: true },
-    ),
+export const fetchMatches = cache((partyId?: string): Promise<MatchList> =>
+  getRequiredJson<MatchList>(`/api/matches?pageSize=50${partyId ? `&partyId=${encodeURIComponent(partyId)}` : ""}`, {
+    asMember: true,
+  }),
 );
 
 /** The public view of a match (no ratings, no invite codes); `null` when it does not exist. */
-export const fetchMatchDetail = cache(
-  (id: string): Promise<MatchDetail | null> =>
-    getJson<MatchDetail>(`/api/matches/${encodeURIComponent(id)}`, { asMember: true }),
+export const fetchMatchDetail = cache((id: string): Promise<MatchDetail | null> =>
+  getJson<MatchDetail>(`/api/matches/${encodeURIComponent(id)}`, { asMember: true }),
 );
 
 /** The newest finished scrims for the game page: results only, never ratings. */
-export const fetchRecentScrims = cache(
-  (): Promise<CompletedMatch[]> =>
-    getRequiredJson<CompletedMatch[]>("/api/games/cs2/matches", { asMember: true }),
+export const fetchRecentScrims = cache((): Promise<CompletedMatch[]> =>
+  getRequiredJson<CompletedMatch[]>("/api/games/cs2/matches", { asMember: true }),
 );
 
 /** The Legends boards and the overall ranking, computed by the backend on each request. */
 export const fetchLegends = cache((): Promise<Legends> => getRequiredJson<Legends>("/api/legends"));
 
 /** A legal document for the footer dialogs; `null` when the backend does not know it (404). */
-export const fetchLegalDocument = cache(
-  (key: LegalKey): Promise<LegalDocument | null> => getJson<LegalDocument>(`/api/legal/${key}`),
+export const fetchLegalDocument = cache((key: LegalKey): Promise<LegalDocument | null> =>
+  getJson<LegalDocument>(`/api/legal/${key}`),
 );
 
 /** The point shop; with the member's token it also says which limited periods they claimed. */
-export const fetchShop = cache(
-  (): Promise<Shop> => getRequiredJson<Shop>("/api/shop", { asMember: true }),
-);
+export const fetchShop = cache((): Promise<Shop> => getRequiredJson<Shop>("/api/shop", { asMember: true }));
 
 /** Messages per page on /news. */
 export const NEWS_PAGE_SIZE = 10;
@@ -174,15 +160,14 @@ export const fetchHomeNews = cache(async (): Promise<NewsItem[]> => {
 });
 
 /** One message; `null` when it does not exist, is not out yet, or is for members only. */
-export const fetchNews = cache(
-  (id: string): Promise<NewsItem | null> =>
-    getJson<NewsItem>(`/api/news/${encodeURIComponent(id)}`, { asMember: true }),
+export const fetchNews = cache((id: string): Promise<NewsItem | null> =>
+  getJson<NewsItem>(`/api/news/${encodeURIComponent(id)}`, { asMember: true }),
 );
 
 /** Published guides for /guide, fixed ones first. */
 export const fetchGuides = cache((): Promise<GuideSummary[]> => getRequiredJson<GuideSummary[]>("/api/guides"));
 
 /** One published guide; `null` when it does not exist or is not published. */
-export const fetchGuide = cache(
-  (ref: string): Promise<Guide | null> => getJson<Guide>(`/api/guides/${encodeURIComponent(ref)}`),
+export const fetchGuide = cache((ref: string): Promise<Guide | null> =>
+  getJson<Guide>(`/api/guides/${encodeURIComponent(ref)}`),
 );

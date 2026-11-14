@@ -47,12 +47,7 @@ export function GameVideoControls({ videos, active, onSelect }: GameVideoControl
           );
         })}
       </div>
-      <button
-        type="button"
-        className={BUTTON}
-        aria-label="下一部"
-        onClick={() => onSelect((active + 1) % total)}
-      >
+      <button type="button" className={BUTTON} aria-label="下一部" onClick={() => onSelect((active + 1) % total)}>
         <ChevronRight aria-hidden className="size-4" />
       </button>
     </div>

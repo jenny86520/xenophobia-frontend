@@ -64,7 +64,11 @@ export function GameCarousel({ games }: { games: Game[] }) {
   const total = games.length;
   // False on the server and during hydration, so the player (and any autoplay) only
   // appears once the client knows the visitor's motion preference.
-  const mounted = useSyncExternalStore(noSubscription, () => true, () => false);
+  const mounted = useSyncExternalStore(
+    noSubscription,
+    () => true,
+    () => false,
+  );
   const reducedMotion = useSyncExternalStore(subscribeReducedMotion, prefersReducedMotion, () => false);
 
   function expand(index: number) {
@@ -155,11 +159,7 @@ export function GameCarousel({ games }: { games: Game[] }) {
                       )}
                     </div>
                     {expanded && mounted && videos.length > 1 && (
-                      <GameVideoControls
-                        videos={videos}
-                        active={videoIndex}
-                        onSelect={selectVideo}
-                      />
+                      <GameVideoControls videos={videos} active={videoIndex} onSelect={selectVideo} />
                     )}
                     <p className="max-w-[60ch] text-body text-ink-secondary">
                       {game.summary || <Placeholder name={`game.${game.id}.summary`} label="遊戲短述" inline />}

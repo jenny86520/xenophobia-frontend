@@ -96,10 +96,10 @@ export function ChangeCupForm({
       <div className="flex flex-col gap-2">
         <FormMessage state={state} />
         <p className="text-caption text-ink-secondary">
-        想換杯子？先到
-        <Link href="/shop#shelf-cosmetics" className="underline underline-offset-4">
-          點數商店
-        </Link>
+          想換杯子？先到
+          <Link href="/shop#shelf-cosmetics" className="underline underline-offset-4">
+            點數商店
+          </Link>
           買一個冰炫風杯，換一次用掉一個。
         </p>
       </div>

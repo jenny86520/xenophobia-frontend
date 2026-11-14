@@ -36,7 +36,10 @@ export function SubPartyRegistration({ partyId, subPartyId, title, summary, memb
         <RegistrationStatusLine
           state={summary}
           registered={view?.registered}
-          className={cn("flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-body text-ink", member && view && "py-3")}
+          className={cn(
+            "flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-body text-ink",
+            member && view && "py-3",
+          )}
         />
         {member && view && (
           <div className="shrink-0">

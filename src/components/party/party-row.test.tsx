@@ -63,9 +63,7 @@ describe("PartyRow", () => {
     expect(screen.getByText("待定")).toBeInTheDocument();
     expect(screen.getByText("會員限定")).toBeInTheDocument();
 
-    rerender(
-      <PartyRow party={{ ...partySummary, startTime: "" }} showLifecycleBadge={false} metaFields="date-time" />,
-    );
+    rerender(<PartyRow party={{ ...partySummary, startTime: "" }} showLifecycleBadge={false} metaFields="date-time" />);
     expect(screen.getByText("2026-09-30")).toBeInTheDocument();
     expect(screen.getByText("時間待定")).toBeInTheDocument();
   });

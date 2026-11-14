@@ -36,7 +36,10 @@ describe("NewsReminder", () => {
       "b",
       "a",
     ]);
-    expect(within(dialog).getByRole("button", { name: /^看全文\s?：點數商店上線$/ })).toHaveAttribute("value", "/news/b");
+    expect(within(dialog).getByRole("button", { name: /^看全文\s?：點數商店上線$/ })).toHaveAttribute(
+      "value",
+      "/news/b",
+    );
     expect(within(dialog).getByRole("button", { name: "知道了" })).toHaveAttribute("type", "submit");
   });
 

@@ -48,7 +48,10 @@ export function LegendRows({ label, unit, entries }: { label: string; unit: stri
   return (
     <ol aria-label={label} className="border-b border-line">
       {entries.map((entry) => (
-        <li key={`${entry.rank}-${entry.nickname}`} className="flex items-baseline gap-5 border-t border-line py-4 md:gap-8">
+        <li
+          key={`${entry.rank}-${entry.nickname}`}
+          className="flex items-baseline gap-5 border-t border-line py-4 md:gap-8"
+        >
           <span
             className={cn(
               "flex w-20 shrink-0 items-center gap-2 font-mono text-h3 leading-none tabular-nums",

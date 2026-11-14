@@ -1,10 +1,4 @@
-import {
-  clipsHref,
-  nextVote,
-  parseClipQuery,
-  reportBlockedReason,
-  voteBlockedReason,
-} from "./clips";
+import { clipsHref, nextVote, parseClipQuery, reportBlockedReason, voteBlockedReason } from "./clips";
 
 describe("parseClipQuery", () => {
   it("reads the game, sort and page, falling back to the defaults", () => {
@@ -34,16 +28,12 @@ describe("parseClipQuery", () => {
 describe("clipsHref", () => {
   it("leaves the defaults out", () => {
     expect(clipsHref({ gameId: null, sort: "newest", page: 1 })).toBe("/clips");
-    expect(clipsHref({ gameId: "g 1", sort: "popular", page: 2 })).toBe(
-      "/clips?game=g+1&sort=popular&page=2",
-    );
+    expect(clipsHref({ gameId: "g 1", sort: "popular", page: 2 })).toBe("/clips?game=g+1&sort=popular&page=2");
   });
 
   it("round-trips through parseClipQuery", () => {
     const query = { gameId: "g1", sort: "popular" as const, page: 4 };
-    const params = Object.fromEntries(
-      new URLSearchParams(clipsHref(query).split("?")[1]),
-    );
+    const params = Object.fromEntries(new URLSearchParams(clipsHref(query).split("?")[1]));
     expect(parseClipQuery(params)).toEqual(query);
   });
 });

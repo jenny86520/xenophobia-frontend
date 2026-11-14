@@ -34,13 +34,17 @@ export default async function PartyPage({ searchParams }: PageProps<"/party">) {
         </p>
 
         {parties.length === 0 ? (
-          <p className="mt-6 border-t border-line pt-8 text-lead text-ink-secondary">
-            沒有符合目前篩選條件的活動。
-          </p>
+          <p className="mt-6 border-t border-line pt-8 text-lead text-ink-secondary">沒有符合目前篩選條件的活動。</p>
         ) : (
           <ul className="mt-6 border-b border-line">
             {parties.map((party) => (
-              <PartyRow key={party.id} party={party} showLifecycleBadge={true} metaFields="date-category" titleAs="h2" />
+              <PartyRow
+                key={party.id}
+                party={party}
+                showLifecycleBadge={true}
+                metaFields="date-category"
+                titleAs="h2"
+              />
             ))}
           </ul>
         )}

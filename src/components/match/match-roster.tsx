@@ -7,13 +7,7 @@ import { PlayerLineItems } from "@/components/match/player-line";
  * A player's name with their rating when the viewer may see it, the captain mark, and a member's
  * equipped title and frame (spec member-cosmetics; guests have none).
  */
-function PlayerLine({
-  player,
-  showRating,
-}: {
-  player: MatchPlayer;
-  showRating: boolean;
-}) {
+function PlayerLine({ player, showRating }: { player: MatchPlayer; showRating: boolean }) {
   return (
     <li {...frameRow(player.frame, "border-b border-line py-3")}>
       <PlayerLineItems
@@ -42,21 +36,13 @@ export function MatchRoster({ match }: { match: MatchDetail }) {
   return (
     <div className="flex flex-col gap-8">
       {groups.map((entry, i) => (
-        <section
-          key={entry.id}
-          aria-labelledby={`group-${entry.id}`}
-          className="flex flex-col gap-3"
-        >
+        <section key={entry.id} aria-labelledby={`group-${entry.id}`} className="flex flex-col gap-3">
           <Heading level={3} id={`group-${entry.id}`}>
             {`小隊 ${i + 1}（${entry.players.length} 人）`}
           </Heading>
           <ul className="border-t border-line">
             {entry.players.map((player) => (
-              <PlayerLine
-                key={player.playerId}
-                player={player}
-                showRating={showRating}
-              />
+              <PlayerLine key={player.playerId} player={player} showRating={showRating} />
             ))}
           </ul>
         </section>
@@ -70,11 +56,7 @@ export function MatchRoster({ match }: { match: MatchDetail }) {
             {solos
               .flatMap((entry) => entry.players)
               .map((player) => (
-                <PlayerLine
-                  key={player.playerId}
-                  player={player}
-                  showRating={showRating}
-                />
+                <PlayerLine key={player.playerId} player={player} showRating={showRating} />
               ))}
           </ul>
         </section>

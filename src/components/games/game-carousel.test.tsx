@@ -40,9 +40,11 @@ function mockReducedMotion(reduce: boolean) {
 /** A YouTube API stand-in that keeps each player's state-change handler. */
 function mockYouTubeApi() {
   const handlers: ((event: { data: number }) => void)[] = [];
-  const Player = jest.fn((_iframe: HTMLIFrameElement, options: { events?: { onStateChange?: (e: { data: number }) => void } }) => {
-    if (options.events?.onStateChange) handlers.push(options.events.onStateChange);
-  });
+  const Player = jest.fn(
+    (_iframe: HTMLIFrameElement, options: { events?: { onStateChange?: (e: { data: number }) => void } }) => {
+      if (options.events?.onStateChange) handlers.push(options.events.onStateChange);
+    },
+  );
   window.YT = { Player, PlayerState: { ENDED: 0 } } as unknown as YouTubeApi;
   return { Player, handlers };
 }
@@ -83,10 +85,7 @@ describe("GameCarousel (expanding)", () => {
   it("labels the carousel and every panel, and expands the first panel by default", () => {
     render(<GameCarousel games={games} />);
 
-    expect(screen.getByRole("region", { name: "遊戲項目輪播" })).toHaveAttribute(
-      "aria-roledescription",
-      "carousel",
-    );
+    expect(screen.getByRole("region", { name: "遊戲項目輪播" })).toHaveAttribute("aria-roledescription", "carousel");
     expect(panel(/第 1 個，共 3 個：Assetto Corsa/)).toHaveAttribute("aria-roledescription", "slide");
     expect(toggle("Assetto Corsa")).toHaveAttribute("aria-expanded", "true");
     expect(toggle("CS2")).toHaveAttribute("aria-expanded", "false");
@@ -258,7 +257,9 @@ describe("GameCarousel (expanding)", () => {
 
       act(() => handlers[0]({ data: 0 })); // ENDED
       const next = screen.getByTitle("R6 highlight：Clip B");
-      expect(next.getAttribute("src")).toMatch(/^https:\/\/www\.youtube-nocookie\.com\/embed\/bbbbbbbbbbb\?.*enablejsapi=1/);
+      expect(next.getAttribute("src")).toMatch(
+        /^https:\/\/www\.youtube-nocookie\.com\/embed\/bbbbbbbbbbb\?.*enablejsapi=1/,
+      );
     });
   });
 });

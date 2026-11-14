@@ -330,7 +330,10 @@ describe("HomePage", () => {
         .getAllByRole("term")
         .map((dt) => dt.textContent),
     ).toEqual(["Email", "Discord"]);
-    expect(within(closing).getByRole("link", { name: textIs("team@x.team") })).toHaveAttribute("href", "mailto:team@x.team");
+    expect(within(closing).getByRole("link", { name: textIs("team@x.team") })).toHaveAttribute(
+      "href",
+      "mailto:team@x.team",
+    );
     expect(within(closing).getByRole("img", { name: "XenoPhobiA LOGO" })).toBeInTheDocument();
     expect(container.querySelector('[data-placeholder="brand.closing-statement"]')).toBeNull();
     expect(container.querySelector('[data-placeholder="brand.vector-logo"]')).toBeNull();

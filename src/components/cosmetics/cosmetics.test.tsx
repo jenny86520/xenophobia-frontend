@@ -6,7 +6,11 @@ describe("MemberTitleTag", () => {
   it("shows the title as text in its colour, with a decorative icon", () => {
     const { container } = render(
       <MemberTitleTag
-        look={{ template: "title.basic", params: { text: "派對常客", textColor: "#ffd166", icon: "crown" }, imageUrl: null }}
+        look={{
+          template: "title.basic",
+          params: { text: "派對常客", textColor: "#ffd166", icon: "crown" },
+          imageUrl: null,
+        }}
       />,
     );
     const tag = container.querySelector("[data-member-title]") as HTMLElement;
@@ -18,7 +22,11 @@ describe("MemberTitleTag", () => {
   it("runs a gradient title between its two colours", () => {
     const { container } = render(
       <MemberTitleTag
-        look={{ template: "title.gradient", params: { text: "傳奇", fromColor: "#ffd166", toColor: "#ff8fab" }, imageUrl: null }}
+        look={{
+          template: "title.gradient",
+          params: { text: "傳奇", fromColor: "#ffd166", toColor: "#ff8fab" },
+          imageUrl: null,
+        }}
       />,
     );
     const tag = container.querySelector("[data-member-title]") as HTMLElement;
@@ -29,7 +37,9 @@ describe("MemberTitleTag", () => {
   it("renders nothing without a title and plain text for an unknown template", () => {
     expect(render(<MemberTitleTag look={null} />).container).toBeEmptyDOMElement();
     const { container } = render(
-      <MemberTitleTag look={{ template: "title.future", params: { text: "新款", textColor: "#ffffff" }, imageUrl: null }} />,
+      <MemberTitleTag
+        look={{ template: "title.future", params: { text: "新款", textColor: "#ffffff" }, imageUrl: null }}
+      />,
     );
     const tag = container.querySelector("[data-member-title]") as HTMLElement;
     expect(tag).toHaveTextContent("新款");

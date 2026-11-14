@@ -8,11 +8,7 @@ const mockedAction = checkInAction as jest.Mock;
 
 function renderPanel(checkedInToday = false) {
   return render(
-    <CheckInPanel
-      checkedInToday={checkedInToday}
-      balance={<p>12 點</p>}
-      campaign={<div data-testid="campaign" />}
-    />,
+    <CheckInPanel checkedInToday={checkedInToday} balance={<p>12 點</p>} campaign={<div data-testid="campaign" />} />,
   );
 }
 

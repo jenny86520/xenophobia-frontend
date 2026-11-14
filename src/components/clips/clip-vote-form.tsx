@@ -21,20 +21,14 @@ export function ClipVoteForm({
   myVote,
   disabled,
 }: {
-  vote: (
-    state: MemberActionState,
-    form: FormData,
-  ) => Promise<MemberActionState>;
+  vote: (state: MemberActionState, form: FormData) => Promise<MemberActionState>;
   likes: number;
   dislikes: number;
   myVote: ClipVote | null;
   /** Voting is paused or not in the member's role (the page says why). */
   disabled: boolean;
 }) {
-  const [state, action, pending] = useActionState<MemberActionState, FormData>(
-    vote,
-    {},
-  );
+  const [state, action, pending] = useActionState<MemberActionState, FormData>(vote, {});
   const buttons = [
     { value: "like" as const, label: "讚", count: likes, Icon: ThumbsUp },
     {
@@ -65,10 +59,7 @@ export function ClipVoteForm({
                   : "border-line-strong text-ink-secondary hover:border-signal hover:text-ink",
               )}
             >
-              <Icon
-                aria-hidden="true"
-                className={cn("size-4", pressed && "fill-current")}
-              />
+              <Icon aria-hidden="true" className={cn("size-4", pressed && "fill-current")} />
               {label}
               <span className="font-mono tabular-nums">{count}</span>
             </button>

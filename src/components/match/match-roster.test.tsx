@@ -21,7 +21,11 @@ describe("MatchRoster cosmetics", () => {
           ownerPlayerId: "p1",
           players: [
             player("p1", "阿明", {
-              memberTitle: { template: "title.basic", params: { text: "內戰鐵人", textColor: "#ffffff" }, imageUrl: null },
+              memberTitle: {
+                template: "title.basic",
+                params: { text: "內戰鐵人", textColor: "#ffffff" },
+                imageUrl: null,
+              },
               frame: {
                 template: "frame.pulse",
                 params: { mainColor: "#00e5ff", accentColor: "#ff3df0", speed: "medium" },
@@ -30,7 +34,12 @@ describe("MatchRoster cosmetics", () => {
             }),
           ],
         },
-        { id: "e2", isGroup: false, ownerPlayerId: "p2", players: [player("p2", "訪客甲", { memberTitle: null, frame: null })] },
+        {
+          id: "e2",
+          isGroup: false,
+          ownerPlayerId: "p2",
+          players: [player("p2", "訪客甲", { memberTitle: null, frame: null })],
+        },
       ],
     } as unknown as MatchDetail;
 

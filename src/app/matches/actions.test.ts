@@ -302,7 +302,9 @@ describe("the game server", () => {
 
   it("starts on the chosen server, and asks for one when none is chosen", async () => {
     respond(200);
-    await expect(serverStartAction("m1", {}, form({}))).resolves.toMatchObject({ fields: { serverId: "請選擇伺服器" } });
+    await expect(serverStartAction("m1", {}, form({}))).resolves.toMatchObject({
+      fields: { serverId: "請選擇伺服器" },
+    });
     expect(global.fetch).not.toHaveBeenCalled();
     await expect(serverStartAction("m1", {}, form({ serverId: "srv1" }))).resolves.toMatchObject({ ok: true });
     expect(call()[0]).toBe("http://localhost:3001/api/matches/m1/manage/server/start");

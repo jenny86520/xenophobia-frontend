@@ -82,7 +82,9 @@ describe("SiteFooter", () => {
 
     expect(container.querySelector('[data-placeholder="contact.social"]')).toBeNull();
     const links = within(screen.getByRole("region", { name: "Social" })).getAllByRole("link");
-    expect(links.map((a) => [a.textContent?.replace("（另開新視窗）", "").replace(" ↗", ""), a.getAttribute("href")])).toEqual([
+    expect(
+      links.map((a) => [a.textContent?.replace("（另開新視窗）", "").replace(" ↗", ""), a.getAttribute("href")]),
+    ).toEqual([
       ["Discord", "https://discord.gg/x"],
       ["官方部落格", "https://blog.x.team"],
     ]);
