@@ -1,0 +1,3 @@
+# Layout-only commits (prettier formatting); `git blame --ignore-revs-file .git-blame-ignore-revs` and GitHub skip them.
+# [style] prettier 120 columns, .gitattributes, format script
+6d7342a6656e3064779f42c8e75941ffe3fd5f85
