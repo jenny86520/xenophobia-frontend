@@ -145,6 +145,8 @@ export type MemberVideoSubmission = {
   rejectReason: string;
   createdAt: string;
   reviewedAt: string | null;
+  /** Set while the video accepted from it is taken down (shown as 已下架 with the reason). */
+  takenDown?: { reason: string } | null;
 };
 
 export type MemberVideoSubmissions = {

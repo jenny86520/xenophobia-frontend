@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  Clapperboard,
   Crown,
   Info,
   Newspaper,
@@ -42,6 +43,7 @@ export const NAV_ITEMS: readonly (NavLink | NavGroup)[] = [
   { kind: "link", href: "/party", label: "Party", lang: "en", icon: PartyPopper },
   { kind: "link", href: "/legends", label: "Legends", lang: "en", icon: Crown },
   { kind: "link", href: "/shop", label: "Shop", lang: "en", icon: Store },
+  { kind: "link", href: "/clips", label: "Clips", lang: "en", icon: Clapperboard },
   {
     kind: "group",
     id: "nav-info",

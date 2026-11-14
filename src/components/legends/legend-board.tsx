@@ -2,6 +2,7 @@ import {
   CalendarCheck,
   CalendarDays,
   CalendarRange,
+  Clapperboard,
   Coins,
   Crosshair,
   Ghost,
@@ -28,6 +29,7 @@ export const BOARD_ICONS: Record<string, LucideIcon> = {
   "scrim-cancelled": Ghost,
   "points-earned": Coins,
   "checkin-streak": CalendarDays,
+  "video-likes": Clapperboard,
 };
 
 /** The id of a board's heading, also the anchor the 各榜榜首 links jump to. */

@@ -25,6 +25,14 @@ describe("SiteHeader", () => {
     expect(screen.getByRole("link", { name: "Legends" })).not.toHaveAttribute("aria-current");
   });
 
+  it("marks Clips on the clips page", () => {
+    mockPathname.mockReturnValue("/clips");
+    render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
+
+    expect(screen.getByRole("link", { name: "Clips" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Shop" })).not.toHaveAttribute("aria-current");
+  });
+
   it("labels the primary navigation in English, marked as English for screen readers", () => {
     render(<SiteHeader brandName="XenoPhobiA" cta={null} />);
 
@@ -34,6 +42,7 @@ describe("SiteHeader", () => {
       ["Party", "/party"],
       ["Legends", "/legends"],
       ["Shop", "/shop"],
+      ["Clips", "/clips"],
       ["About", "/about"],
       ["News", "/news"],
       ["Guide", "/guide"],

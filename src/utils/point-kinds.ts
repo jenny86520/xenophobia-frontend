@@ -14,6 +14,7 @@ const POINT_KIND_LABELS: Record<string, string> = {
   quest_reward: "新手任務",
   cosmetic_purchase: "購買外觀",
   ice_delete_refund: "刪除冰炫風退回",
+  video_report_reward: "檢舉影片成立",
 };
 
 export function pointKindLabel(kind: string): string {

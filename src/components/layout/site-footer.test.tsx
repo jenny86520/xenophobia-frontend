@@ -31,7 +31,7 @@ const about = (
 });
 
 describe("SiteFooter", () => {
-  it("lists Home, Party, Legends, Shop, About, News, Guide and Member in English, marked as English", () => {
+  it("lists Home, Party, Legends, Shop, Clips, About, News, Guide and Member in English, marked as English", () => {
     render(<SiteFooter brandName="XenoPhobiA" version="0.1.0" about={about([])} />);
 
     const links = within(screen.getByRole("navigation", { name: "Index" })).getAllByRole("link");
@@ -40,6 +40,7 @@ describe("SiteFooter", () => {
       ["Party", "/party", "en"],
       ["Legends", "/legends", "en"],
       ["Shop", "/shop", "en"],
+      ["Clips", "/clips", "en"],
       ["About", "/about", "en"],
       ["News", "/news", "en"],
       ["Guide", "/guide", "en"],

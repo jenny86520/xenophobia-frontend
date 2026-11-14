@@ -3,6 +3,7 @@ import { Eyebrow } from "@/components/brand/eyebrow";
 import { formatCount, MetaLabel } from "@/components/brand/meta-label";
 import { Placeholder } from "@/components/brand/placeholder";
 import { Section } from "@/components/brand/section";
+import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
 import { GameCarousel } from "@/components/games/game-carousel";
 import type { Game } from "@/types/about";
@@ -13,7 +14,10 @@ type GamesProps = {
   index: number;
 };
 
-/** 3 · What we play: a carousel of the games, each with its newest highlight video. */
+/**
+ * 3 · What we play: a carousel of the games, each playing its home picks (the backend ranks them by
+ * members' likes), and a link to every clip on /clips.
+ */
 export function Games({ games, index }: GamesProps) {
   return (
     <Section labelledBy="games-title" ruled className="reveal" id="games">
@@ -24,6 +28,9 @@ export function Games({ games, index }: GamesProps) {
             遊戲項目
           </Heading>
           <MetaLabel>{formatCount(games.length)} Titles</MetaLabel>
+          <TextLink href="/clips" lang="en" className="cta-secondary self-start text-body text-ink">
+            All clips <span aria-hidden="true">→</span>
+          </TextLink>
         </div>
         <div className="col-span-4 md:col-span-8 lg:col-span-8 lg:col-start-5">
           {games.length > 0 ? (

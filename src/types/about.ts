@@ -24,7 +24,7 @@ export type GameVideo =
 /** The nickname of the member a video is credited to (the submitter); null or missing when none. */
 type VideoMember = { memberNickname?: string | null };
 
-/** `videos`: the featured videos in play order; empty when the game has none. */
+/** `videos`: the home picks (ranked by members' likes in the backend) in play order; empty when none. */
 export type Game = { id: string; name: string; summary: string; videos: GameVideo[] };
 
 /** icon is a backend code (see components/about/highlight-icon.tsx). */

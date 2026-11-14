@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { cache } from "react";
 import { forwardedForHeader } from "@/lib/forwarded-for";
 import { backendBaseUrl } from "@/lib/public-content-client";
+import type { ClipList } from "@/types/clip";
 import type { CosmeticCollection } from "@/types/cosmetic";
 import type { FriendProfile, FriendsOverview } from "@/types/friends";
 import type { IceAlbumPage, IceCreamHistory, MemberIceCreams } from "@/types/ice-cream";
@@ -119,6 +120,16 @@ export function fetchMemberIceCreams(): Promise<MemberIceCreams | null> {
 /** The member's cosmetics (collection, what is equipped, cup stock); null when signed out. */
 export function fetchMemberCosmetics(): Promise<CosmeticCollection | null> {
   return memberGetJson<CosmeticCollection>("/api/member/cosmetics");
+}
+
+/** Clips per page: four full rows of three (each one an embedded player, loaded lazily). */
+export const CLIPS_PAGE_SIZE = 12;
+
+/** One page of /clips (members only); null when signed out or refused (the page then asks to sign in). */
+export function fetchClips(query: { gameId: string | null; sort: string; page: number }): Promise<ClipList | null> {
+  const params = new URLSearchParams({ sort: query.sort, page: String(query.page), pageSize: String(CLIPS_PAGE_SIZE) });
+  if (query.gameId) params.set("gameId", query.gameId);
+  return memberGetJson<ClipList>(`/api/clips?${params.toString()}`);
 }
 
 /** Tokens per album page: three or four full rows of cards. */

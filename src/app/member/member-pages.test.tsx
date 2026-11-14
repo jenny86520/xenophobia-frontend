@@ -1017,11 +1017,11 @@ describe("/member", () => {
       render(await MemberPage(memberProps("videos")));
 
       expect(screen.getByRole("link", { name: "投稿影片" })).toHaveAttribute("aria-current", "page");
-      expect(
-        screen.getByText(
-          "為遊戲項目投稿你的 highlight 影片。投稿需經管理員審核，通過後會公開在網站上，並陸續上傳至官網 YouTube 頻道。",
-        ),
-      ).toBeInTheDocument();
+      const clipsLink = screen.getByRole("link", { name: "精彩片段" });
+      expect(clipsLink).toHaveAttribute("href", "/clips");
+      expect(clipsLink.closest("p")).toHaveTextContent(
+        "為遊戲項目投稿你的 highlight 影片。投稿需經管理員審核，通過後會出現在精彩片段，讓會員按讚決定是否上首頁，並陸續上傳至官網 YouTube 頻道。",
+      );
       // The upload limits sit under the file field, where they apply.
       expect(screen.getByLabelText("影片檔")).toHaveAccessibleDescription(
         "MP4 或 WebM，500 MB 以內；每天最多 5 部，今天還能上傳 5 部。",

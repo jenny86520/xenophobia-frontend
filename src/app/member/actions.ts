@@ -552,3 +552,44 @@ export async function equipCosmeticAction(kind: string, itemId: string | null): 
   revalidatePath("/", "layout");
   return { ok: true, message: itemId ? "已裝備。" : "已卸下。" };
 }
+
+/* ---------- Clips (spec video-clips) ---------- */
+
+/**
+ * Likes, dislikes or takes the vote back on a clip: the pressed button's `vote` value ("like",
+ * "dislike", or "" for taking it back; the page computes it from the current vote). The video id is
+ * bound in the server component.
+ */
+export async function voteClipAction(
+  videoId: string,
+  _: MemberActionState,
+  form: FormData,
+): Promise<MemberActionState> {
+  const raw = text(form, "vote");
+  const vote = raw === "like" || raw === "dislike" ? raw : null;
+  const sent = await friendRequest(`/api/member/clips/${encodeURIComponent(videoId)}/vote`, {
+    method: "PUT",
+    body: JSON.stringify({ vote }),
+  });
+  if ("state" in sent) return sent.state;
+  if (!sent.response.ok) return errorState(sent.response, "操作失敗，請稍後再試");
+  revalidatePath("/clips");
+  return { ok: true };
+}
+
+/** Reports a clip with a category and an explanation; the video id is bound in the server component. */
+export async function reportClipAction(
+  videoId: string,
+  _: MemberActionState,
+  form: FormData,
+): Promise<MemberActionState> {
+  const values = { category: text(form, "category"), detail: text(form, "detail") };
+  const sent = await friendRequest(`/api/member/clips/${encodeURIComponent(videoId)}/reports`, {
+    method: "POST",
+    body: JSON.stringify(values),
+  });
+  if ("state" in sent) return sent.state;
+  if (!sent.response.ok) return { ...(await errorState(sent.response, "檢舉失敗，請稍後再試")), values };
+  revalidatePath("/clips");
+  return { ok: true, message: "已收到檢舉，管理員會盡快處理" };
+}

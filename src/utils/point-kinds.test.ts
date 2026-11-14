@@ -16,6 +16,7 @@ describe("pointKindLabel", () => {
   it("names the shop kinds instead of showing their codes", () => {
     expect(pointKindLabel("cosmetic_purchase")).toBe("購買外觀");
     expect(pointKindLabel("ice_delete_refund")).toBe("刪除冰炫風退回");
+    expect(pointKindLabel("video_report_reward")).toBe("檢舉影片成立");
   });
 
   it("shows an unknown kind as its code", () => {

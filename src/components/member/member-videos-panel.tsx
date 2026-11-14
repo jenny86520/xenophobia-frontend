@@ -62,8 +62,9 @@ export function MemberVideosPanel({ submissions, games, steamId }: MemberVideosP
         ) : (
           <>
             <p className="max-w-xl text-body text-ink-secondary">
-              為遊戲項目投稿你的 highlight 影片。投稿需經管理員審核，通過後會公開在網站上，並陸續上傳至官網 YouTube
-              頻道。
+              為遊戲項目投稿你的 highlight 影片。投稿需經管理員審核，通過後會出現在
+              <TextLink href="/clips">精彩片段</TextLink>
+              ，讓會員按讚決定是否上首頁，並陸續上傳至官網 YouTube 頻道。
             </p>
             {games.length === 0 ? (
               <p className="text-body text-ink-secondary">目前沒有可以投稿的遊戲項目。</p>
