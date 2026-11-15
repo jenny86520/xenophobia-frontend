@@ -259,6 +259,7 @@ describe("/shop", () => {
       expect(within(title).queryByRole("button")).not.toBeInTheDocument();
       expect(within(frame).getByRole("button", { name: "購買" })).toBeInTheDocument();
       expect(frame.querySelector("[data-frame='frame.pulse']")).not.toBeNull();
+      expect(frame.querySelector("[data-preview-name]")).toHaveTextContent("小明");
       expect(cup).toHaveTextContent("冰炫風杯・換一次・庫存 1");
       expect(within(cup).getByRole("button", { name: "購買" })).toBeInTheDocument();
       expect(cup.querySelector("svg[data-cup='cup.classic']")).not.toBeNull();
@@ -358,6 +359,7 @@ describe("/shop", () => {
         await renderPage(shop({ cosmetics: teaser.map((item) => ({ ...item, owned: null, stock: null })) }), false);
         const [frame, cup] = cosmeticCards();
         expect(frame).toHaveTextContent("12/24 20:00 開賣");
+        expect(frame.querySelector("[data-preview-name]")).toHaveTextContent("你的名字");
         expect(within(frame).queryByRole("link")).not.toBeInTheDocument();
         expect(within(cup).getByRole("link", { name: "登入會員後即可購買" })).toBeInTheDocument();
       });

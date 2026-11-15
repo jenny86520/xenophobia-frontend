@@ -99,13 +99,13 @@ function stockOf(item: ShopCosmetic): { remaining: number; limit: number } | und
   return { remaining: item.remaining ?? 0, limit: item.stockLimit };
 }
 
-/** One cosmetic's card (the same under 全部 and under its category's tab). */
-function cosmeticCard(item: ShopCosmetic, signIn: (label: string) => ReactNode) {
+/** One cosmetic's card (the same under 全部 and under its category's tab); a frame previews `nickname`. */
+function cosmeticCard(item: ShopCosmetic, signIn: (label: string) => ReactNode, nickname: string | null) {
   return (
     <ProductCard
       key={item.id}
       id={`product-cosmetic-${item.id}`}
-      picture={<CosmeticPreview kind={item.kind} look={item.look} />}
+      picture={<CosmeticPreview kind={item.kind} look={item.look} sampleName={nickname} />}
       name={item.name}
       price={`${item.price} 點`}
       terms={cosmeticTermsOf(item)}
@@ -120,19 +120,21 @@ function cosmeticCard(item: ShopCosmetic, signIn: (label: string) => ReactNode) 
 /**
  * The cosmetics shelf (spec point-shop): tabs for the admins' zones, then the four kinds; the
  * member's 隱藏已擁有; and under 全部 one section per kind with its own heading (each item once). A
- * single section needs no heading of its own: the shelf's heading names the grid.
+ * single section needs no heading of its own: the shelf's heading names the grid. Frames preview the
+ * member's own nickname (null for visitors: 「你的名字」).
  */
 function CosmeticsShelf({
   shop,
   query,
-  signedIn,
+  nickname,
   signIn,
 }: {
   shop: Awaited<ReturnType<typeof fetchShop>>;
   query: { category?: string | string[]; owned?: string | string[] };
-  signedIn: boolean;
+  nickname: string | null;
   signIn: (label: string) => ReactNode;
 }) {
+  const signedIn = nickname !== null;
   const items = shop.cosmetics ?? [];
   const groups = cosmeticTabs(shop.cosmeticCategories ?? [], items);
   const current = parseShopCategory(query.category, groups);
@@ -156,7 +158,7 @@ function CosmeticsShelf({
   } else if (shown.length === 1) {
     body = (
       <ProductGrid labelledBy={COSMETICS_SHELF_ID}>
-        {shown[0].items.map((item) => cosmeticCard(item, signIn))}
+        {shown[0].items.map((item) => cosmeticCard(item, signIn, nickname))}
       </ProductGrid>
     );
   } else {
@@ -167,7 +169,9 @@ function CosmeticsShelf({
           <Heading level={3} id={headingId}>
             {group.label}
           </Heading>
-          <ProductGrid labelledBy={headingId}>{group.items.map((item) => cosmeticCard(item, signIn))}</ProductGrid>
+          <ProductGrid labelledBy={headingId}>
+            {group.items.map((item) => cosmeticCard(item, signIn, nickname))}
+          </ProductGrid>
         </section>
       );
     });
@@ -311,7 +315,7 @@ export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
               );
             })}
           </ProductShelf>
-          <CosmeticsShelf shop={shop} query={query} signedIn={profile !== null} signIn={signIn} />
+          <CosmeticsShelf shop={shop} query={query} nickname={profile?.nickname ?? null} signIn={signIn} />
         </div>
       </Section>
       {shop.balance !== null && <ShopBalance balance={shop.balance} />}

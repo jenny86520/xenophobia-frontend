@@ -78,7 +78,12 @@ export function ProductCard({
           stock && "pb-16",
         )}
       >
-        <div className={cn("flex scale-110 items-center justify-center", soldOut && "opacity-40 grayscale")}>
+        <div
+          className={cn(
+            "flex max-w-full min-w-0 scale-110 items-center justify-center",
+            soldOut && "opacity-40 grayscale",
+          )}
+        >
           {picture ?? <IceCreamIcon className="size-14" />}
         </div>
         {tag && <Badge className="absolute top-3 left-3">{tag}</Badge>}

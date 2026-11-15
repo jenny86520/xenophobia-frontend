@@ -183,6 +183,31 @@ describe("CosmeticPreview", () => {
     ],
   ];
 
+  const FRAME = look("frame.line", { mainColor: "#e63946", borderStyle: "solid" });
+  const previewName = (container: HTMLElement) => container.querySelector("[data-preview-name]") as HTMLElement;
+
+  it("frames the member's own nickname, trimmed", () => {
+    const { container } = render(<CosmeticPreview kind="frame" look={FRAME} sampleName="  小明 " />);
+    expect(previewName(container)).toHaveTextContent(/^小明$/);
+  });
+
+  it.each([undefined, null, "", "   "])("frames 你的名字 without a nickname (%p)", (sampleName) => {
+    const { container } = render(<CosmeticPreview kind="frame" look={FRAME} sampleName={sampleName} />);
+    expect(previewName(container)).toHaveTextContent(/^你的名字$/);
+  });
+
+  it("cuts a long nickname with an ellipsis inside the frame, never clipping the frame itself", () => {
+    const long = "超級無敵長的暱稱".repeat(4);
+    const { container } = render(<CosmeticPreview kind="frame" look={FRAME} sampleName={long} />);
+    const name = previewName(container);
+    expect(name).toHaveTextContent(long);
+    expect(name).toHaveClass("truncate");
+    const frame = container.querySelector("[data-frame]") as HTMLElement;
+    expect(frame).toHaveClass("max-w-full", "min-w-0");
+    expect(frame).not.toHaveClass("truncate");
+    expect(frame.className).not.toMatch(/overflow/);
+  });
+
   it.each(NEW_LOOKS)("draws the new %s template %#, not the default look", (kind, cosmetic, selector) => {
     const { container } = render(<CosmeticPreview kind={kind} look={cosmetic} />);
     expect(container.querySelector(selector)).not.toBeNull();

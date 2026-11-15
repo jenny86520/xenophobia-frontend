@@ -5,19 +5,34 @@ import type { CosmeticLook } from "@/types/cosmetic";
 import { frameProps } from "./frame";
 import { MemberTitleTag } from "./member-title-tag";
 
+/** The name in a frame preview when no member is signed in (visitors, or no nickname given). */
+export const SAMPLE_NAME = "你的名字";
+
 /**
- * What a cosmetic looks like, for shop cards and the collection: the title tag itself, a sample name
- * row in the frame, one stamped seal, or the cup. Decorative (the name beside it says what it is).
+ * What a cosmetic looks like, for shop cards and the collection: the title tag itself, a name row in
+ * the frame, one stamped seal, or the cup. Decorative (the name beside it says what it is). The frame
+ * row shows `sampleName` (the signed-in member's own nickname), else 「你的名字」; a name too long for
+ * the space keeps its start and ends in an ellipsis (CSS, by the width actually there).
  */
-export function CosmeticPreview({ kind, look, className }: { kind: string; look: CosmeticLook; className?: string }) {
+export function CosmeticPreview({
+  kind,
+  look,
+  sampleName,
+  className,
+}: {
+  kind: string;
+  look: CosmeticLook;
+  sampleName?: string | null;
+  className?: string;
+}) {
   return (
-    <span aria-hidden="true" className={cn("flex items-center justify-center", className)}>
-      <PreviewBody kind={kind} look={look} />
+    <span aria-hidden="true" className={cn("flex max-w-full min-w-0 items-center justify-center", className)}>
+      <PreviewBody kind={kind} look={look} sampleName={sampleName?.trim() || SAMPLE_NAME} />
     </span>
   );
 }
 
-function PreviewBody({ kind, look }: { kind: string; look: CosmeticLook }) {
+function PreviewBody({ kind, look, sampleName }: { kind: string; look: CosmeticLook; sampleName: string }) {
   if (kind === "title") return <MemberTitleTag look={look} className="text-body" />;
   if (kind === "frame") {
     const frame = frameProps(look);
@@ -26,9 +41,12 @@ function PreviewBody({ kind, look }: { kind: string; look: CosmeticLook }) {
         data-frame={frame["data-frame"]}
         data-ornament={frame["data-ornament"]}
         style={frame.style}
-        className={cn("px-3 py-2 text-body text-ink", frame.className)}
+        className={cn("max-w-full min-w-0 px-3 py-2 text-body text-ink", frame.className)}
       >
-        你的名字
+        {/* Truncated inside the frame, never on it: corner ornaments reach past the frame's edge. */}
+        <span data-preview-name className="block truncate">
+          {sampleName}
+        </span>
       </span>
     );
   }

@@ -200,7 +200,7 @@ async function tabContent(tab: MemberTab, profile: MemberProfile, page: QueryVal
 
   if (tab === "cosmetics") {
     const collection = (await fetchMemberCosmetics()) ?? { owned: [], cups: [] };
-    return <MemberCosmeticsPanel collection={collection} />;
+    return <MemberCosmeticsPanel collection={collection} nickname={profile.nickname} />;
   }
 
   if (tab === "videos") {

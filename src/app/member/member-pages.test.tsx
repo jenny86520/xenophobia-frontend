@@ -1087,9 +1087,9 @@ describe("/member 收藏 tab", () => {
     expect(within(titles[0]).getByRole("button", { name: "卸下" })).toBeInTheDocument();
     expect(titles[1]).toHaveTextContent("已下架");
     expect(within(titles[1]).getByRole("button", { name: "裝備" })).toBeInTheDocument();
-    expect(
-      within(screen.getByRole("list", { name: "比賽室框" })).getByRole("button", { name: "裝備" }),
-    ).toBeInTheDocument();
+    const frames = screen.getByRole("list", { name: "比賽室框" });
+    expect(within(frames).getByRole("button", { name: "裝備" })).toBeInTheDocument();
+    expect(frames.querySelector("[data-preview-name]")).toHaveTextContent("小明");
     expect(screen.getByText("還沒有集點卡外觀。")).toBeInTheDocument();
     expect(within(screen.getByRole("list", { name: "冰炫風杯" })).getByRole("listitem")).toHaveTextContent("聖誕杯× 2");
   });

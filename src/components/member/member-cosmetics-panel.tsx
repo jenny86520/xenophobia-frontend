@@ -17,12 +17,20 @@ const SECTIONS: Array<{ kind: OwnedCosmetic["kind"]; title: string; note: string
   { kind: "stamp", title: "集點卡外觀", note: "點數分頁的集點卡改用這個印章，只有你看得到。" },
 ];
 
-/** One owned cosmetic: its preview and name, 裝備中 when worn, and the form to wear or take it off. */
-function OwnedRow({ item }: { item: OwnedCosmetic }) {
+/**
+ * One owned cosmetic: its preview (a frame shows the member's own nickname, cut short with an
+ * ellipsis when long) and name, 裝備中 when worn, and the form to wear or take it off.
+ */
+function OwnedRow({ item, nickname }: { item: OwnedCosmetic; nickname: string }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-b border-line py-4">
       <div className="flex min-w-0 items-center gap-4">
-        <CosmeticPreview kind={item.kind} look={item.look} className="min-w-24" />
+        <CosmeticPreview
+          kind={item.kind}
+          look={item.look}
+          sampleName={nickname}
+          className="max-w-40 min-w-24 shrink-0"
+        />
         <div className="flex min-w-0 flex-col gap-1">
           <span className="text-lead text-ink">{item.name}</span>
           <span className="flex flex-wrap gap-2">
@@ -45,7 +53,7 @@ function OwnedRow({ item }: { item: OwnedCosmetic }) {
  * each with 裝備 or 卸下 (one of a kind at a time); on the side the ice cream cups in stock, which are
  * changed onto tokens from the 冰炫風 tab. Every form works without JavaScript.
  */
-export function MemberCosmeticsPanel({ collection }: { collection: CosmeticCollection }) {
+export function MemberCosmeticsPanel({ collection, nickname }: { collection: CosmeticCollection; nickname: string }) {
   const empty = collection.owned.length === 0 && collection.cups.length === 0;
   return (
     <MemberTabColumns
@@ -76,7 +84,7 @@ export function MemberCosmeticsPanel({ collection }: { collection: CosmeticColle
                 ) : (
                   <ul aria-labelledby={headingId} className="border-t border-line">
                     {items.map((item) => (
-                      <OwnedRow key={item.id} item={item} />
+                      <OwnedRow key={item.id} item={item} nickname={nickname} />
                     ))}
                   </ul>
                 )}
