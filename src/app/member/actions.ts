@@ -173,6 +173,27 @@ export async function claimQuestAction(code: string): Promise<MemberActionState>
   return { ok: true, message: `已領取 ${points} 點` };
 }
 
+/**
+ * Claims a running 限時領點 campaign in the point shop (spec point-shop), bound with its id in the
+ * page. The backend decides whether it is running and whether the member already claimed it.
+ */
+export async function claimPointCampaignAction(campaignId: string): Promise<MemberActionState> {
+  let response: Response;
+  try {
+    response = await memberFetch(`/api/member/point-campaigns/${encodeURIComponent(campaignId)}/claim`, {
+      method: "POST",
+    });
+  } catch {
+    return UNREACHABLE;
+  }
+  if (response.status === 401) return signInAgain();
+  if (!response.ok) return errorState(response, "領取失敗，請稍後再試");
+  const { points } = (await response.json()) as { points: number; balance: number };
+  revalidatePath("/shop");
+  revalidatePath("/member");
+  return { ok: true, message: `已領取 ${points} 點` };
+}
+
 /** Agrees to the documents at the versions the member was shown; the backend refuses stale ones. */
 export async function acceptLegalAction(_: MemberActionState, form: FormData): Promise<MemberActionState> {
   let response: Response;

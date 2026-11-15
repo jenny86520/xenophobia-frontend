@@ -1,7 +1,7 @@
 "use client";
 
 import { UserPlus } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, type ReactNode } from "react";
 import { sendFriendRequestAction, updateFriendNoteAction } from "@/app/member/actions";
 import { cn } from "@/lib/utils";
 import type { MemberActionState } from "@/types/member";
@@ -68,17 +68,31 @@ export function AddFriendForm() {
 
 type SimpleAction = (state: MemberActionState) => Promise<MemberActionState>;
 
-/** One button running one bound action (accept, decline, withdraw, join, dismiss). */
+/**
+ * One button running one bound action (accept, decline, withdraw, join, dismiss). With `done` (e.g.
+ * 已領取 once the backend says so) it shows that instead of the button but stays mounted, so the
+ * action's message survives the revalidate that turned the card done.
+ */
 export function FriendActionButton({
   action,
   label,
   primary,
+  done,
 }: {
   action: SimpleAction;
   label: string;
   primary?: boolean;
+  done?: ReactNode;
 }) {
   const [state, formAction, pending] = useActionState<MemberActionState>(action, {});
+  if (done) {
+    return (
+      <div className="flex flex-col items-start gap-2">
+        {done}
+        <FormMessage state={state} />
+      </div>
+    );
+  }
   return (
     <form action={formAction} className="flex flex-col items-start gap-2">
       {primary ? (

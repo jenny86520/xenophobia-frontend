@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { CalendarCheck, Flame } from "lucide-react";
-import { buyCosmeticAction, claimIceCampaignAction, claimQuestAction } from "@/app/member/actions";
+import { CalendarCheck, Flame, Gift } from "lucide-react";
+import {
+  buyCosmeticAction,
+  claimIceCampaignAction,
+  claimPointCampaignAction,
+  claimQuestAction,
+} from "@/app/member/actions";
 import { PageHeader } from "@/components/brand/page-header";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
@@ -246,6 +251,29 @@ export default async function ShopPage({ searchParams }: PageProps<"/shop">) {
             />
           </ProductShelf>
           <ProductShelf id="shelf-tasks" title="點數任務">
+            {(shop.pointCampaigns ?? []).map((campaign) => (
+              <ProductCard
+                key={campaign.id}
+                id={`product-point-campaign-${campaign.id}`}
+                tag="期間限定"
+                picture={<Gift aria-hidden="true" className={PICTURE_CLASSES} />}
+                name={campaign.title}
+                price={`+${campaign.points} 點`}
+                terms={["每人限領一次", `${dateText(campaign.endDate)} 結束`]}
+                action={
+                  !profile ? (
+                    signIn("登入會員後即可領取")
+                  ) : (
+                    <FriendActionButton
+                      action={claimPointCampaignAction.bind(null, campaign.id)}
+                      label="領取"
+                      primary
+                      done={campaign.claimed ? <ShelfStatus kind="done">已領取</ShelfStatus> : undefined}
+                    />
+                  )
+                }
+              />
+            ))}
             <ProductCard
               id="product-checkin"
               picture={<CalendarCheck aria-hidden="true" className={PICTURE_CLASSES} />}

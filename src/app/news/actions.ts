@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { memberFetch } from "@/lib/member-session";
+import { isSitePath } from "@/utils/site-path";
 
 /** Records that the member saw these messages; best effort (a failure just leaves them unread). */
 async function markRead(ids: string[]): Promise<void> {
@@ -15,17 +16,17 @@ async function markRead(ids: string[]): Promise<void> {
 }
 
 /**
- * The reminder popup's form: 「知道了」 or one message's 「看全文」 (which sends `next`). Either way
- * every message in the popup counts as seen, the layout re-renders without it, and 看全文 then goes
- * to that message. Works without JavaScript; the modal island calls it on Esc too.
+ * The reminder popup's form: 「知道了」, one message's 「看全文」 or its call-to-action button (both send
+ * `next`). Either way every message in the popup counts as seen, the layout re-renders without it,
+ * and a `next` then goes to that page. Works without JavaScript; the modal island calls it on Esc too.
  */
 export async function acknowledgeNewsAction(formData: FormData): Promise<void> {
   const ids = formData.getAll("ids").filter((id): id is string => typeof id === "string");
   await markRead(ids);
   revalidatePath("/", "layout");
   const next = formData.get("next");
-  // Only our own message pages: never redirect to an address taken from the form as is.
-  if (typeof next === "string" && /^\/news\/[\w-]+$/.test(next)) redirect(next);
+  // Only paths on this site (the backend's CTA rule): a tampered form never leads elsewhere.
+  if (isSitePath(next)) redirect(next);
 }
 
 /**

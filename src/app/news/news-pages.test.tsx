@@ -57,6 +57,17 @@ describe("/news", () => {
     expect(markNewsReadAction).not.toHaveBeenCalled();
   });
 
+  it("leaves a message's call-to-action button off the list", async () => {
+    (fetchNewsList as jest.Mock).mockResolvedValue({
+      items: [item("x", { title: "耶誕活動開跑", ctaLabel: "去領 20 點", ctaUrl: "/shop#shelf-tasks" })],
+      total: 1,
+      page: 1,
+      pageSize: 10,
+    });
+    render(await NewsPage(listProps()));
+    expect(screen.queryByText("去領 20 點")).not.toBeInTheDocument();
+  });
+
   it("filters by the category in the URL and links the pages", async () => {
     (fetchNewsList as jest.Mock).mockResolvedValue({
       items: [item("u", { category: "update" })],
@@ -134,6 +145,22 @@ describe("/news/[id]", () => {
     expect(back.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.queryByRole("link", { name: "回到最新消息" })).not.toBeInTheDocument();
     expect(markNewsReadAction).toHaveBeenCalledWith(["a"]);
+  });
+
+  it("puts the call-to-action button under the text, and none without one", async () => {
+    (fetchNews as jest.Mock).mockResolvedValue(
+      item("x", { title: "耶誕活動開跑", ctaLabel: "去領 20 點", ctaUrl: "/shop#shelf-tasks" }),
+    );
+    const { unmount } = render(await NewsItemPage(itemProps("x")));
+    const cta = screen.getByRole("link", { name: "去領 20 點" });
+    expect(cta).toHaveAttribute("href", "/shop#shelf-tasks");
+    const lastListItem = screen.getAllByRole("listitem").at(-1)!;
+    expect(lastListItem.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    unmount();
+
+    (fetchNews as jest.Mock).mockResolvedValue(item("a", { ctaLabel: "", ctaUrl: "" }));
+    render(await NewsItemPage(itemProps("a")));
+    expect(screen.queryByRole("link", { name: /去領/ })).not.toBeInTheDocument();
   });
 
   it("is a real 404 for a message that cannot be shown", async () => {

@@ -43,6 +43,32 @@ describe("NewsReminder", () => {
     expect(within(dialog).getByRole("button", { name: "知道了" })).toHaveAttribute("type", "submit");
   });
 
+  it("adds a message's call-to-action button, which goes there through the same form", () => {
+    render(
+      <NewsReminder
+        reminders={[
+          { ...reminder("x", "耶誕活動開跑"), ctaLabel: "去領 20 點", ctaUrl: "/shop#shelf-tasks" },
+          { ...reminder("a", "冰炫風"), ctaLabel: "", ctaUrl: "" },
+        ]}
+      />,
+    );
+
+    const dialog = screen.getByRole("dialog", { name: "最新消息" });
+    const cta = within(dialog).getByRole("button", { name: "去領 20 點" });
+    expect(cta).toHaveAttribute("type", "submit");
+    expect(cta).toHaveAttribute("name", "next");
+    expect(cta).toHaveAttribute("value", "/shop#shelf-tasks");
+    // Only the message with a button gets one (看全文 ×2, the CTA, 知道了).
+    expect(within(dialog).getAllByRole("button")).toHaveLength(4);
+  });
+
+  it("shows no button for a link that is not a site path", () => {
+    render(
+      <NewsReminder reminders={[{ ...reminder("x", "外部"), ctaLabel: "去看看", ctaUrl: "https://evil.example" }]} />,
+    );
+    expect(screen.queryByRole("button", { name: "去看看" })).not.toBeInTheDocument();
+  });
+
   it("counts closing with Esc as seen", async () => {
     render(<NewsReminder reminders={[reminder("b", "點數商店上線")]} />);
 

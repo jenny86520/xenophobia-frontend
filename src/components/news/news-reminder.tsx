@@ -6,6 +6,7 @@ import { MetaLabel } from "@/components/brand/meta-label";
 import { ctaPrimaryClasses } from "@/components/brand/cta-link";
 import type { NewsReminder as Reminder } from "@/types/news";
 import { formatTaipeiDate } from "@/utils/datetime";
+import { newsCta } from "@/utils/news-cta";
 
 /**
  * The messages a member is reminded of once (the backend picks them). Rendered on the server as an
@@ -48,24 +49,34 @@ export function NewsReminder({ reminders }: { reminders: Reminder[] }) {
           </h2>
         </div>
         <ul className="flex flex-col">
-          {reminders.map((reminder) => (
-            <li key={reminder.id} className="flex flex-col gap-2 border-t border-line py-4">
-              <input type="hidden" name="ids" value={reminder.id} />
-              <MetaLabel>
-                <time dateTime={reminder.publishAt}>{formatTaipeiDate(reminder.publishAt)}</time>
-              </MetaLabel>
-              <h3 className="font-heading text-h3 text-ink">{reminder.title}</h3>
-              {reminder.excerpt && <p className="text-body text-ink-secondary">{reminder.excerpt}</p>}
-              <button
-                type="submit"
-                name="next"
-                value={`/news/${reminder.id}`}
-                className="link-underline self-start text-body text-ink-secondary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
-              >
-                看全文<span className="sr-only">：{reminder.title}</span>
-              </button>
-            </li>
-          ))}
+          {reminders.map((reminder) => {
+            const cta = newsCta(reminder);
+            return (
+              <li key={reminder.id} className="flex flex-col gap-2 border-t border-line py-4">
+                <input type="hidden" name="ids" value={reminder.id} />
+                <MetaLabel>
+                  <time dateTime={reminder.publishAt}>{formatTaipeiDate(reminder.publishAt)}</time>
+                </MetaLabel>
+                <h3 className="font-heading text-h3 text-ink">{reminder.title}</h3>
+                {reminder.excerpt && <p className="text-body text-ink-secondary">{reminder.excerpt}</p>}
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <button
+                    type="submit"
+                    name="next"
+                    value={`/news/${reminder.id}`}
+                    className="link-underline text-body text-ink-secondary hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                  >
+                    看全文<span className="sr-only">：{reminder.title}</span>
+                  </button>
+                  {cta && (
+                    <button type="submit" name="next" value={cta.url} className={ctaPrimaryClasses()}>
+                      {cta.label}
+                    </button>
+                  )}
+                </div>
+              </li>
+            );
+          })}
         </ul>
         <button type="submit" autoFocus className={ctaPrimaryClasses("default", "self-end")}>
           知道了

@@ -9,6 +9,7 @@ jest.mock("@/lib/public-content-client", () => ({ fetchShop: jest.fn() }));
 jest.mock("@/app/member/actions", () => ({
   claimIceCampaignAction: jest.fn(),
   claimQuestAction: jest.fn(),
+  claimPointCampaignAction: jest.fn(),
   buyCosmeticAction: jest.fn(),
 }));
 
@@ -161,6 +162,44 @@ describe("/shop", () => {
     await renderPage(shop({ iceCampaigns: [], streakCampaign: null, quests: undefined }), false);
     expect(ids(shelf("冰炫風"))).toEqual(["product-create"]);
     expect(ids(shelf("點數任務"))).toEqual(["product-checkin"]);
+  });
+
+  describe("限時領點", () => {
+    const campaigns: NonNullable<Shop["pointCampaigns"]> = [
+      { id: "xmas", title: "耶誕禮物", points: 20, endDate: "2026-12-26", claimed: false },
+      { id: "eve", title: "平安夜加碼", points: 5, endDate: "2026-12-24", claimed: true },
+    ];
+
+    it("leads the 點數任務 shelf with running campaigns a member can claim once", async () => {
+      await renderPage(shop({ pointCampaigns: campaigns }), true);
+      const tasks = shelf("點數任務");
+      expect(ids(tasks).slice(0, 3)).toEqual([
+        "product-point-campaign-xmas",
+        "product-point-campaign-eve",
+        "product-checkin",
+      ]);
+      const [xmas, eve] = tasks;
+      expect(xmas).toHaveAccessibleName("耶誕禮物");
+      expect(xmas).toHaveTextContent("期間限定");
+      expect(xmas).toHaveTextContent("+20 點");
+      expect(xmas).toHaveTextContent("每人限領一次・2026/12/26 結束");
+      expect(within(xmas).getByRole("button", { name: "領取" })).toBeInTheDocument();
+      expect(eve).toHaveTextContent("已領取");
+      expect(within(eve).queryByRole("button")).not.toBeInTheDocument();
+    });
+
+    it("asks visitors to sign in", async () => {
+      await renderPage(
+        shop({
+          pointCampaigns: campaigns.map(({ id, title, points, endDate }) => ({ id, title, points, endDate })),
+          quests: undefined,
+        }),
+        false,
+      );
+      const [xmas] = shelf("點數任務");
+      expect(within(xmas).getByRole("link", { name: "登入會員後即可領取" })).toHaveAttribute("href", "/member/login");
+      expect(within(xmas).queryByRole("button")).not.toBeInTheDocument();
+    });
   });
 
   describe("外觀 shelf", () => {

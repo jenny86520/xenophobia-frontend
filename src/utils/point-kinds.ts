@@ -15,6 +15,7 @@ const POINT_KIND_LABELS: Record<string, string> = {
   cosmetic_purchase: "購買外觀",
   ice_delete_refund: "刪除冰炫風退回",
   video_report_reward: "檢舉影片成立",
+  point_campaign: "限時領點",
 };
 
 export function pointKindLabel(kind: string): string {

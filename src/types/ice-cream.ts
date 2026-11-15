@@ -106,6 +106,8 @@ export type Shop = {
   streakCampaign: { title: string; endDate: string; requiredDays: number } | null;
   iceCampaigns: { id: string; title: string; endDate: string; claimed: boolean }[];
   createCost: number;
+  /** 限時領點 campaigns running today; `claimed` only for a member; an older backend may leave it out. */
+  pointCampaigns?: ShopPointCampaign[];
   /** The signed-in member's points; null for visitors. */
   balance: number | null;
   /** Newbie quests in order; an older backend may leave it out. */
@@ -114,6 +116,16 @@ export type Shop = {
   cosmetics?: ShopCosmetic[];
   /** The admins' cosmetic categories in display order; an older backend may leave it out. */
   cosmeticCategories?: ShopCosmeticCategory[];
+};
+
+/** A running 限時領點 campaign on the shop's 點數任務 shelf (spec point-shop). */
+export type ShopPointCampaign = {
+  id: string;
+  title: string;
+  points: number;
+  endDate: string;
+  /** Present only for a signed-in member. */
+  claimed?: boolean;
 };
 
 /** A friend's tokens on their friend page. */

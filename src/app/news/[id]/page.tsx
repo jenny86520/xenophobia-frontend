@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CtaLink } from "@/components/brand/cta-link";
 import { Eyebrow } from "@/components/brand/eyebrow";
 import { PlainText } from "@/components/brand/plain-text";
 import { Section } from "@/components/brand/section";
@@ -9,6 +10,7 @@ import { MarkNewsSeen } from "@/components/news/mark-news-seen";
 import { NewsCategoryBadge, NewsMeta } from "@/components/news/news-labels";
 import { memberToken } from "@/lib/member-session";
 import { fetchNews } from "@/lib/public-content-client";
+import { newsCta } from "@/utils/news-cta";
 
 export async function generateMetadata({ params }: PageProps<"/news/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -26,6 +28,7 @@ export default async function NewsItemPage({ params }: PageProps<"/news/[id]">) 
   const { id } = await params;
   const [item, signedIn] = await Promise.all([fetchNews(id), memberToken()]);
   if (!item) notFound();
+  const cta = newsCta(item);
 
   return (
     <main id="main">
@@ -33,6 +36,7 @@ export default async function NewsItemPage({ params }: PageProps<"/news/[id]">) 
         <TextLink href="/news" className="text-body text-ink-secondary hover:text-ink">
           <span aria-hidden="true">←</span> 最新消息
         </TextLink>
+        {/* Full width: the text runs across the whole container, like the page header. */}
         <article className="mt-10 flex flex-col gap-6">
           <Eyebrow>NEWS</Eyebrow>
           <div className="flex flex-wrap items-center gap-3">
@@ -42,7 +46,8 @@ export default async function NewsItemPage({ params }: PageProps<"/news/[id]">) 
           <Heading level={1} id="page-title">
             {item.title}
           </Heading>
-          <PlainText text={item.content} headingLevel={2} />
+          <PlainText text={item.content} headingLevel={2} className="max-w-none text-lead" />
+          {cta && <CtaLink href={cta.url} label={cta.label} className="self-start" />}
         </article>
         {signedIn && <MarkNewsSeen ids={[item.id]} />}
       </Section>

@@ -15,6 +15,7 @@ describe("pointKindLabel", () => {
 
   it("names the shop kinds instead of showing their codes", () => {
     expect(pointKindLabel("cosmetic_purchase")).toBe("購買外觀");
+    expect(pointKindLabel("point_campaign")).toBe("限時領點");
     expect(pointKindLabel("ice_delete_refund")).toBe("刪除冰炫風退回");
     expect(pointKindLabel("video_report_reward")).toBe("檢舉影片成立");
   });
@@ -27,6 +28,7 @@ describe("pointKindLabel", () => {
 describe("pointEntryLabel", () => {
   it("adds what a purchase bought", () => {
     expect(pointEntryLabel({ kind: "cosmetic_purchase", detail: "聖誕杯" })).toBe("購買外觀・聖誕杯");
+    expect(pointEntryLabel({ kind: "point_campaign", detail: "耶誕禮物" })).toBe("限時領點・耶誕禮物");
   });
 
   it("is just the kind without a detail", () => {
