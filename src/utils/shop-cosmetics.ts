@@ -1,44 +1,53 @@
-/**
- * The point shop's cosmetics shelf (spec point-shop): grouping by the admins' categories, the
- * `?category=` tab and the members' `owned=hide`. Presentation only: which category an item is in
- * and whether the member owns it both come from the backend.
- */
+import { COSMETIC_KIND_LABELS } from "@/utils/cosmetics";
 
-/** The `category` value of the 其他 tab: items without a category (or with one the shop does not list). */
-export const OTHER_CATEGORY = "other";
-export const OTHER_LABEL = "其他";
+/**
+ * The point shop's cosmetics shelf (spec point-shop): tabs for the admins' zones and for the four
+ * kinds, the `?category=` tab and the members' `owned=hide`. Presentation only: an item's kind, its
+ * zones and whether the member owns it all come from the backend.
+ */
 
 /** The anchor every tab and toggle link jumps to, so the page stays on the cosmetics shelf. */
 export const COSMETICS_SHELF_ID = "shelf-cosmetics";
 
+/** The kinds in shelf order; their tab values are the kind codes (zone ids are uuids, never these). */
+export const KIND_TABS = ["title", "frame", "stamp", "cup"] as const;
+
 export type ShopCategoryTab = "all" | string;
 
 export type CosmeticGroup<T> = {
-  /** A category id, or OTHER_CATEGORY. */
+  /** A zone id or a kind code. */
   key: string;
   label: string;
   items: T[];
 };
 
-type Groupable = { categoryId?: string | null };
+type Groupable = { kind: string; categoryIds?: string[] };
 type Ownable = { owned: boolean | null };
 
 /**
- * The items grouped by category, in the categories' order with 其他 last; groups without items are
- * left out, and each keeps the backend's order of its items.
+ * The tabs after 全部: the admins' zones in their order (an item may be in several, of any kind),
+ * then the four kinds in shelf order. Tabs without items are left out; each keeps the backend's
+ * order of its items.
  */
-export function cosmeticGroups<T extends Groupable>(
+export function cosmeticTabs<T extends Groupable>(
   categories: ReadonlyArray<{ id: string; name: string }>,
   items: readonly T[],
 ): CosmeticGroup<T>[] {
-  const known = new Set(categories.map((category) => category.id));
-  const keyOf = (item: T) => (item.categoryId && known.has(item.categoryId) ? item.categoryId : OTHER_CATEGORY);
-  return [...categories.map((c) => ({ key: c.id, label: c.name })), { key: OTHER_CATEGORY, label: OTHER_LABEL }]
-    .map((group) => ({
-      ...group,
-      items: items.filter((item) => keyOf(item) === group.key),
-    }))
-    .filter((group) => group.items.length > 0);
+  const zones = categories.map((zone) => ({
+    key: zone.id,
+    label: zone.name,
+    items: items.filter((item) => item.categoryIds?.includes(zone.id) ?? false),
+  }));
+  return [...zones, ...kindSections(items)].filter((group) => group.items.length > 0);
+}
+
+/** 全部 in sections by kind (shelf order), each item once; kinds without items are left out. */
+export function kindSections<T extends Groupable>(items: readonly T[]): CosmeticGroup<T>[] {
+  return KIND_TABS.map((kind) => ({
+    key: kind,
+    label: COSMETIC_KIND_LABELS[kind],
+    items: items.filter((item) => item.kind === kind),
+  })).filter((group) => group.items.length > 0);
 }
 
 /** The tab named by `?category=`: a group that has items, else 全部. */
@@ -55,7 +64,8 @@ export function parseHideOwned(value: string | string[] | undefined, signedIn: b
 }
 
 /**
- * The groups shown under the current tab: one group, or every group under 全部; with `hideOwned`,
+ * The groups shown under the current tab: that tab's group, or under 全部 every group passed in (the
+ * kind sections); with `hideOwned`,
  * collectibles the member owns (`owned === true`) are left out (cups, whose `owned` is null, never
  * are), and groups left empty are dropped.
  */

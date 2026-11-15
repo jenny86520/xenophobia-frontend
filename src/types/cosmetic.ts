@@ -30,11 +30,11 @@ export type ShopCosmetic = {
   saleStartsAt?: string | null;
   /** A teaser before its start: shown with the start time, never with a buy button. */
   upcoming?: boolean;
-  /** The admins' shop category; null (or missing from older backends) = 未分類, shown under 其他. */
-  categoryId?: string | null;
+  /** The admins' shop zones, in their order; [] (or missing from older backends) = none. */
+  categoryIds?: string[];
 };
 
-/** One of the admins' cosmetic categories (the shop's tabs), in display order. */
+/** One of the admins' shop zones (a tab before the kinds), in display order. */
 export type ShopCosmeticCategory = { id: string; name: string };
 
 export type OwnedCosmetic = {

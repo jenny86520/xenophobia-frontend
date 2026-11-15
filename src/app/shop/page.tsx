@@ -23,7 +23,8 @@ import { questIcon } from "@/utils/quests";
 import { QuestGoalLink } from "@/components/member/quest-goal-link";
 import {
   COSMETICS_SHELF_ID,
-  cosmeticGroups,
+  cosmeticTabs,
+  kindSections,
   parseHideOwned,
   parseShopCategory,
   shopCosmeticsHref,
@@ -112,9 +113,9 @@ function cosmeticCard(item: ShopCosmetic, signIn: (label: string) => ReactNode) 
 }
 
 /**
- * The cosmetics shelf (spec point-shop): tabs by the admins' categories (其他 for the rest), the
- * member's 隱藏已擁有, and under 全部 one section per category with its own heading. A single
- * group needs no heading of its own: the shelf's heading names the grid.
+ * The cosmetics shelf (spec point-shop): tabs for the admins' zones, then the four kinds; the
+ * member's 隱藏已擁有; and under 全部 one section per kind with its own heading (each item once). A
+ * single section needs no heading of its own: the shelf's heading names the grid.
  */
 function CosmeticsShelf({
   shop,
@@ -128,10 +129,10 @@ function CosmeticsShelf({
   signIn: (label: string) => ReactNode;
 }) {
   const items = shop.cosmetics ?? [];
-  const groups = cosmeticGroups(shop.cosmeticCategories ?? [], items);
+  const groups = cosmeticTabs(shop.cosmeticCategories ?? [], items);
   const current = parseShopCategory(query.category, groups);
   const hideOwned = parseHideOwned(query.owned, signedIn);
-  const shown = shownGroups(groups, current, hideOwned);
+  const shown = shownGroups(current === "all" ? kindSections(items) : groups, current, hideOwned);
 
   let body: ReactNode;
   if (items.length === 0) {
@@ -170,7 +171,13 @@ function CosmeticsShelf({
   return (
     <ProductShelf id={COSMETICS_SHELF_ID} title="外觀" grid={false}>
       {groups.length > 0 && (
-        <ShopCosmeticTabs groups={groups} current={current} hideOwned={hideOwned} signedIn={signedIn} />
+        <ShopCosmeticTabs
+          groups={groups}
+          total={items.length}
+          current={current}
+          hideOwned={hideOwned}
+          signedIn={signedIn}
+        />
       )}
       {body}
     </ProductShelf>

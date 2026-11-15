@@ -4,25 +4,27 @@ import { cn } from "@/lib/utils";
 import { type CosmeticGroup, type ShopCategoryTab, shopCosmeticsHref } from "@/utils/shop-cosmetics";
 
 /**
- * The cosmetics shelf's tabs (spec point-shop): 全部, then one per category with items (the admins'
- * order, 其他 last), each with its item count, as links rendered on the server, so they work
+ * The cosmetics shelf's tabs (spec point-shop): 全部, then each zone with items (the admins' order),
+ * then each kind with items, each with its item count, as links rendered on the server, so they work
  * without JavaScript. Like the /legends tabs: a <nav> with aria-current, the current tab marked by a
  * rule and bolder text, scrolling sideways when narrow. A signed-in member also gets the
  * 隱藏已擁有 / 顯示已擁有 link; every link keeps the other setting and lands on the shelf.
  */
 export function ShopCosmeticTabs({
   groups,
+  total,
   current,
   hideOwned,
   signedIn,
 }: {
-  /** Every group with items, before hiding owned ones (the counts never change with the toggle). */
+  /** Every tab with items, before hiding owned ones (the counts never change with the toggle). */
   groups: CosmeticGroup<unknown>[];
+  /** 全部's count: every item once, though an item may be in several zones. */
+  total: number;
   current: ShopCategoryTab;
   hideOwned: boolean;
   signedIn: boolean;
 }) {
-  const total = groups.reduce((sum, group) => sum + group.items.length, 0);
   const tabs = [{ key: "all", label: "全部", count: total }, ...groups.map((g) => ({ ...g, count: g.items.length }))];
   const ToggleIcon = hideOwned ? Eye : EyeOff;
 

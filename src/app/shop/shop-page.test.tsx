@@ -79,6 +79,12 @@ async function renderPage(data: Shop, member: boolean, query: Record<string, str
 describe("/shop", () => {
   const shelf = (name: string) => Array.from(screen.getByRole("list", { name }).children) as HTMLElement[];
   const ids = (cards: HTMLElement[]) => cards.map((card) => card.getAttribute("aria-labelledby"));
+  /** Every card on the 外觀 shelf in order, across its sections. */
+  const cosmeticCards = () =>
+    Array.from(
+      document.getElementById("shelf-cosmetics")?.closest("section")?.querySelectorAll("ul[aria-labelledby] > li") ??
+        [],
+    ) as HTMLElement[];
 
   it("puts ice creams on one shelf and the ways to earn points on another", async () => {
     await renderPage(shop(), true);
@@ -206,7 +212,7 @@ describe("/shop", () => {
 
     it("previews each cosmetic, marks owned ones and keeps cups buyable with their stock", async () => {
       await renderPage(shop({ cosmetics }), true);
-      const [title, frame, cup] = shelf("外觀");
+      const [title, frame, cup] = cosmeticCards();
       expect(title).toHaveAccessibleName("派對常客");
       expect(title).toHaveTextContent("30 點");
       expect(title).toHaveTextContent("稱號・永久");
@@ -221,7 +227,7 @@ describe("/shop", () => {
 
     it("asks before buying: the price and no refund in a dialog holding the only submit", async () => {
       await renderPage(shop({ cosmetics }), true);
-      const [, frame, cup] = shelf("外觀");
+      const [, frame, cup] = cosmeticCards();
       const open = within(frame).getByRole("button", { name: "購買" });
       expect(open).toHaveAttribute("type", "button");
       const dialog = document.getElementById(open.getAttribute("popovertarget") ?? "");
@@ -265,7 +271,10 @@ describe("/shop", () => {
         },
       ];
       await renderPage(shop({ cosmetics: limited }), true);
-      const [cup, frame, plain] = shelf("外觀");
+      // Under 全部 the cards come by kind: the frames, then the cup.
+      const card = (id: string) =>
+        cosmeticCards().find((li) => li.getAttribute("aria-labelledby") === `product-cosmetic-${id}`) as HTMLElement;
+      const [cup, frame, plain] = [card(limited[0].id), card("f2"), card("f3")];
       expect(within(cup).getByText("限量 20 份")).toBeInTheDocument();
       expect(cup.querySelector("[data-stock-meter]")).toHaveTextContent("剩餘3 / 20 份");
       expect(cup).toHaveTextContent("12/31 停售");
@@ -291,14 +300,14 @@ describe("/shop", () => {
           owned: false,
           saleStartsAt: "2026-12-24T12:00:00.000Z",
           upcoming: true,
-          categoryId: "xmas",
+          categoryIds: ["xmas"],
         },
-        { ...cosmetics[2], categoryId: "xmas", saleStartsAt: null, upcoming: false },
+        { ...cosmetics[2], categoryIds: ["xmas"], saleStartsAt: null, upcoming: false },
       ];
 
       it("shows the preview, price and start of sale with no buy button", async () => {
         await renderPage(shop({ cosmetics: teaser }), true);
-        const [frame, cup] = shelf("外觀");
+        const [frame, cup] = cosmeticCards();
         expect(frame.querySelector("[data-frame='frame.pulse']")).not.toBeNull();
         expect(frame).toHaveTextContent("10 點");
         expect(frame).toHaveTextContent("12/24 20:00 開賣");
@@ -308,7 +317,7 @@ describe("/shop", () => {
 
       it("shows visitors the same start of sale without a sign-in link", async () => {
         await renderPage(shop({ cosmetics: teaser.map((item) => ({ ...item, owned: null, stock: null })) }), false);
-        const [frame, cup] = shelf("外觀");
+        const [frame, cup] = cosmeticCards();
         expect(frame).toHaveTextContent("12/24 20:00 開賣");
         expect(within(frame).queryByRole("link")).not.toBeInTheDocument();
         expect(within(cup).getByRole("link", { name: "登入會員後即可購買" })).toBeInTheDocument();
@@ -320,136 +329,129 @@ describe("/shop", () => {
           within(screen.getByRole("navigation", { name: "外觀分類" }))
             .getAllByRole("link")
             .map((link) => link.textContent),
-        ).toEqual(["全部 2", "聖誕系列 2"]);
+        ).toEqual(["全部 2", "聖誕系列 2", "比賽室框 1", "冰炫風杯 1"]);
       });
     });
 
     it("asks visitors to sign in and says when nothing is on sale", async () => {
       await renderPage(shop({ cosmetics }), false);
-      for (const card of shelf("外觀")) {
+      for (const card of cosmeticCards()) {
         expect(within(card).getByRole("link", { name: "登入會員後即可購買" })).toHaveAttribute("href", "/member/login");
       }
     });
 
     it("says when there is nothing on sale", async () => {
       await renderPage(shop({ cosmetics: [] }), true);
-      expect(shelf("外觀")[0]).toHaveTextContent("目前沒有外觀商品");
+      expect(cosmeticCards()[0]).toHaveTextContent("目前沒有外觀商品");
       expect(screen.queryByRole("navigation", { name: "外觀分類" })).not.toBeInTheDocument();
     });
 
-    describe("categories", () => {
+    describe("zones and kinds", () => {
       const cosmeticCategories = [
-        { id: "xmas", name: "聖誕系列" },
-        { id: "party", name: "派對限定" },
+        { id: "limited", name: "限定" },
+        { id: "collab", name: "聯名" },
         { id: "spring", name: "新春" },
       ];
-      // 派對常客 (owned) and 霓虹框 in 派對限定, 聖誕杯 in 聖誕系列, plus an item with no category.
+      // 2 titles, 1 frame, 2 cups: 派對常客 (owned) and 聖誕杯 in 限定, 霓虹框 in 聯名, nothing in 新春.
       const sorted: NonNullable<Shop["cosmetics"]> = [
-        { ...cosmetics[0], categoryId: "party" },
-        { ...cosmetics[1], categoryId: "party" },
-        { ...cosmetics[2], categoryId: "xmas" },
-        { ...cosmetics[1], id: "f9", name: "常駐框", categoryId: null },
+        { ...cosmetics[0], categoryIds: ["limited"] },
+        { ...cosmetics[0], id: "t9", name: "新手稱號", owned: false, categoryIds: [] },
+        { ...cosmetics[1], categoryIds: ["collab"] },
+        { ...cosmetics[2], categoryIds: ["limited"] },
+        { ...cosmetics[2], id: "c9", name: "常駐杯", categoryIds: [] },
       ];
       const tabs = () =>
         within(screen.getByRole("navigation", { name: "外觀分類" }))
           .getAllByRole("link")
           .map((link) => link.textContent);
 
-      it("tabs the categories with items in the admins' order, 其他 last, and sections 全部", async () => {
+      it("tabs the zones, then the kinds, and sections 全部 by kind with each item once", async () => {
         await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true);
-        expect(tabs()).toEqual(["全部 4", "聖誕系列 1", "派對限定 2", "其他 1"]);
-        expect(screen.getByRole("link", { name: "全部 4" })).toHaveAttribute("aria-current", "page");
-        expect(screen.getByRole("link", { name: "派對限定 2" })).toHaveAttribute(
+        expect(tabs()).toEqual(["全部 5", "限定 2", "聯名 1", "稱號 2", "比賽室框 1", "冰炫風杯 2"]);
+        expect(screen.getByRole("link", { name: "全部 5" })).toHaveAttribute("aria-current", "page");
+        expect(screen.getByRole("link", { name: "限定 2" })).toHaveAttribute(
           "href",
-          "/shop?category=party#shelf-cosmetics",
+          "/shop?category=limited#shelf-cosmetics",
         );
         expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
-          "聖誕系列",
-          "派對限定",
-          "其他",
+          "稱號",
+          "比賽室框",
+          "冰炫風杯",
         ]);
-        expect(ids(shelf("聖誕系列"))).toEqual(["product-cosmetic-c1"]);
-        expect(ids(shelf("派對限定"))).toEqual(["product-cosmetic-t1", "product-cosmetic-f1"]);
-        expect(ids(shelf("其他"))).toEqual(["product-cosmetic-f9"]);
+        expect(ids(shelf("稱號"))).toEqual(["product-cosmetic-t1", "product-cosmetic-t9"]);
+        expect(ids(shelf("比賽室框"))).toEqual(["product-cosmetic-f1"]);
+        expect(ids(shelf("冰炫風杯"))).toEqual(["product-cosmetic-c1", "product-cosmetic-c9"]);
+        expect(cosmeticCards()).toHaveLength(5);
       });
 
-      it("shows one category under its tab, without a sub-heading", async () => {
-        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, {
-          category: "party",
-        });
-        expect(screen.getByRole("link", { name: "派對限定 2" })).toHaveAttribute("aria-current", "page");
+      it("shows a zone across kinds under its tab, without a sub-heading", async () => {
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, { category: "limited" });
+        expect(screen.getByRole("link", { name: "限定 2" })).toHaveAttribute("aria-current", "page");
         expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
-        expect(ids(shelf("外觀"))).toEqual(["product-cosmetic-t1", "product-cosmetic-f1"]);
+        expect(ids(shelf("外觀"))).toEqual(["product-cosmetic-t1", "product-cosmetic-c1"]);
         // The other shelves stay.
         expect(ids(shelf("冰炫風"))).toContain("product-create");
       });
 
-      it("treats an unknown or empty category as 全部", async () => {
-        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, {
-          category: "spring",
-        });
-        expect(screen.getByRole("link", { name: "全部 4" })).toHaveAttribute("aria-current", "page");
+      it("shows one kind under its tab, zone members included", async () => {
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, { category: "cup" });
+        expect(screen.getByRole("link", { name: "冰炫風杯 2" })).toHaveAttribute("aria-current", "page");
+        expect(ids(shelf("外觀"))).toEqual(["product-cosmetic-c1", "product-cosmetic-c9"]);
       });
 
-      it("has only 全部 and 其他 without categories", async () => {
+      it("treats an unknown, empty or old 其他 tab as 全部", async () => {
+        for (const category of ["spring", "stamp", "other"]) {
+          document.body.innerHTML = "";
+          await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, { category });
+          expect(screen.getByRole("link", { name: "全部 5" })).toHaveAttribute("aria-current", "page");
+        }
+      });
+
+      it("has only 全部 and the kinds without zones, and no 其他", async () => {
         await renderPage(shop({ cosmetics }), false);
-        expect(tabs()).toEqual(["全部 3", "其他 3"]);
-        expect(shelf("外觀")).toHaveLength(3);
+        expect(tabs()).toEqual(["全部 3", "稱號 1", "比賽室框 1", "冰炫風杯 1"]);
+        expect(cosmeticCards()).toHaveLength(3);
       });
 
       it("lets a member hide what they own, keeping cups and the counts", async () => {
-        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, {
-          category: "party",
-        });
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, { category: "limited" });
         expect(screen.getByRole("link", { name: "隱藏已擁有" })).toHaveAttribute(
           "href",
-          "/shop?category=party&owned=hide#shelf-cosmetics",
+          "/shop?category=limited&owned=hide#shelf-cosmetics",
         );
 
         document.body.innerHTML = "";
         await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, {
-          category: "party",
+          category: "limited",
           owned: "hide",
         });
-        expect(ids(shelf("外觀"))).toEqual(["product-cosmetic-f1"]);
-        expect(tabs()).toContain("派對限定 2");
+        // The owned title goes; the cup in the zone never does.
+        expect(ids(shelf("外觀"))).toEqual(["product-cosmetic-c1"]);
+        expect(tabs()).toContain("限定 2");
         expect(screen.getByRole("link", { name: "顯示已擁有" })).toHaveAttribute(
           "href",
-          "/shop?category=party#shelf-cosmetics",
+          "/shop?category=limited#shelf-cosmetics",
         );
         // Tabs keep the toggle.
-        expect(screen.getByRole("link", { name: "全部 4" })).toHaveAttribute(
+        expect(screen.getByRole("link", { name: "全部 5" })).toHaveAttribute(
           "href",
           "/shop?owned=hide#shelf-cosmetics",
         );
-
-        document.body.innerHTML = "";
-        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, {
-          category: "xmas",
-          owned: "hide",
-        });
-        // A cup is never hidden.
-        expect(ids(shelf("外觀"))).toEqual(["product-cosmetic-c1"]);
       });
 
       it("says so when everything in a tab is owned", async () => {
-        const owned = sorted.map((item) => (item.id === "f1" ? { ...item, owned: true } : item));
-        await renderPage(shop({ cosmetics: owned, cosmeticCategories }), true, {
-          category: "party",
-          owned: "hide",
-        });
+        const owned = sorted.map((item) => (item.id === "t9" ? { ...item, owned: true } : item));
+        await renderPage(shop({ cosmetics: owned, cosmeticCategories }), true, { category: "title", owned: "hide" });
         expect(screen.getByText(/這類外觀你都擁有了/)).toBeInTheDocument();
         const show = screen.getAllByRole("link", { name: "顯示已擁有" });
-        show.forEach((link) => expect(link).toHaveAttribute("href", "/shop?category=party#shelf-cosmetics"));
+        show.forEach((link) => expect(link).toHaveAttribute("href", "/shop?category=title#shelf-cosmetics"));
       });
 
       it("gives visitors no hide link and ignores owned=hide", async () => {
-        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), false, {
-          owned: "hide",
-        });
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), false, { owned: "hide" });
         expect(screen.queryByRole("link", { name: /已擁有/ })).not.toBeInTheDocument();
-        expect(tabs()).toEqual(["全部 4", "聖誕系列 1", "派對限定 2", "其他 1"]);
-        expect(ids(shelf("派對限定"))).toHaveLength(2);
+        expect(tabs()).toEqual(["全部 5", "限定 2", "聯名 1", "稱號 2", "比賽室框 1", "冰炫風杯 2"]);
+        expect(cosmeticCards()).toHaveLength(5);
       });
     });
   });
