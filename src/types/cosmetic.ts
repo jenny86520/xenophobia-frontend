@@ -26,6 +26,10 @@ export type ShopCosmetic = {
   saleEndsOn?: string | null;
   /** Every copy is sold: no buy button. */
   soldOut?: boolean;
+  /** When it goes on sale (an instant); null = on sale already (older backends send nothing). */
+  saleStartsAt?: string | null;
+  /** A teaser before its start: shown with the start time, never with a buy button. */
+  upcoming?: boolean;
   /** The admins' shop category; null (or missing from older backends) = 未分類, shown under 其他. */
   categoryId?: string | null;
 };

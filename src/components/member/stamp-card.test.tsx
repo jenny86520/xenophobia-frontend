@@ -90,6 +90,56 @@ describe("StampCard looks", () => {
     expect(seal.querySelector("img")?.getAttribute("src")).toMatch(/\/media\/images\/x\.png$/);
   });
 
+  it("themes only the slot area for a night card, leaving the progress line as it was", () => {
+    const { container } = render(
+      <StampCard
+        streak={3}
+        requiredDays={7}
+        checkedInToday
+        ledgerPage={1}
+        look={{
+          template: "stamp.night",
+          params: { cardColor: "#1b2a4a", pattern: "snow", patternColor: "#f5c542", inkColor: "#f5c542" },
+          imageUrl: null,
+        }}
+      />,
+    );
+    const theme = container.querySelector("[data-stamp-theme]") as HTMLElement;
+    expect(theme).toHaveAttribute("aria-hidden", "true");
+    expect(theme).toHaveAttribute("data-pattern", "snow");
+    expect(theme).toHaveClass("stamp-card-night");
+    expect(theme.style.getPropertyValue("--skin-card")).toBe("#1b2a4a");
+    expect(theme.querySelector("ol")).not.toBeNull();
+    const progress = screen.getByText("3 / 7 天・再 4 天 +1");
+    expect(theme).not.toContainElement(progress);
+    const seal = container.querySelector("[data-stamped] .stamp-mark") as HTMLElement;
+    expect(seal.style.getPropertyValue("--skin-ink")).toBe("#f5c542");
+  });
+
+  it("gives a ticket card its theme and the older seals none", () => {
+    const ticket = render(
+      <StampCard
+        streak={1}
+        requiredDays={7}
+        checkedInToday
+        ledgerPage={1}
+        look={{ template: "stamp.ticket", params: { cardColor: "#f3e9d2", inkColor: "#b3261e" }, imageUrl: null }}
+      />,
+    );
+    expect(ticket.container.querySelector("[data-stamp-theme]")).toHaveClass("stamp-card-ticket");
+    ticket.unmount();
+    const seal = render(
+      <StampCard
+        streak={1}
+        requiredDays={7}
+        checkedInToday
+        ledgerPage={1}
+        look={{ template: "stamp.seal", params: { inkColor: "#ff8fab" }, imageUrl: null }}
+      />,
+    );
+    expect(seal.container.querySelector("[data-stamp-theme]")).toBeNull();
+  });
+
   it("keeps the default red XPA seal without a look or for an unknown template", () => {
     for (const look of [null, { template: "stamp.future", params: { inkColor: "#ffffff" }, imageUrl: null }]) {
       const { container, unmount } = render(

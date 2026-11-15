@@ -18,6 +18,7 @@ import { fetchShop } from "@/lib/public-content-client";
 import type { ShopCosmetic } from "@/types/cosmetic";
 import type { ShopQuest } from "@/types/quest";
 import { cosmeticTerms } from "@/utils/cosmetics";
+import { formatTaipeiMonthDayTime } from "@/utils/datetime";
 import { questIcon } from "@/utils/quests";
 import { QuestGoalLink } from "@/components/member/quest-goal-link";
 import {
@@ -48,8 +49,14 @@ function questAction(quest: ShopQuest, signIn: (label: string) => ReactNode) {
   return <QuestGoalLink code={quest.code} />;
 }
 
-/** A cosmetic card's action: buy, 已擁有 (collectibles), 已售完, or a sign-in for visitors. */
+/**
+ * A cosmetic card's action: its start of sale while it is a teaser (for members and visitors
+ * alike, no button), buy, 已擁有 (collectibles), 已售完, or a sign-in for visitors.
+ */
 function cosmeticAction(item: ShopCosmetic, signIn: (label: string) => ReactNode) {
+  if (item.upcoming && item.saleStartsAt) {
+    return <ShelfStatus kind="upcoming">{formatTaipeiMonthDayTime(item.saleStartsAt)} 開賣</ShelfStatus>;
+  }
   const owned = item.owned === true;
   if (!owned && item.soldOut) return <ShelfStatus kind="soldOut">已售完</ShelfStatus>;
   if (item.owned === null && item.stock === null) return signIn("登入會員後即可購買");

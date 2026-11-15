@@ -24,6 +24,7 @@ function PreviewBody({ kind, look }: { kind: string; look: CosmeticLook }) {
     return (
       <span
         data-frame={frame["data-frame"]}
+        data-ornament={frame["data-ornament"]}
         style={frame.style}
         className={cn("px-3 py-2 text-body text-ink", frame.className)}
       >
@@ -33,7 +34,7 @@ function PreviewBody({ kind, look }: { kind: string; look: CosmeticLook }) {
   }
   if (kind === "stamp") {
     const skin = stampSkin(look);
-    return (
+    const seal = (
       <span className="relative flex size-16 items-center justify-center">
         <span
           style={skin?.style}
@@ -50,6 +51,17 @@ function PreviewBody({ kind, look }: { kind: string; look: CosmeticLook }) {
             <img src="/brand/xpa-logo.png" alt="" width={40} height={40} className="size-3/5 object-contain" />
           )}
         </span>
+      </span>
+    );
+    // A card theme shows behind the seal, like a corner of the member's stamp card.
+    if (!skin?.card) return seal;
+    return (
+      <span
+        data-pattern={skin.card.pattern}
+        style={skin.card.style}
+        className={cn("flex items-center justify-center p-3!", skin.card.className)}
+      >
+        {seal}
       </span>
     );
   }

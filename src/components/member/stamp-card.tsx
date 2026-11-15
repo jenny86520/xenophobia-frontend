@@ -69,16 +69,45 @@ function CardPages({ index, count, ledgerPage }: { index: number; count: number;
   );
 }
 
+/** A whole-card theme behind the slots (decoration only; the progress line stays outside it). */
+export type StampCardTheme = { className: string; style: CSSProperties; pattern?: string };
+
 /** The equipped stamp card look, turned into classes and CSS variables for the stamped slots. */
-type StampSkin = { className: string; style: CSSProperties; imageUrl: string | null };
+type StampSkin = { className: string; style: CSSProperties; imageUrl: string | null; card?: StampCardTheme };
+
+const STAMP_TEMPLATES = ["stamp.seal", "stamp.square", "stamp.night", "stamp.ticket"];
+const NIGHT_PATTERNS = ["dots", "snow", "grid"] as const;
+
+/** The night and ticket cards' theme: their card colour (and the night card's pattern). */
+function cardTheme(look: CosmeticLook): StampCardTheme | undefined {
+  if (look.template === "stamp.night") {
+    return {
+      className: "stamp-card-theme stamp-card-night",
+      style: skinVars(look.params, {
+        "--skin-card": "cardColor",
+        "--skin-pattern": "patternColor",
+        "--skin-ink": "inkColor",
+      }),
+      pattern: choice(look.params.pattern, NIGHT_PATTERNS, "dots"),
+    };
+  }
+  if (look.template === "stamp.ticket") {
+    return {
+      className: "stamp-card-theme stamp-card-ticket",
+      style: skinVars(look.params, { "--skin-card": "cardColor", "--skin-ink": "inkColor" }),
+    };
+  }
+  return undefined;
+}
 
 /**
  * A stamp card cosmetic (spec member-cosmetics): the seal takes its ink colour (border, a light
  * fill, the dashed outline) and image; the square seal is square, with a single or double border.
- * Unknown templates keep the default red XPA seal.
+ * The night and ticket cards also theme the whole slot area (`card`), their ink checked against
+ * their own card colour. Unknown templates keep the default red XPA seal.
  */
 export function stampSkin(look: CosmeticLook | null | undefined): StampSkin | null {
-  if (!look || (look.template !== "stamp.seal" && look.template !== "stamp.square")) return null;
+  if (!look || !STAMP_TEMPLATES.includes(look.template)) return null;
   const style = skinVars(look.params, { "--skin-ink": "inkColor" });
   if (!("--skin-ink" in style)) return null;
   const square = look.template === "stamp.square";
@@ -91,6 +120,7 @@ export function stampSkin(look: CosmeticLook | null | undefined): StampSkin | nu
       square && "rounded-sm",
       double && "border-4 border-double",
     ),
+    card: cardTheme(look),
   };
 }
 
@@ -111,13 +141,28 @@ type StampCardProps = StampProgress & {
 export function StampCard({ requestedCard, ledgerPage, look, ...progress }: StampCardProps) {
   const { slots, page } = stampCard(progress, requestedCard);
   const skin = stampSkin(look);
+  const slotList = (
+    <ol aria-hidden="true" className="relative grid grid-cols-5 gap-3 @md:grid-cols-10">
+      {slots.map((slot) => (
+        <Slot key={slot.day} slot={slot} look={skin} />
+      ))}
+    </ol>
+  );
   return (
     <div id="stamp-card" className="@container flex scroll-mt-24 flex-col gap-4">
-      <ol aria-hidden="true" className="grid grid-cols-5 gap-3 @md:grid-cols-10">
-        {slots.map((slot) => (
-          <Slot key={slot.day} slot={slot} look={skin} />
-        ))}
-      </ol>
+      {skin?.card ? (
+        <div
+          aria-hidden="true"
+          data-stamp-theme={look?.template}
+          data-pattern={skin.card.pattern}
+          style={skin.card.style}
+          className={skin.card.className}
+        >
+          {slotList}
+        </div>
+      ) : (
+        slotList
+      )}
       <p className="font-mono text-lead text-ink">{stampProgressText(progress.streak, progress.requiredDays)}</p>
       {page && <CardPages index={page.index} count={page.count} ledgerPage={ledgerPage} />}
     </div>

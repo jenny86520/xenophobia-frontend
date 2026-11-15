@@ -1687,6 +1687,200 @@
   }
 }
 
+/*
+ * Corner frames (frame.corners, spec member-cosmetics): ::before lies over the whole row but its
+ * mask keeps only one ornament per corner, painted in --skin-main (checked for 3:1); ::after puts a
+ * small --skin-accent dot inside each corner. The ornaments are fixed drawings here (admins only pick
+ * one); without mask support the row keeps its faint outline and no ornaments.
+ */
+.frame-corners {
+  position: relative;
+  border: 1px solid color-mix(in oklch, var(--skin-main) 35%, transparent);
+}
+
+@supports (mask-image: none) or (-webkit-mask-image: none) {
+  .frame-corners::before,
+  .frame-corners::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .frame-corners::before {
+    inset: -4px;
+    background: var(--skin-main);
+    -webkit-mask: var(--frame-ornament);
+    mask: var(--frame-ornament);
+  }
+
+  .frame-corners::after {
+    inset: 4px;
+    background:
+      radial-gradient(circle, var(--skin-accent, var(--skin-main)) 1.5px, transparent 2px) top left / 4px 4px no-repeat,
+      radial-gradient(circle, var(--skin-accent, var(--skin-main)) 1.5px, transparent 2px) top right / 4px 4px no-repeat,
+      radial-gradient(circle, var(--skin-accent, var(--skin-main)) 1.5px, transparent 2px) bottom left / 4px 4px
+        no-repeat,
+      radial-gradient(circle, var(--skin-accent, var(--skin-main)) 1.5px, transparent 2px) bottom right / 4px 4px
+        no-repeat;
+  }
+
+  .frame-corners[data-ornament="bracket"] {
+    --frame-ornament:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12V2h10'/%3E%3C/svg%3E")
+        top left / 16px 16px no-repeat,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 2h10v10'/%3E%3C/svg%3E")
+        top right / 16px 16px no-repeat,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 4v10h10'/%3E%3C/svg%3E")
+        bottom left / 16px 16px no-repeat,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4v10H4'/%3E%3C/svg%3E")
+        bottom right / 16px 16px no-repeat;
+  }
+
+  .frame-corners[data-ornament="snowflake"] {
+    --frame-ornament:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 1.5v13M2.4 4.75l11.2 6.5M2.4 11.25l11.2-6.5'/%3E%3Cpath d='M6.5 2.5 8 4l1.5-1.5M6.5 13.5 8 12l1.5 1.5'/%3E%3C/svg%3E")
+        top left / 16px 16px no-repeat,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 1.5v13M2.4 4.75l11.2 6.5M2.4 11.25l11.2-6.5'/%3E%3Cpath d='M6.5 2.5 8 4l1.5-1.5M6.5 13.5 8 12l1.5 1.5'/%3E%3C/svg%3E")
+        top right / 16px 16px no-repeat,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 1.5v13M2.4 4.75l11.2 6.5M2.4 11.25l11.2-6.5'/%3E%3Cpath d='M6.5 2.5 8 4l1.5-1.5M6.5 13.5 8 12l1.5 1.5'/%3E%3C/svg%3E")
+        bottom left / 16px 16px no-repeat,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 1.5v13M2.4 4.75l11.2 6.5M2.4 11.25l11.2-6.5'/%3E%3Cpath d='M6.5 2.5 8 4l1.5-1.5M6.5 13.5 8 12l1.5 1.5'/%3E%3C/svg%3E")
+        bottom right / 16px 16px no-repeat;
+  }
+
+  .frame-corners[data-ornament="star"] {
+    --frame-ornament:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 1.8 1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6Z' fill='white'/%3E%3C/svg%3E")
+        top left / 16px 16px no-repeat,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 1.8 1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6Z' fill='white'/%3E%3C/svg%3E")
+        top right / 16px 16px no-repeat,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 1.8 1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6Z' fill='white'/%3E%3C/svg%3E")
+        bottom left / 16px 16px no-repeat,
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 1.8 1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6Z' fill='white'/%3E%3C/svg%3E")
+        bottom right / 16px 16px no-repeat;
+  }
+}
+
+/*
+ * Picture frames (frame.image): the admins' uploaded picture is the border image, so it is drawn on
+ * the 6px border only and never over the row's text. border-image-width defaults to the border
+ * width; if the picture does not load the browser draws the solid border in --skin-main instead.
+ */
+.frame-image {
+  border: 6px solid var(--skin-main);
+  border-radius: 0;
+  border-image: var(--skin-frame-image, none) 30% stretch;
+}
+
+/*
+ * Shine titles (title.shine): the text in --skin-text with a band of --skin-shine sweeping left to
+ * right in 1.2 s, then 1.8 s of rest (3 s a cycle, never flashing; both colours passed 4.5:1 and so
+ * did their midpoint). Reduced motion or no background-clip: the text colour alone, static.
+ */
+.title-shine {
+  color: var(--skin-text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    .title-shine {
+      background-image: linear-gradient(
+        100deg,
+        var(--skin-text) 0 40%,
+        var(--skin-shine, var(--skin-text)) 50%,
+        var(--skin-text) 60% 100%
+      );
+      background-size: 250% 100%;
+      background-position: 100% 0;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: xpa-title-shine 3s linear infinite;
+    }
+  }
+}
+
+@keyframes xpa-title-shine {
+  0% {
+    background-position: 100% 0;
+  }
+  40%,
+  100% {
+    background-position: 0% 0;
+  }
+}
+
+/*
+ * Stamp card themes (stamp.night, stamp.ticket; spec member-cosmetics): StampCard wraps the slot list
+ * (aria-hidden decoration) in the theme; the progress line below stays on the site background. Colours
+ * come only from --skin-card, --skin-pattern and --skin-ink. Empty slots take a mix of the ink so they
+ * read on any card colour; stamped ones keep the seal look.
+ */
+.stamp-card-theme {
+  position: relative;
+  border-radius: 4px;
+  background-color: var(--skin-card);
+  padding: 1rem;
+}
+
+.stamp-card-theme li:not([data-stamped]) {
+  border-color: color-mix(in oklch, var(--skin-ink) 55%, transparent);
+  color: var(--skin-ink);
+}
+
+.stamp-card-night[data-pattern="dots"] {
+  background-image:
+    radial-gradient(circle, var(--skin-pattern) 1px, transparent 1.6px),
+    radial-gradient(circle, color-mix(in oklch, var(--skin-pattern) 55%, transparent) 0.8px, transparent 1.3px);
+  background-size:
+    29px 29px,
+    17px 17px;
+  background-position:
+    3px 5px,
+    11px 13px;
+}
+
+.stamp-card-night[data-pattern="grid"] {
+  background-image:
+    linear-gradient(color-mix(in oklch, var(--skin-pattern) 35%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklch, var(--skin-pattern) 35%, transparent) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+@supports (mask-image: none) or (-webkit-mask-image: none) {
+  .stamp-card-night[data-pattern="snow"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: color-mix(in oklch, var(--skin-pattern) 70%, transparent);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round'%3E%3Cg transform='translate%2812 12%29'%3E%3Cpath d='M0-5v10M-4.3-2.5l8.6 5M-4.3 2.5l8.6-5'/%3E%3C/g%3E%3Cg transform='translate%2830 29%29 scale%28.7%29'%3E%3Cpath d='M0-5v10M-4.3-2.5l8.6 5M-4.3 2.5l8.6-5'/%3E%3C/g%3E%3C/svg%3E")
+      0 0 / 40px 40px repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round'%3E%3Cg transform='translate%2812 12%29'%3E%3Cpath d='M0-5v10M-4.3-2.5l8.6 5M-4.3 2.5l8.6-5'/%3E%3C/g%3E%3Cg transform='translate%2830 29%29 scale%28.7%29'%3E%3Cpath d='M0-5v10M-4.3-2.5l8.6 5M-4.3 2.5l8.6-5'/%3E%3C/g%3E%3C/svg%3E")
+      0 0 / 40px 40px repeat;
+  }
+}
+
+/* A ticket: a dashed tear line by the stub on the left, a punched half-circle on each side. */
+.stamp-card-ticket {
+  padding-left: 2.75rem;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--skin-ink) 50%, transparent) 0 6px,
+    transparent 6px 12px
+  );
+  background-size: 2px 100%;
+  background-position: 1.5rem 0;
+  background-repeat: no-repeat;
+  -webkit-mask:
+    radial-gradient(circle at left center, transparent 10px, black 10.5px) left / 51% 100% no-repeat,
+    radial-gradient(circle at right center, transparent 10px, black 10.5px) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle at left center, transparent 10px, black 10.5px) left / 51% 100% no-repeat,
+    radial-gradient(circle at right center, transparent 10px, black 10.5px) right / 51% 100% no-repeat;
+}
+
 /* Visitors who prefer reduced motion get (near-)instant transitions and animations. */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -35,3 +35,11 @@ export function formatTaipeiDate(iso: string): string {
   const part = Object.fromEntries(TAIPEI_PARTS.formatToParts(date).map((p) => [p.type, p.value]));
   return `${part.year}-${part.month}-${part.day}`;
 }
+
+/** "M/D HH:mm" in Taiwan time (e.g. a cosmetic's start of sale, 「12/24 20:00 開賣」). */
+export function formatTaipeiMonthDayTime(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  const part = Object.fromEntries(TAIPEI_PARTS.formatToParts(date).map((p) => [p.type, p.value]));
+  return `${Number(part.month)}/${Number(part.day)} ${part.hour}:${part.minute}`;
+}

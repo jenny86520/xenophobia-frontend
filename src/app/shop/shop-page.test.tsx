@@ -280,6 +280,50 @@ describe("/shop", () => {
       expect(within(plain).queryByText(/限量/)).not.toBeInTheDocument();
     });
 
+    describe("teasers before the start of sale", () => {
+      // 聖誕不打烊 goes on sale at 2026-12-24 20:00 in Taiwan; 聖誕杯 is on sale already.
+      const teaser: NonNullable<Shop["cosmetics"]> = [
+        {
+          ...cosmetics[1],
+          id: "f7",
+          name: "聖誕不打烊",
+          price: 10,
+          owned: false,
+          saleStartsAt: "2026-12-24T12:00:00.000Z",
+          upcoming: true,
+          categoryId: "xmas",
+        },
+        { ...cosmetics[2], categoryId: "xmas", saleStartsAt: null, upcoming: false },
+      ];
+
+      it("shows the preview, price and start of sale with no buy button", async () => {
+        await renderPage(shop({ cosmetics: teaser }), true);
+        const [frame, cup] = shelf("外觀");
+        expect(frame.querySelector("[data-frame='frame.pulse']")).not.toBeNull();
+        expect(frame).toHaveTextContent("10 點");
+        expect(frame).toHaveTextContent("12/24 20:00 開賣");
+        expect(within(frame).queryByRole("button")).not.toBeInTheDocument();
+        expect(within(cup).getByRole("button", { name: "購買" })).toBeInTheDocument();
+      });
+
+      it("shows visitors the same start of sale without a sign-in link", async () => {
+        await renderPage(shop({ cosmetics: teaser.map((item) => ({ ...item, owned: null, stock: null })) }), false);
+        const [frame, cup] = shelf("外觀");
+        expect(frame).toHaveTextContent("12/24 20:00 開賣");
+        expect(within(frame).queryByRole("link")).not.toBeInTheDocument();
+        expect(within(cup).getByRole("link", { name: "登入會員後即可購買" })).toBeInTheDocument();
+      });
+
+      it("counts a teaser in its category tab", async () => {
+        await renderPage(shop({ cosmetics: teaser, cosmeticCategories: [{ id: "xmas", name: "聖誕系列" }] }), true);
+        expect(
+          within(screen.getByRole("navigation", { name: "外觀分類" }))
+            .getAllByRole("link")
+            .map((link) => link.textContent),
+        ).toEqual(["全部 2", "聖誕系列 2"]);
+      });
+    });
+
     it("asks visitors to sign in and says when nothing is on sale", async () => {
       await renderPage(shop({ cosmetics }), false);
       for (const card of shelf("外觀")) {

@@ -1,4 +1,20 @@
-import { Crown, Flame, Gem, Heart, PartyPopper, Skull, Star, Swords, Trophy, Zap, type LucideIcon } from "lucide-react";
+import {
+  CandyCane,
+  Crown,
+  Flame,
+  Gem,
+  Gift,
+  Heart,
+  PartyPopper,
+  Skull,
+  Snowflake,
+  Star,
+  Swords,
+  TreePine,
+  Trophy,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 
 /** Lucide drawings for the backend's TITLE_ICONS codes (keep in step with it and the admin's copy). */
 export const TITLE_ICONS: Record<string, LucideIcon> = {
@@ -12,4 +28,8 @@ export const TITLE_ICONS: Record<string, LucideIcon> = {
   heart: Heart,
   gem: Gem,
   skull: Skull,
+  "tree-pine": TreePine,
+  snowflake: Snowflake,
+  gift: Gift,
+  "candy-cane": CandyCane,
 };

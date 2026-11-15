@@ -1,4 +1,4 @@
-import { Check, CircleSlash } from "lucide-react";
+import { CalendarClock, Check, CircleSlash } from "lucide-react";
 import type { ReactNode } from "react";
 import { IceCreamIcon } from "@/components/brand/ice-cream-icon";
 import { MetaLabel } from "@/components/brand/meta-label";
@@ -112,8 +112,8 @@ export function ProductCard({
  * A card's settled state in place of its button: done (已擁有, 已兌換, 已領取) with a check, or
  * 已售完 with a slashed circle. The word carries the meaning; the icon is decoration.
  */
-export function ShelfStatus({ kind, children }: { kind: "done" | "soldOut"; children: ReactNode }) {
-  const Icon = kind === "done" ? Check : CircleSlash;
+export function ShelfStatus({ kind, children }: { kind: "done" | "soldOut" | "upcoming"; children: ReactNode }) {
+  const Icon = kind === "done" ? Check : kind === "upcoming" ? CalendarClock : CircleSlash;
   return (
     <span className="inline-flex items-center gap-2 text-body text-ink-secondary">
       <Icon aria-hidden="true" className={cn("size-4", kind === "done" ? "text-signal" : "text-ink-muted")} />

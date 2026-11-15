@@ -1,4 +1,4 @@
-import { formatSubPartyTime, formatTaipeiDateTime } from "./datetime";
+import { formatSubPartyTime, formatTaipeiDateTime, formatTaipeiMonthDayTime } from "./datetime";
 
 describe("formatSubPartyTime", () => {
   const originalTz = process.env.TZ;
@@ -33,5 +33,16 @@ describe("formatTaipeiDateTime", () => {
 
   it("returns the input unchanged when it is not a date", () => {
     expect(formatTaipeiDateTime("nope")).toBe("nope");
+  });
+});
+
+describe("formatTaipeiMonthDayTime", () => {
+  it("shows an instant as M/D HH:mm in Taiwan, without leading zeros on the date", () => {
+    expect(formatTaipeiMonthDayTime("2026-12-24T12:00:00.000Z")).toBe("12/24 20:00");
+    expect(formatTaipeiMonthDayTime("2027-01-04T23:05:00.000Z")).toBe("1/5 07:05");
+  });
+
+  it("returns the input unchanged when it is not a date", () => {
+    expect(formatTaipeiMonthDayTime("nope")).toBe("nope");
   });
 });
