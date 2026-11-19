@@ -63,7 +63,7 @@ function PreviewBody({ kind, look, sampleName }: { kind: string; look: CosmeticL
         >
           {skin?.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={skin.imageUrl} alt="" width={40} height={40} className="size-3/5 object-contain" />
+            <img src={skin.imageUrl} alt="" width={40} height={40} className="size-[85%] object-contain" />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img src="/brand/xpa-logo.png" alt="" width={40} height={40} className="size-3/5 object-contain" />

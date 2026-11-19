@@ -37,8 +37,10 @@ function Slot({ slot, look }: { slot: StampSlot; look?: StampSkin | null }) {
         >
           {look?.imageUrl ? (
             // A cosmetic's stamp image comes from the backend's origin, like party covers (no next/image).
+            // Uploaded pictures are usually wide with their own margins, so they fill more of the seal
+            // than the XPA logo does.
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={look.imageUrl} alt="" width={64} height={64} className="size-3/5 object-contain" />
+            <img src={look.imageUrl} alt="" width={64} height={64} className="size-[85%] object-contain" />
           ) : (
             <Image src="/brand/xpa-logo.png" alt="" width={64} height={64} className="size-3/5" />
           )}
