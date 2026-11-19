@@ -1,38 +1,16 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import {
-  cancelMatchAction,
-  captainBanAction,
-  matchResultAction,
-  serverAbortAction,
-  serverStartAction,
-  managerBanAction,
-  vetoResetAction,
-  vetoStartAction,
-  vetoUndoAction,
-  confirmTeamsAction,
-  createMatchAction,
-  generateTeamsAction,
-  importPartyAction,
-  inviteFriendAction,
-  joinGroupAction,
-  leaveAction,
-  lockAction,
-  managerTeamNameAction,
-  removePlayerAction,
-  signUpAction,
-  teamNameAction,
-  unconfirmTeamsAction,
-  unlockAction,
-} from "@/app/matches/actions";
+import { createMatchAction } from "@/app/matches/actions";
 import { CheckboxField, FormField, FormMessage, SelectField, SubmitButton } from "@/components/member/form-controls";
 import { cn } from "@/lib/utils";
 import type { MatchActionState, ScrimServerOption } from "@/types/match";
 
 /**
- * Match forms: each is a <form action> bound to a Server Action with useActionState, so all of
+ * Match forms: each is a <form action> running a Server Action with useActionState, so all of
  * them work without JavaScript. The backend decides; these only show its message and field errors.
+ * Actions arrive already bound by a server component (the buttons in `match-buttons.tsx`, or the
+ * caller): binding one here made the no-JavaScript submission hang in `next dev`.
  */
 
 const secondaryButton = cn(
@@ -40,10 +18,18 @@ const secondaryButton = cn(
   "hover:border-signal focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-60",
 );
 
-type SimpleAction = (state: MatchActionState) => Promise<MatchActionState>;
+export type SimpleAction = (state: MatchActionState) => Promise<MatchActionState>;
 
 /** One button that runs one action (sign up, leave, import, lock, generate). */
-function ActionButton({ action, label, secondary }: { action: SimpleAction; label: string; secondary?: boolean }) {
+export function ActionButton({
+  action,
+  label,
+  secondary,
+}: {
+  action: SimpleAction;
+  label: string;
+  secondary?: boolean;
+}) {
   const [state, formAction, pending] = useActionState<MatchActionState>(action, {});
   return (
     <form action={formAction} className="flex flex-col items-start gap-3">
@@ -61,17 +47,8 @@ function ActionButton({ action, label, secondary }: { action: SimpleAction; labe
 
 // ---- Signing up ----
 
-export function SignUpButtons({ matchId }: { matchId: string }) {
-  return (
-    <div className="flex flex-wrap items-start gap-4">
-      <ActionButton action={signUpAction.bind(null, matchId, "solo")} label="單人報名" />
-      <ActionButton action={signUpAction.bind(null, matchId, "group")} label="建立小隊" secondary />
-    </div>
-  );
-}
-
-export function JoinGroupForm({ matchId }: { matchId: string }) {
-  const [state, action, pending] = useActionState<MatchActionState, FormData>(joinGroupAction.bind(null, matchId), {});
+export function JoinGroupForm({ join }: { join: ConfirmedAction }) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(join, {});
   return (
     <form action={action} className="flex max-w-sm flex-col gap-4">
       <FormField
@@ -91,29 +68,6 @@ export function JoinGroupForm({ matchId }: { matchId: string }) {
       <FormMessage state={state} />
     </form>
   );
-}
-
-/** 邀進小隊 or 邀請報名 for one friend (members only; the backend checks the friendship and the group). */
-export function InviteFriendButton({
-  matchId,
-  memberId,
-  kind,
-}: {
-  matchId: string;
-  memberId: string;
-  kind: "group" | "signup";
-}) {
-  return (
-    <ActionButton
-      action={inviteFriendAction.bind(null, matchId, memberId, kind)}
-      label={kind === "group" ? "邀進小隊" : "邀請報名"}
-      secondary
-    />
-  );
-}
-
-export function LeaveButton({ matchId }: { matchId: string }) {
-  return <ActionButton action={leaveAction.bind(null, matchId)} label="退出報名" secondary />;
 }
 
 // ---- Creating ----
@@ -154,28 +108,10 @@ export function CreateMatchForm({ parties }: { parties: Option[] }) {
 
 // ---- Managing (the creating member) ----
 
-export function ImportPartyButton({ matchId }: { matchId: string }) {
-  return <ActionButton action={importPartyAction.bind(null, matchId)} label="從派對帶入" secondary />;
-}
-
-export function LockButton({ matchId }: { matchId: string }) {
-  return <ActionButton action={lockAction.bind(null, matchId)} label="鎖定名單" />;
-}
-
-export function GenerateTeamsButton({ matchId, again }: { matchId: string; again?: boolean }) {
-  return (
-    <ActionButton
-      action={generateTeamsAction.bind(null, matchId)}
-      label={again ? "依目前評分重新計算" : "產生分隊候選"}
-      secondary={again}
-    />
-  );
-}
-
-type ConfirmedAction = (state: MatchActionState, form: FormData) => Promise<MatchActionState>;
+export type ConfirmedAction = (state: MatchActionState, form: FormData) => Promise<MatchActionState>;
 
 /** A destructive action: needs its box ticked first (no dialog without JavaScript). */
-function ConfirmedActionForm({
+export function ConfirmedActionForm({
   id,
   action,
   label,
@@ -200,44 +136,8 @@ function ConfirmedActionForm({
   );
 }
 
-export function UnlockForm({ matchId }: { matchId: string }) {
-  return (
-    <ConfirmedActionForm
-      id="unlock"
-      action={unlockAction.bind(null, matchId)}
-      label="解除鎖定"
-      confirmText="確認解除鎖定，名單回到報名中"
-    />
-  );
-}
-
-export function UnconfirmTeamsForm({ matchId }: { matchId: string }) {
-  return (
-    <ConfirmedActionForm
-      id="unconfirm"
-      action={unconfirmTeamsAction.bind(null, matchId)}
-      label="退回分隊"
-      confirmText="確認退回分隊，清除兩隊、隊長與評分快照，候選依目前評分重新產生"
-    />
-  );
-}
-
-export function CancelMatchForm({ matchId }: { matchId: string }) {
-  return (
-    <ConfirmedActionForm
-      id="cancel"
-      action={cancelMatchAction.bind(null, matchId)}
-      label="取消場次"
-      confirmText="確認取消這場，取消後不能再報名、分隊或 Ban 圖"
-    />
-  );
-}
-
-export function RemovePlayerForm({ matchId, players }: { matchId: string; players: Option[] }) {
-  const [state, action, pending] = useActionState<MatchActionState, FormData>(
-    removePlayerAction.bind(null, matchId),
-    {},
-  );
+export function RemovePlayerForm({ remove, players }: { remove: ConfirmedAction; players: Option[] }) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(remove, {});
   return (
     <form action={action} className="flex max-w-sm flex-col gap-4">
       <SelectField
@@ -267,22 +167,20 @@ export type TeamPlayer = { playerId: string; name: string; rating: number; group
  * (preset to the suggestion) and the box that allows splitting a group. The backend checks it all.
  */
 export function TeamConfirmForm({
-  matchId,
+  confirm,
   players,
   teamOf,
   captainA,
   captainB,
 }: {
-  matchId: string;
+  /** `confirmTeamsAction` bound to the match by a server component. */
+  confirm: ConfirmedAction;
   players: TeamPlayer[];
   teamOf: Record<string, "A" | "B">;
   captainA: string;
   captainB: string;
 }) {
-  const [state, action, pending] = useActionState<MatchActionState, FormData>(
-    confirmTeamsAction.bind(null, matchId),
-    {},
-  );
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(confirm, {});
   const teamError = state.fields?.teamA ?? state.fields?.teamB;
   // After a refused confirm, show what was chosen rather than the preset again.
   const chosen = state.values;
@@ -407,21 +305,19 @@ export function TeamConfirmForm({
  * either (`asManager`). Empty goes back to A 隊 / B 隊. Typed text survives the room's refresh.
  */
 export function TeamNameForm({
-  matchId,
+  rename,
   side,
   current,
   asManager,
 }: {
-  matchId: string;
+  /** `teamNameAction` (a captain) or `managerTeamNameAction` (a manager), bound by a server component. */
+  rename: ConfirmedAction;
   side: "A" | "B";
   /** The name typed so far (empty while it is the default). */
   current: string;
   asManager: boolean;
 }) {
-  const [state, action, pending] = useActionState<MatchActionState, FormData>(
-    asManager ? managerTeamNameAction.bind(null, matchId, side) : teamNameAction.bind(null, matchId),
-    {},
-  );
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(rename, {});
   return (
     <form action={action} className="flex flex-col gap-3">
       <FormField
@@ -445,21 +341,8 @@ export function TeamNameForm({
 // ---- The map veto ----
 
 /** The captain whose turn it is bans one map (one small form per map). */
-export function CaptainBanButton({
-  matchId,
-  step,
-  mapKey,
-  mapName,
-}: {
-  matchId: string;
-  step: number;
-  mapKey: string;
-  mapName: string;
-}) {
-  const [state, action, pending] = useActionState<MatchActionState>(
-    captainBanAction.bind(null, matchId, step, mapKey),
-    {},
-  );
+export function CaptainBanButton({ ban, mapName }: { ban: SimpleAction; mapName: string }) {
+  const [state, action, pending] = useActionState<MatchActionState>(ban, {});
   return (
     <form action={action} className="flex flex-col items-end gap-2">
       <button
@@ -482,8 +365,8 @@ const VETO_RULE_OPTIONS = [
 ] as const;
 
 /** Starts the veto: the first-ban rule and the time for each step. */
-export function VetoStartForm({ matchId }: { matchId: string }) {
-  const [state, action, pending] = useActionState<MatchActionState, FormData>(vetoStartAction.bind(null, matchId), {});
+export function VetoStartForm({ start }: { start: ConfirmedAction }) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(start, {});
   const rule = state.values?.rule ?? "random";
   return (
     <form action={action} className="flex flex-col gap-6">
@@ -538,11 +421,8 @@ export function VetoStartForm({ matchId }: { matchId: string }) {
 }
 
 /** A manager bans for the team whose turn it is: the chosen map, or one at random. */
-export function ManagerBanForm({ matchId, step, maps }: { matchId: string; step: number; maps: Option[] }) {
-  const [state, action, pending] = useActionState<MatchActionState, FormData>(
-    managerBanAction.bind(null, matchId, step),
-    {},
-  );
+export function ManagerBanForm({ ban, maps }: { ban: ConfirmedAction; maps: Option[] }) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(ban, {});
   return (
     <form action={action} className="flex max-w-sm flex-col gap-4">
       <SelectField
@@ -566,36 +446,11 @@ export function ManagerBanForm({ matchId, step, maps }: { matchId: string; step:
   );
 }
 
-export function VetoUndoForm({ matchId }: { matchId: string }) {
-  return (
-    <ConfirmedActionForm
-      id="veto-undo"
-      action={vetoUndoAction.bind(null, matchId)}
-      label="撤銷最近一步"
-      confirmText="確認撤銷最近一步，那張地圖回到可選"
-    />
-  );
-}
-
-export function VetoResetForm({ matchId }: { matchId: string }) {
-  return (
-    <ConfirmedActionForm
-      id="veto-reset"
-      action={vetoResetAction.bind(null, matchId)}
-      label="重設 Ban 圖"
-      confirmText="確認重設，清除所有 Ban 與先手，回到隊伍已確認"
-    />
-  );
-}
-
 // ---- The game server ----
 
 /** The start form: scrim servers that are free (one in use by another match is named, not offered). */
-export function ServerStartForm({ matchId, servers }: { matchId: string; servers: ScrimServerOption[] }) {
-  const [state, action, pending] = useActionState<MatchActionState, FormData>(
-    serverStartAction.bind(null, matchId),
-    {},
-  );
+export function ServerStartForm({ start, servers }: { start: ConfirmedAction; servers: ScrimServerOption[] }) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(start, {});
   const free = servers.filter((server) => !server.inUse);
   const busy = servers.filter((server) => server.inUse);
   if (servers.length === 0) {
@@ -626,23 +481,9 @@ export function ServerStartForm({ matchId, servers }: { matchId: string; servers
   );
 }
 
-export function ServerAbortForm({ matchId }: { matchId: string }) {
-  return (
-    <ConfirmedActionForm
-      id="server-abort"
-      action={serverAbortAction.bind(null, matchId)}
-      label="中止比賽"
-      confirmText="確認中止，伺服器上的比賽會結束，比分與數據清除，之後可以重新開打"
-    />
-  );
-}
-
 /** Manual scores, when the server cannot report them (or to correct a result). */
-export function MatchResultForm({ matchId, completed }: { matchId: string; completed: boolean }) {
-  const [state, action, pending] = useActionState<MatchActionState, FormData>(
-    matchResultAction.bind(null, matchId),
-    {},
-  );
+export function MatchResultForm({ save, completed }: { save: ConfirmedAction; completed: boolean }) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(save, {});
   return (
     <form action={action} className="flex max-w-sm flex-col gap-4">
       <div className="grid grid-cols-2 gap-4">

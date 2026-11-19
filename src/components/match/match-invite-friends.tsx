@@ -2,7 +2,7 @@ import { MetaLabel } from "@/components/brand/meta-label";
 import { OpenFriendsButton } from "@/components/friends/open-friends-button";
 import { FriendName, friendHref } from "@/components/member/friend-name";
 import type { MatchFriends } from "@/types/friends";
-import { InviteFriendButton } from "./match-forms";
+import { InviteFriendButton } from "./match-buttons";
 
 /** What each friend's row says, in words (never colour alone). */
 function friendState(friend: MatchFriends["friends"][number]): string[] {

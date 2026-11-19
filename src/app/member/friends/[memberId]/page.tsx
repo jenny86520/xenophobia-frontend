@@ -7,6 +7,7 @@ import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
 import { IceCreamIcon } from "@/components/brand/ice-cream-icon";
 import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
+import { updateFriendNoteAction } from "@/app/member/actions";
 import { FriendNoteForm } from "@/components/member/friend-forms";
 import { IceCreamCard, IceCreamDetailCard, IceCreamGrid } from "@/components/ice-cream/ice-cream-card";
 import { ICE_STATUS_TEXT } from "@/utils/ice-cream-events";
@@ -146,7 +147,7 @@ export default async function FriendPage({ params }: PageProps<"/member/friends/
           我的備註
         </Heading>
         <div className="mt-6">
-          <FriendNoteForm memberId={friend.memberId} note={friend.note} />
+          <FriendNoteForm save={updateFriendNoteAction.bind(null, friend.memberId)} note={friend.note} />
         </div>
       </Section>
     </main>

@@ -11,6 +11,7 @@ import type {
   RegistrationStatus,
   RegistrationSummary,
 } from "@/types/member";
+import { registrationAction } from "@/app/member/actions";
 import { RegistrationButton } from "./registration-button";
 import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 
@@ -177,7 +178,7 @@ export function PartyRegistration({ partyId, summary, member }: Props) {
               </InfoDialog>
             )}
             <RegistrationButton
-              partyId={partyId}
+              action={registrationAction.bind(null, partyId, member.registered ? "leave" : "join", null)}
               intent={member.registered ? "leave" : "join"}
               blockedReason={member.blockedBy ? BLOCK_TEXT[member.blockedBy] : null}
               align="end"

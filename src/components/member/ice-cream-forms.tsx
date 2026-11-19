@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { createIceCreamAction, giftIceCreamAction, saveIceShowcaseAction } from "@/app/member/actions";
+import { createIceCreamAction, saveIceShowcaseAction } from "@/app/member/actions";
 import { IceCreamIcon } from "@/components/brand/ice-cream-icon";
 import type { CupStock } from "@/types/cosmetic";
 import type { MemberActionState } from "@/types/member";
@@ -28,17 +28,22 @@ export function CreateIceCreamForm({ cost }: { cost: number }) {
   );
 }
 
-/** Gives one held token to a friend picked from the member's own friend list. */
+/**
+ * Gives one held token to a friend picked from the member's own friend list. `gift` is
+ * `giftIceCreamAction` bound to the token by the panel (a server component).
+ */
 export function GiftIceCreamForm({
   id,
   serial,
   friends,
+  gift,
 }: {
   id: string;
   serial: number;
   friends: { memberId: string; nickname: string }[];
+  gift: (state: MemberActionState, form: FormData) => Promise<MemberActionState>;
 }) {
-  const [state, action, pending] = useActionState<MemberActionState, FormData>(giftIceCreamAction.bind(null, id), {});
+  const [state, action, pending] = useActionState<MemberActionState, FormData>(gift, {});
   const selectId = `gift-${id}`;
   return (
     <form action={action} aria-label={`把${iceCreamName(serial)}送給好友`} className="flex flex-col gap-2">

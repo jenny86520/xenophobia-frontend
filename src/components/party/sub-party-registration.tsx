@@ -7,6 +7,7 @@ import {
   SignInToRegister,
   canVisitorsRegister,
 } from "./party-registration";
+import { registrationAction } from "@/app/member/actions";
 import { RegistrationButton } from "./registration-button";
 
 type Props = {
@@ -44,7 +45,7 @@ export function SubPartyRegistration({ partyId, subPartyId, title, summary, memb
         {member && view && (
           <div className="shrink-0">
             <RegistrationButton
-              partyId={partyId}
+              action={registrationAction.bind(null, partyId, view.registered ? "leave" : "join", subPartyId)}
               subPartyId={subPartyId}
               intent={view.registered ? "leave" : "join"}
               blockedReason={view.blockedBy ? BLOCK_TEXT[view.blockedBy] : null}

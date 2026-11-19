@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { FirstBanReason, MatchStatus, MatchVeto, VetoRule } from "@/types/match";
 import { mediaUrl } from "@/utils/media";
 import { Spotlight } from "@/components/brand/spotlight";
+import { captainBanAction } from "@/app/matches/actions";
 import { CaptainBanButton } from "./match-forms";
 import { StepCountdown } from "./veto-live";
 import { VetoRadar, VetoRadarLegend } from "./veto-radar";
@@ -149,7 +150,10 @@ export function VetoPanel({
                         active &&
                         canBan &&
                         veto.step && (
-                          <CaptainBanButton matchId={matchId} step={veto.step} mapKey={map.key} mapName={map.name} />
+                          <CaptainBanButton
+                            ban={captainBanAction.bind(null, matchId, veto.step, map.key)}
+                            mapName={map.name}
+                          />
                         )
                       )}
                     </div>

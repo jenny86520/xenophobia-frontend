@@ -2,7 +2,7 @@
 
 import { UserPlus } from "lucide-react";
 import { useActionState, type ReactNode } from "react";
-import { sendFriendRequestAction, updateFriendNoteAction } from "@/app/member/actions";
+import { sendFriendRequestAction } from "@/app/member/actions";
 import { cn } from "@/lib/utils";
 import type { MemberActionState } from "@/types/member";
 import { FormField, FormMessage, SubmitButton } from "./form-controls";
@@ -17,12 +17,18 @@ export const secondaryButtonClasses = cn(
   "hover:border-signal focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none disabled:opacity-60",
 );
 
-/** The member's private note about one friend; saving an empty note removes it. */
-export function FriendNoteForm({ memberId, note }: { memberId: string; note: string | null }) {
-  const [state, action, pending] = useActionState<MemberActionState, FormData>(
-    updateFriendNoteAction.bind(null, memberId),
-    {},
-  );
+/**
+ * The member's private note about one friend; saving an empty note removes it. `save` is
+ * `updateFriendNoteAction` bound to the friend by the page (a server component).
+ */
+export function FriendNoteForm({
+  save,
+  note,
+}: {
+  save: (state: MemberActionState, form: FormData) => Promise<MemberActionState>;
+  note: string | null;
+}) {
+  const [state, action, pending] = useActionState<MemberActionState, FormData>(save, {});
   return (
     <form action={action} className="flex max-w-md flex-col gap-4">
       <FormField

@@ -1,14 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
-import { registrationAction } from "@/app/member/actions";
 import { FormMessage, SubmitButton } from "@/components/member/form-controls";
 import { cn } from "@/lib/utils";
 import type { MemberActionState } from "@/types/member";
 
 type Props = {
-  partyId: string;
-  /** Set for a sub-party's button; null or left out for the party itself. */
+  /** `registrationAction` already bound to the party, intent and sub-party by a server component. */
+  action: (state: MemberActionState) => Promise<MemberActionState>;
+  /** Set for a sub-party's button (keeps the reason's id unique); null or left out for the party itself. */
   subPartyId?: string | null;
   intent: "join" | "leave";
   /** Why the action is unavailable (shown next to the disabled button); null when allowed. */
@@ -18,11 +18,14 @@ type Props = {
 };
 
 /** 參加 / 取消參加: a form bound to the registration Server Action, so it works without JavaScript too. */
-export function RegistrationButton({ partyId, subPartyId = null, intent, blockedReason, align = "start" }: Props) {
-  const [state, action, pending] = useActionState<MemberActionState>(
-    registrationAction.bind(null, partyId, intent, subPartyId),
-    {},
-  );
+export function RegistrationButton({
+  action: register,
+  subPartyId = null,
+  intent,
+  blockedReason,
+  align = "start",
+}: Props) {
+  const [state, action, pending] = useActionState<MemberActionState>(register, {});
   const label = intent === "join" ? "參加" : "取消參加";
   // One page has a button per sub-party, so the reason's id must be unique.
   const blockedId = `registration-blocked-${subPartyId ?? "party"}`;

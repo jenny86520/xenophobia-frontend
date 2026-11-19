@@ -13,6 +13,7 @@ import type {
   ScrimServerOption,
 } from "@/types/match";
 import { ratingBreakdown, signedPoints, swingText } from "@/utils/rating";
+import { managerTeamNameAction, teamNameAction } from "@/app/matches/actions";
 import { TeamNameForm } from "./match-forms";
 import { CandidateList, StageActions } from "./match-manage";
 import { MatchRoster } from "./match-roster";
@@ -78,7 +79,9 @@ function TeamColumn({
       </p>
       {rename && (
         <TeamNameForm
-          matchId={matchId}
+          rename={
+            rename === "manager" ? managerTeamNameAction.bind(null, matchId, side) : teamNameAction.bind(null, matchId)
+          }
           side={side}
           current={team.name === `${side} 隊` ? "" : team.name}
           asManager={rename === "manager"}

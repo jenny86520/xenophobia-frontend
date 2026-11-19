@@ -7,7 +7,9 @@ import { MetaLabel } from "@/components/brand/meta-label";
 import { Section } from "@/components/brand/section";
 import { TextLink } from "@/components/brand/text-link";
 import { Heading } from "@/components/brand/typography";
-import { JoinGroupForm, LeaveButton, SignUpButtons } from "@/components/match/match-forms";
+import { joinGroupAction } from "@/app/matches/actions";
+import { LeaveButton, SignUpButtons } from "@/components/match/match-buttons";
+import { JoinGroupForm } from "@/components/match/match-forms";
 import { MatchInviteFriends } from "@/components/match/match-invite-friends";
 import { MatchManage } from "@/components/match/match-manage";
 import { MatchRoom } from "@/components/match/match-room";
@@ -52,7 +54,7 @@ function SignUp({ match }: { match: ViewerMatch }) {
   return (
     <div className="flex flex-col gap-6">
       <SignUpButtons matchId={match.id} />
-      <JoinGroupForm matchId={match.id} />
+      <JoinGroupForm join={joinGroupAction.bind(null, match.id)} />
     </div>
   );
 }

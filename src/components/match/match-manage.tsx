@@ -6,22 +6,32 @@ import { PlayerLineItems } from "@/components/match/player-line";
 import { cn } from "@/lib/utils";
 import type { ManagedMatch, MatchServerSession, ScrimServerOption, TeamCandidate } from "@/types/match";
 import {
+  confirmTeamsAction,
+  managerBanAction,
+  matchResultAction,
+  removePlayerAction,
+  serverStartAction,
+  vetoStartAction,
+} from "@/app/matches/actions";
+import {
   CancelMatchForm,
   GenerateTeamsButton,
   ImportPartyButton,
   LockButton,
-  RemovePlayerForm,
-  TeamConfirmForm,
+  ServerAbortForm,
   UnconfirmTeamsForm,
-  type TeamPlayer,
   UnlockForm,
+  VetoResetForm,
+  VetoUndoForm,
+} from "./match-buttons";
+import {
   ManagerBanForm,
   MatchResultForm,
-  ServerAbortForm,
+  RemovePlayerForm,
   ServerStartForm,
-  VetoResetForm,
+  TeamConfirmForm,
+  type TeamPlayer,
   VetoStartForm,
-  VetoUndoForm,
 } from "./match-forms";
 
 /** "?candidate=2" → index 1; anything else picks the best (first) candidate. */
@@ -215,7 +225,7 @@ export function StageActions({
     return (
       <div className="flex flex-col gap-4">
         <Heading level={3}>開始 Ban 圖</Heading>
-        <VetoStartForm matchId={match.id} />
+        <VetoStartForm start={vetoStartAction.bind(null, match.id)} />
       </div>
     );
   }
@@ -226,7 +236,7 @@ export function StageActions({
         <p className="text-body text-ink-secondary">
           輪到的隊伍需要協助時，可以替他們 Ban 指定的地圖，或隨機 Ban 一張；時間到系統也會自動隨機 Ban。
         </p>
-        <ManagerBanForm matchId={match.id} step={veto.step} maps={banOptions} />
+        <ManagerBanForm ban={managerBanAction.bind(null, match.id, veto.step)} maps={banOptions} />
       </div>
     );
   }
@@ -240,7 +250,7 @@ export function StageActions({
         {session?.status === "failed" && session.error && (
           <p role="alert" className="text-body text-destructive">{`上一次開打失敗：${session.error}`}</p>
         )}
-        <ServerStartForm matchId={match.id} servers={servers ?? []} />
+        <ServerStartForm start={serverStartAction.bind(null, match.id)} servers={servers ?? []} />
       </div>
     );
   }
@@ -298,7 +308,7 @@ export function MatchManage({ match }: { match: ManagedMatch }) {
         <div className="flex flex-col gap-3">
           <Heading level={3}>{match.status === "completed" ? "更正比分" : "手動輸入比分"}</Heading>
           <p className="text-body text-ink-secondary">伺服器沒辦法回傳結果時使用；手動輸入的場次沒有玩家數據。</p>
-          <MatchResultForm matchId={match.id} completed={match.status === "completed"} />
+          <MatchResultForm save={matchResultAction.bind(null, match.id)} completed={match.status === "completed"} />
         </div>
       )}
 
@@ -310,7 +320,7 @@ export function MatchManage({ match }: { match: ManagedMatch }) {
           {removable && (
             <div className="flex flex-col gap-3">
               <Heading level={3}>移出玩家</Heading>
-              <RemovePlayerForm matchId={match.id} players={options} />
+              <RemovePlayerForm remove={removePlayerAction.bind(null, match.id)} players={options} />
             </div>
           )}
           {unlockable && (
@@ -400,7 +410,7 @@ function TeamDraft({
         </Heading>
         <TeamConfirmForm
           key={selected}
-          matchId={match.id}
+          confirm={confirmTeamsAction.bind(null, match.id)}
           players={players}
           teamOf={teamOf}
           captainA={chosen.teamA.suggestedCaptain}

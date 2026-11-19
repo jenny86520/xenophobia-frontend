@@ -1,6 +1,12 @@
 import { TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
-import { changeCupAction, deleteIceCreamAction, iceCreamStepAction, redeemIceCreamAction } from "@/app/member/actions";
+import {
+  changeCupAction,
+  deleteIceCreamAction,
+  giftIceCreamAction,
+  iceCreamStepAction,
+  redeemIceCreamAction,
+} from "@/app/member/actions";
 import { ConfirmDialog } from "@/components/brand/confirm-dialog";
 import { MetaLabel } from "@/components/brand/meta-label";
 import { GuideButton } from "@/components/guide/guide-button";
@@ -287,7 +293,12 @@ function HeldCard({
           {can("gift") && (
             <PopoverDialog id={dialog("gift")} title={`贈送${name}`}>
               {friends.length > 0 ? (
-                <GiftIceCreamForm id={ice.id} serial={ice.serial} friends={friends} />
+                <GiftIceCreamForm
+                  id={ice.id}
+                  serial={ice.serial}
+                  friends={friends}
+                  gift={giftIceCreamAction.bind(null, ice.id)}
+                />
               ) : (
                 <p>還沒有好友可以塞，先去加幾個朋友吧。</p>
               )}

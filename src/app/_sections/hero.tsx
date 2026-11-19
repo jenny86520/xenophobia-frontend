@@ -61,20 +61,24 @@ export function Hero({ profile, nextParty }: HeroProps) {
           {mmdd && <MetaLabel>Next / {mmdd}</MetaLabel>}
         </div>
 
-        {/* Centered and sized by the name's length (--hero-chars) so it always fits the container:
-            14vw (capped at 13rem) fits the ten letters of the default name, so a longer name shares
-            the same 140vw among its characters. It never goes below 2.5rem (6rem, the Display minimum,
-            from lg); a name that still does not fit wraps between words (text-balance), and
-            overflow-wrap is the last resort for one long word. The size is set per breakpoint so the
-            base text-display line-height/tracking/weight stay intact. */}
-        <Display
-          as="h1"
-          id="hero-title"
-          style={{ "--hero-chars": Array.from(profile.name).length } as CSSProperties}
-          className="hero-parallax mt-8 text-center text-balance [overflow-wrap:anywhere] max-lg:text-[length:max(2.5rem,min(13rem,calc(140vw/max(var(--hero-chars),10))))] lg:text-[length:max(6rem,min(13rem,calc(140vw/max(var(--hero-chars),10))))]"
-        >
-          <BrandName name={profile.name} />
-        </Display>
+        {/* Centered and sized by the name's length (--hero-chars) and the column's own width (cqi of
+            the @container around it), never the viewport's: the column stops growing at 90rem minus
+            the gutters, so a vw size once outgrew it and broke XENOPHOBIA mid-word. Ten letters of
+            Geist 800 are about 6.54em wide, so 13.6cqi each fills about 89% of the column; a longer
+            name shares the same 136cqi among its characters. It never goes below 2.5rem (6rem, the
+            Display minimum, from lg); a name that still does not fit wraps between words
+            (text-balance), and overflow-wrap is the last resort for one long word. The size is set
+            per breakpoint so the base text-display line-height/tracking/weight stay intact. */}
+        <div className="@container">
+          <Display
+            as="h1"
+            id="hero-title"
+            style={{ "--hero-chars": Array.from(profile.name).length } as CSSProperties}
+            className="hero-parallax mt-8 text-center text-balance [overflow-wrap:anywhere] max-lg:text-[length:max(2.5rem,min(13rem,calc(136cqi/max(var(--hero-chars),10))))] lg:text-[length:max(6rem,min(13rem,calc(136cqi/max(var(--hero-chars),10))))]"
+          >
+            <BrandName name={profile.name} />
+          </Display>
+        </div>
 
         <EditorialGrid className="mt-12 gap-y-10">
           <div className="col-span-4 flex flex-col gap-6 md:col-span-6 lg:col-span-7">
