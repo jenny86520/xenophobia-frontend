@@ -3,8 +3,10 @@ import {
   kindSections,
   parseHideOwned,
   parseShopCategory,
+  sectionsFor,
   shopCosmeticsHref,
   shownGroups,
+  zoneSections,
 } from "./shop-cosmetics";
 
 const zones = [
@@ -90,26 +92,62 @@ describe("parseHideOwned", () => {
   });
 });
 
-describe("shownGroups", () => {
-  const tabs = cosmeticTabs(zones, items);
-  const sections = kindSections(items);
+describe("zoneSections", () => {
+  const stamps = [
+    item("s1", "stamp", []),
+    item("s2", "stamp", ["collab", "limited"]),
+    item("s3", "stamp", ["gone-zone"]),
+    item("s4", "stamp", ["limited"]),
+    item("t1", "title", ["limited"]),
+  ];
 
-  it("shows the kind sections under 全部 and one tab's items under that tab", () => {
-    expect(shownGroups(sections, "all", false).map((g) => g.key)).toEqual(["title", "frame", "cup"]);
-    expect(shownGroups(tabs, "limited", false).map((g) => [g.key, g.items.map((i) => i.id)])).toEqual([
-      ["limited", ["t1", "c1"]],
+  it("puts 其他 first, then the zones in their order, an item in two zones in both", () => {
+    expect(zoneSections("stamp", zones, stamps).map((g) => [g.key, g.label, g.items.map((i) => i.id)])).toEqual([
+      ["none", "其他", ["s1", "s3"]],
+      ["limited", "限定", ["s2", "s4"]],
+      ["collab", "聯名", ["s2"]],
     ]);
   });
 
-  it("hides owned collectibles but never cups, dropping groups left empty", () => {
-    expect(shownGroups(tabs, "title", true).map((g) => g.items.map((i) => i.id))).toEqual([["t1"]]);
-    expect(shownGroups(tabs, "cup", true).map((g) => g.items.map((i) => i.id))).toEqual([["c1", "c2"]]);
-    const onlyOwned = cosmeticTabs([], [item("t2", "title", [], true)]);
-    expect(shownGroups(onlyOwned, "title", true)).toEqual([]);
+  it("has only 其他 without zones, and leaves out empty sections", () => {
+    expect(zoneSections("stamp", [], stamps).map((g) => [g.key, g.items.length])).toEqual([["none", 4]]);
+    expect(zoneSections("title", zones, stamps).map((g) => g.key)).toEqual(["limited"]);
+    expect(zoneSections("cup", zones, stamps)).toEqual([]);
+  });
+});
+
+describe("sectionsFor", () => {
+  const tabs = cosmeticTabs(zones, items);
+
+  it("gives 全部 the kind sections, a kind its zone sections and a zone its own tab", () => {
+    expect(sectionsFor("all", zones, items, tabs).map((g) => g.key)).toEqual(["title", "frame", "cup"]);
+    expect(sectionsFor("cup", zones, items, tabs).map((g) => [g.key, g.items.map((i) => i.id)])).toEqual([
+      ["none", ["c2"]],
+      ["limited", ["c1"]],
+    ]);
+    expect(sectionsFor("limited", zones, items, tabs).map((g) => [g.key, g.items.map((i) => i.id)])).toEqual([
+      ["limited", ["t1", "c1"]],
+    ]);
+  });
+});
+
+describe("shownGroups", () => {
+  const tabs = cosmeticTabs(zones, items);
+
+  it("keeps every section without hiding", () => {
+    expect(shownGroups(kindSections(items), false).map((g) => g.key)).toEqual(["title", "frame", "cup"]);
+  });
+
+  it("hides owned collectibles but never cups, dropping sections left empty", () => {
+    const titles = sectionsFor("title", zones, items, tabs);
+    expect(shownGroups(titles, true).map((g) => [g.key, g.items.map((i) => i.id)])).toEqual([["limited", ["t1"]]]);
+    const cups = sectionsFor("cup", zones, items, tabs);
+    expect(shownGroups(cups, true).map((g) => g.items.map((i) => i.id))).toEqual([["c2"], ["c1"]]);
+    expect(shownGroups([{ key: "title", label: "稱號", items: [item("t2", "title", [], true)] }], true)).toEqual([]);
   });
 
   it("does not change the tabs' own counts", () => {
-    shownGroups(tabs, "title", true);
+    shownGroups(tabs, true);
     expect(tabs.find((g) => g.key === "title")?.items).toHaveLength(2);
   });
 });

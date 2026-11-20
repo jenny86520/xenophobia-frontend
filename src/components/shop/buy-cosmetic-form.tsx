@@ -25,6 +25,7 @@ export function BuyCosmeticForm({
   buy,
   owned,
   itemId,
+  idPrefix,
   name,
   price,
   kind,
@@ -32,12 +33,14 @@ export function BuyCosmeticForm({
   buy: (state: MemberActionState) => Promise<MemberActionState>;
   owned: boolean;
   itemId: string;
+  /** Keeps the dialog id unique when the same item's card shows in two sections. */
+  idPrefix?: string;
   name: string;
   price: number;
   kind: CosmeticKind;
 }) {
   const [state, action, pending] = useActionState<MemberActionState>(buy, {});
-  const dialogId = `buy-cosmetic-${itemId}`;
+  const dialogId = idPrefix ? `buy-cosmetic-${idPrefix}-${itemId}` : `buy-cosmetic-${itemId}`;
   const answered = useRef(state);
   useEffect(() => {
     if (answered.current === state) return;

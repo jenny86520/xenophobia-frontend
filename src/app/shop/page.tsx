@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { CalendarCheck, Flame, Gift } from "lucide-react";
+import { CalendarCheck, ChevronDown, Flame, Gift } from "lucide-react";
 import {
   buyCosmeticAction,
   claimIceCampaignAction,
@@ -29,9 +29,9 @@ import { QuestGoalLink } from "@/components/member/quest-goal-link";
 import {
   COSMETICS_SHELF_ID,
   cosmeticTabs,
-  kindSections,
   parseHideOwned,
   parseShopCategory,
+  sectionsFor,
   shopCosmeticsHref,
   shownGroups,
 } from "@/utils/shop-cosmetics";
@@ -59,7 +59,7 @@ function questAction(quest: ShopQuest, signIn: (label: string) => ReactNode) {
  * A cosmetic card's action: its start of sale while it is a teaser (for members and visitors
  * alike, no button), buy, 已擁有 (collectibles), 已售完, or a sign-in for visitors.
  */
-function cosmeticAction(item: ShopCosmetic, signIn: (label: string) => ReactNode) {
+function cosmeticAction(item: ShopCosmetic, signIn: (label: string) => ReactNode, scope?: string) {
   if (item.upcoming && item.saleStartsAt) {
     return <ShelfStatus kind="upcoming">{formatTaipeiMonthDayTime(item.saleStartsAt)} 開賣</ShelfStatus>;
   }
@@ -71,6 +71,7 @@ function cosmeticAction(item: ShopCosmetic, signIn: (label: string) => ReactNode
       buy={buyCosmeticAction.bind(null, item.id, item.price)}
       owned={owned}
       itemId={item.id}
+      idPrefix={scope}
       name={item.name}
       price={item.price}
       kind={item.kind}
@@ -99,12 +100,20 @@ function stockOf(item: ShopCosmetic): { remaining: number; limit: number } | und
   return { remaining: item.remaining ?? 0, limit: item.stockLimit };
 }
 
-/** One cosmetic's card (the same under 全部 and under its category's tab); a frame previews `nickname`. */
-function cosmeticCard(item: ShopCosmetic, signIn: (label: string) => ReactNode, nickname: string | null) {
+/**
+ * One cosmetic's card (the same under 全部 and under its category's tab); a frame previews `nickname`.
+ * `scope` (the section's key) keeps ids unique when an item in two zones shows twice on a kind tab.
+ */
+function cosmeticCard(
+  item: ShopCosmetic,
+  signIn: (label: string) => ReactNode,
+  nickname: string | null,
+  scope?: string,
+) {
   return (
     <ProductCard
       key={item.id}
-      id={`product-cosmetic-${item.id}`}
+      id={scope ? `product-cosmetic-${scope}-${item.id}` : `product-cosmetic-${item.id}`}
       picture={<CosmeticPreview kind={item.kind} look={item.look} sampleName={nickname} />}
       name={item.name}
       price={`${item.price} 點`}
@@ -112,16 +121,18 @@ function cosmeticCard(item: ShopCosmetic, signIn: (label: string) => ReactNode, 
       tag={item.stockLimit ? `限量 ${item.stockLimit} 份` : undefined}
       stock={stockOf(item)}
       soldOut={item.soldOut === true}
-      action={cosmeticAction(item, signIn)}
+      action={cosmeticAction(item, signIn, scope)}
     />
   );
 }
 
 /**
  * The cosmetics shelf (spec point-shop): tabs for the admins' zones, then the four kinds; the
- * member's 隱藏已擁有; and under 全部 one section per kind with its own heading (each item once). A
- * single section needs no heading of its own: the shelf's heading names the grid. Frames preview the
- * member's own nickname (null for visitors: 「你的名字」).
+ * member's 隱藏已擁有; under 全部 one section per kind (each item once), under a kind 其他 and then
+ * one section per zone (an item in two zones in both). Each section is a native `<details open>`
+ * whose summary holds its h3, so it folds without JavaScript and starts open. A single section needs
+ * no heading of its own: the shelf's heading names the grid. Frames preview the member's own
+ * nickname (null for visitors: 「你的名字」).
  */
 function CosmeticsShelf({
   shop,
@@ -139,7 +150,7 @@ function CosmeticsShelf({
   const groups = cosmeticTabs(shop.cosmeticCategories ?? [], items);
   const current = parseShopCategory(query.category, groups);
   const hideOwned = parseHideOwned(query.owned, signedIn);
-  const shown = shownGroups(current === "all" ? kindSections(items) : groups, current, hideOwned);
+  const shown = shownGroups(sectionsFor(current, shop.cosmeticCategories ?? [], items, groups), hideOwned);
 
   let body: ReactNode;
   if (items.length === 0) {
@@ -166,12 +177,24 @@ function CosmeticsShelf({
       const headingId = `${COSMETICS_SHELF_ID}-${group.key}`;
       return (
         <section key={group.key} aria-labelledby={headingId} className="mt-10">
-          <Heading level={3} id={headingId}>
-            {group.label}
-          </Heading>
-          <ProductGrid labelledBy={headingId}>
-            {group.items.map((item) => cosmeticCard(item, signIn, nickname))}
-          </ProductGrid>
+          <details open className="group/section">
+            <summary className="flex cursor-pointer list-none items-baseline gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-signal [&::-webkit-details-marker]:hidden">
+              <Heading level={3} id={headingId}>
+                {group.label}
+              </Heading>
+              <span className="font-mono text-caption text-ink-muted">
+                {group.items.length}
+                <span className="sr-only"> 件</span>
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className="ml-auto size-5 shrink-0 -rotate-90 self-center text-ink-secondary group-open/section:rotate-0 motion-safe:transition-transform"
+              />
+            </summary>
+            <ProductGrid labelledBy={headingId}>
+              {group.items.map((item) => cosmeticCard(item, signIn, nickname, group.key))}
+            </ProductGrid>
+          </details>
         </section>
       );
     });

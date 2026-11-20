@@ -311,9 +311,9 @@ describe("/shop", () => {
         },
       ];
       await renderPage(shop({ cosmetics: limited }), true);
-      // Under 全部 the cards come by kind: the frames, then the cup.
+      // Under 全部 the cards come by kind (frames, then the cup), their ids scoped by the section.
       const card = (id: string) =>
-        cosmeticCards().find((li) => li.getAttribute("aria-labelledby") === `product-cosmetic-${id}`) as HTMLElement;
+        cosmeticCards().find((li) => li.getAttribute("aria-labelledby")?.endsWith(`-${id}`)) as HTMLElement;
       const [cup, frame, plain] = [card(limited[0].id), card("f2"), card("f3")];
       expect(within(cup).getByText("限量 20 份")).toBeInTheDocument();
       expect(cup.querySelector("[data-stock-meter]")).toHaveTextContent("剩餘3 / 20 份");
@@ -419,10 +419,23 @@ describe("/shop", () => {
           "比賽室框",
           "冰炫風杯",
         ]);
-        expect(ids(shelf("稱號"))).toEqual(["product-cosmetic-t1", "product-cosmetic-t9"]);
-        expect(ids(shelf("比賽室框"))).toEqual(["product-cosmetic-f1"]);
-        expect(ids(shelf("冰炫風杯"))).toEqual(["product-cosmetic-c1", "product-cosmetic-c9"]);
+        expect(ids(shelf("稱號"))).toEqual(["product-cosmetic-title-t1", "product-cosmetic-title-t9"]);
+        expect(ids(shelf("比賽室框"))).toEqual(["product-cosmetic-frame-f1"]);
+        expect(ids(shelf("冰炫風杯"))).toEqual(["product-cosmetic-cup-c1", "product-cosmetic-cup-c9"]);
         expect(cosmeticCards()).toHaveLength(5);
+      });
+
+      it("folds each section natively, open by default, its h3 and count in the summary", async () => {
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true);
+        const details = Array.from(document.querySelectorAll("section details"));
+        expect(details).toHaveLength(3);
+        for (const section of details) {
+          expect(section).toHaveAttribute("open");
+          const summary = section.querySelector(":scope > summary") as HTMLElement;
+          expect(within(summary).getByRole("heading", { level: 3 })).toBeInTheDocument();
+        }
+        const titles = details[0].querySelector("summary") as HTMLElement;
+        expect(titles).toHaveTextContent("稱號2 件");
       });
 
       it("shows a zone across kinds under its tab, without a sub-heading", async () => {
@@ -434,10 +447,40 @@ describe("/shop", () => {
         expect(ids(shelf("冰炫風"))).toContain("product-create");
       });
 
-      it("shows one kind under its tab, zone members included", async () => {
+      it("sections one kind under its tab by zone, 其他 first", async () => {
         await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, { category: "cup" });
         expect(screen.getByRole("link", { name: "冰炫風杯 2" })).toHaveAttribute("aria-current", "page");
-        expect(ids(shelf("外觀"))).toEqual(["product-cosmetic-c1", "product-cosmetic-c9"]);
+        expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(["其他", "限定"]);
+        expect(ids(shelf("其他"))).toEqual(["product-cosmetic-none-c9"]);
+        expect(ids(shelf("限定"))).toEqual(["product-cosmetic-limited-c1"]);
+      });
+
+      it("shows an item in two zones in both sections, with its own ids and dialog each", async () => {
+        const twice = sorted.map((item) => (item.id === "t9" ? { ...item, categoryIds: ["limited", "collab"] } : item));
+        await renderPage(shop({ cosmetics: twice, cosmeticCategories }), true, { category: "title" });
+        expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual(["限定", "聯名"]);
+        expect(ids(shelf("限定"))).toEqual(["product-cosmetic-limited-t1", "product-cosmetic-limited-t9"]);
+        expect(ids(shelf("聯名"))).toEqual(["product-cosmetic-collab-t9"]);
+        expect(screen.getByRole("link", { name: "稱號 2" })).toBeInTheDocument();
+        const targets = screen.getAllByRole("button", { name: "購買" }).map((b) => b.getAttribute("popovertarget"));
+        expect(targets).toEqual(["buy-cosmetic-limited-t9", "buy-cosmetic-collab-t9"]);
+        targets.forEach((id) => expect(document.getElementById(id as string)).not.toBeNull());
+        const allIds = Array.from(document.querySelectorAll("[id]")).map((el) => el.id);
+        expect(new Set(allIds).size).toBe(allIds.length);
+      });
+
+      it("has no heading or fold when a kind tab is one section", async () => {
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, { category: "frame" });
+        expect(screen.queryAllByRole("heading", { level: 3 })).toHaveLength(0);
+        expect(document.querySelector("section details")).toBeNull();
+        expect(ids(shelf("外觀"))).toEqual(["product-cosmetic-f1"]);
+      });
+
+      it("counts what is shown in a section once owned items are hidden", async () => {
+        await renderPage(shop({ cosmetics: sorted, cosmeticCategories }), true, { owned: "hide" });
+        const summary = screen.getByRole("heading", { level: 3, name: "稱號" }).closest("summary") as HTMLElement;
+        expect(summary).toHaveTextContent("稱號1 件");
+        expect(tabs()).toContain("稱號 2");
       });
 
       it("treats an unknown, empty or old 其他 tab as 全部", async () => {
