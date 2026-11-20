@@ -262,6 +262,39 @@ describe("LegendsPage", () => {
     expect(within(screen.getByRole("region", { name: "簽到狂人" })).queryByRole("button")).toBeNull();
   });
 
+  it("puts the three video boards on the 影片 tab, each marked as not counting, with 爛片之王 explained", async () => {
+    const videoBoard = (code: string, title: string, metric: string, unit: string, value: number) => ({
+      code,
+      title,
+      metric,
+      unit,
+      countsTowardOverall: false,
+      entries: [{ rank: 1, nickname: "阿明", value }],
+    });
+    const data: Legends = {
+      ...legends,
+      boards: [
+        videoBoard("video-likes", "人氣導演", "累積獲得讚數", "讚", 12),
+        videoBoard("video-top-likes", "一片封神", "單支影片最高讚數", "讚", 8),
+        videoBoard("video-dislikes", "爛片之王", "累積獲得爛數", "爛", 5),
+      ],
+    };
+    await renderPage(data, "videos");
+
+    expect(tabLinks()).toEqual([
+      ["總排行", "/legends", null],
+      ["影片", "/legends?tab=videos", "page"],
+    ]);
+    expect(boardHeadings()).toEqual(["人氣導演", "一片封神", "爛片之王"]);
+    for (const title of ["人氣導演", "一片封神", "爛片之王"]) {
+      expect(screen.getByRole("region", { name: title })).toHaveTextContent("不計入總排行");
+    }
+    const rules = document.getElementById("legend-rules-video-dislikes");
+    expect(rules).toHaveTextContent("目前上架中的影片");
+    expect(rules).toHaveTextContent("按讚不會抵銷");
+    expect(rules).toHaveTextContent("不計入總排行");
+  });
+
   it("still shows the overall ranking when nobody is listed", async () => {
     await renderPage({ overall: { title: "傳奇總榜", entries: [] }, boards: [] });
 

@@ -5,8 +5,10 @@ import {
   Clapperboard,
   Coins,
   Crosshair,
+  Flame,
   Ghost,
   Swords,
+  ThumbsDown,
   Trophy,
   type LucideIcon,
 } from "lucide-react";
@@ -30,6 +32,8 @@ export const BOARD_ICONS: Record<string, LucideIcon> = {
   "points-earned": Coins,
   "checkin-streak": CalendarDays,
   "video-likes": Clapperboard,
+  "video-top-likes": Flame,
+  "video-dislikes": ThumbsDown,
 };
 
 /** The id of a board's heading, also the anchor the 各榜榜首 links jump to. */

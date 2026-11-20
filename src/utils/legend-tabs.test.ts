@@ -10,11 +10,14 @@ describe("legend tabs", () => {
     // A known tab with no boards is not shown, so it is not chosen either.
     expect(parseLegendTab("points", boards)).toBe("overall");
     expect(parseLegendTab("scrim", boards)).toBe("scrim");
+    expect(parseLegendTab("videos", boards)).toBe("overall");
+    expect(parseLegendTab("videos", [...boards, { code: "video-dislikes" }])).toBe("videos");
   });
 
   it("puts boards the site does not know under 其他", () => {
     expect(tabOf("scrim-cancelled")).toBe("scrim");
     expect(tabOf("checkin-streak")).toBe("points");
+    expect(["video-likes", "video-top-likes", "video-dislikes"].map(tabOf)).toEqual(["videos", "videos", "videos"]);
     expect(tabOf("brand-new")).toBe("other");
   });
 
@@ -22,6 +25,14 @@ describe("legend tabs", () => {
     expect(visibleTabs(boards)).toEqual(["overall", "party", "scrim"]);
     expect(visibleTabs([])).toEqual(["overall"]);
     expect(visibleTabs([...boards, { code: "brand-new" }])).toEqual(["overall", "party", "scrim", "other"]);
+    // 影片 sits between 簽到與點數 and 其他; with only video boards there is no 其他.
+    expect(visibleTabs([{ code: "checkin-streak" }, { code: "video-likes" }, { code: "brand-new" }])).toEqual([
+      "overall",
+      "points",
+      "videos",
+      "other",
+    ]);
+    expect(visibleTabs([{ code: "video-top-likes" }])).toEqual(["overall", "videos"]);
   });
 
   it("keeps the backend's order within a tab", () => {

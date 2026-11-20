@@ -1,4 +1,4 @@
-import { CalendarCheck, Coins, Sparkles, Swords, Trophy } from "lucide-react";
+import { CalendarCheck, Clapperboard, Coins, Sparkles, Swords, Trophy } from "lucide-react";
 
 /**
  * The /legends tabs, in display order; the first is the default. A board's tab is only where the page
@@ -9,6 +9,7 @@ export const LEGEND_TABS = [
   { value: "party", label: "派對", icon: CalendarCheck },
   { value: "scrim", label: "內戰", icon: Swords },
   { value: "points", label: "簽到與點數", icon: Coins },
+  { value: "videos", label: "影片", icon: Clapperboard },
   { value: "other", label: "其他", icon: Sparkles },
 ] as const;
 
@@ -23,6 +24,9 @@ export const BOARD_TAB: Record<string, Exclude<LegendTab, "overall" | "other">> 
   "scrim-cancelled": "scrim",
   "checkin-streak": "points",
   "points-earned": "points",
+  "video-likes": "videos",
+  "video-top-likes": "videos",
+  "video-dislikes": "videos",
 };
 
 /** Which tab a board code belongs to. */
