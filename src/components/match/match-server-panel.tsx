@@ -43,6 +43,7 @@ function Score({
           {server.resultSource === "manual" && (
             <span className="ml-2 text-body text-ink-muted">（比分為手動輸入）</span>
           )}
+          {server.resultSource === "demo" && <span className="ml-2 text-body text-ink-muted">（依 demo）</span>}
         </p>
       )}
     </div>

@@ -438,6 +438,17 @@ describe("/matches/[id] rating changes", () => {
     };
   };
 
+  it("says a result written from an admin's demo comes from the demo", async () => {
+    const match = done(false);
+    (fetchViewerMatch as jest.Mock).mockResolvedValue(
+      viewer({}, { ...match, server: { ...match.server!, resultSource: "demo" } }),
+    );
+    await renderMatch();
+    expect(screen.getByText("（依 demo）")).toBeInTheDocument();
+    expect(screen.queryByText("（比分為手動輸入）")).not.toBeInTheDocument();
+    expect(screen.queryByText("手動輸入比分的場次沒有玩家數據。")).not.toBeInTheDocument();
+  });
+
   it("shows signed-in people each player's change in the match", async () => {
     (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer({}, done(true)));
     await renderMatch();

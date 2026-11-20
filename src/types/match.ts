@@ -64,7 +64,8 @@ export type MatchServer = {
   /** Set once completed; null then is a draw. */
   winner: "A" | "B" | null;
   /** server: MatchZy's result; manual: typed in by a manager (no full stats). */
-  resultSource: "server" | "manual" | null;
+  /** demo: an admin applied a demo uploaded by hand (shown as 「依 demo」). */
+  resultSource: "server" | "manual" | "demo" | null;
   liveAt: string | null;
   completedAt: string | null;
 };
