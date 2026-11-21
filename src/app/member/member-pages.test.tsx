@@ -438,6 +438,22 @@ describe("/member", () => {
           team: "A",
           isCaptain: true,
           ratingChange: { delta: 28, teamPart: 25, personalPart: 3, note: null },
+          unscored: false,
+        },
+        {
+          id: "m0",
+          title: "十月舊場次",
+          status: "completed",
+          game: { id: "cs2", name: "Counter-Strike 2" },
+          party: null,
+          playerCount: 10,
+          capacity: 10,
+          createdAt: "2026-10-01T00:00:00.000Z",
+          createdBy: "小華",
+          team: "B",
+          isCaptain: false,
+          ratingChange: null,
+          unscored: true,
         },
       ],
       adjustments: [{ before: 1206, after: 1234, delta: 28, at: "2026-11-07T04:00:00.000Z" }],
@@ -452,6 +468,8 @@ describe("/member", () => {
     expect(row).toHaveAttribute("href", "/matches/m1");
     expect(within(row).getByText("A 隊・隊長・評分 +28")).toBeInTheDocument();
     expect(within(row).getByText("小華・2026/10/25 08:00")).toBeInTheDocument();
+    // A match an admin closed without a score says so.
+    expect(within(panel).getByRole("link", { name: /十月舊場次/ })).toHaveTextContent("B 隊・未記錄比分");
     expect(within(panel).getByRole("link", { name: "查看所有內戰場次" })).toHaveAttribute("href", "/matches");
     expect(within(panel).getByRole("link", { name: "評分排行" })).toHaveAttribute("href", "/games/cs2");
     // Admins' adjustments are listed apart.

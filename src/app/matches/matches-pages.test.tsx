@@ -52,6 +52,8 @@ jest.mock("@/app/matches/actions", () =>
       "serverStartAction",
       "serverAbortAction",
       "matchResultAction",
+      "matchTitleAction",
+      "matchCloseAction",
       "teamNameAction",
       "managerTeamNameAction",
     ].map((name) => [name, jest.fn()]),
@@ -136,6 +138,7 @@ const viewer = (overrides: Partial<ViewerMatch["viewer"]> = {}, match: MatchDeta
     ...overrides,
   },
   stats: [],
+  statsDetail: "full",
 });
 
 const renderMatch = async (search: Record<string, string> = {}) =>
@@ -324,6 +327,7 @@ describe("/matches/[id]", () => {
       createdBy: "會員host1",
       createdByMemberId: "host1",
       stats: [],
+      statsDetail: "full",
       connect: null,
       serverSession: null,
       candidates: null,
@@ -341,6 +345,11 @@ describe("/matches/[id]", () => {
     expect(within(manage).getByRole("checkbox", { name: "確認把這位玩家移出名單" })).toBeRequired();
     expect(within(manage).getByText("K7P2QM")).toBeInTheDocument();
     expect(within(manage).getByRole("button", { name: "取消場次" })).toBeInTheDocument();
+    // The title can change in any status; no score or close before the teams are confirmed.
+    expect(within(manage).getByRole("textbox", { name: /場次標題/ })).toHaveValue("週五晚場");
+    expect(within(manage).getByRole("button", { name: "儲存標題" })).toBeInTheDocument();
+    expect(within(manage).queryByRole("button", { name: "標記為已完成" })).not.toBeInTheDocument();
+    expect(within(manage).queryByRole("button", { name: "儲存比分" })).not.toBeInTheDocument();
   });
 
   it("compares the candidates and presets the chosen one in the team form", async () => {
@@ -357,6 +366,7 @@ describe("/matches/[id]", () => {
       createdBy: "admin",
       createdByMemberId: "host1",
       stats: [],
+      statsDetail: "full",
       connect: null,
       serverSession: null,
       candidates: [
@@ -517,6 +527,7 @@ describe("/matches/[id] drafting and team names", () => {
       createdBy: "阿凱",
       createdByMemberId: "host1",
       stats: [],
+      statsDetail: "full",
       connect: null,
       serverSession: null,
     });
@@ -719,6 +730,7 @@ describe("/matches/[id] map veto", () => {
       createdBy: "阿凱",
       createdByMemberId: "host1",
       stats: [],
+      statsDetail: "full",
       connect: null,
       serverSession: null,
       candidates: null,
@@ -736,6 +748,10 @@ describe("/matches/[id] map veto", () => {
     let manage = screen.getByRole("region", { name: "管理" });
     expect(within(manage).getByRole("checkbox", { name: /確認退回分隊/ })).toBeRequired();
     expect(within(manage).getByRole("button", { name: "退回分隊" })).toBeInTheDocument();
+    // An old match left here (made before the veto existed) can still be finished: a score, or none.
+    expect(within(manage).getByRole("heading", { name: "手動輸入比分" })).toBeInTheDocument();
+    expect(within(manage).getByRole("checkbox", { name: /確認標記為已完成（不記比分）/ })).toBeRequired();
+    expect(within(manage).getByRole("button", { name: "標記為已完成" })).toBeInTheDocument();
     unmount();
 
     (fetchViewerMatch as jest.Mock).mockResolvedValue(viewer({ canManage: true }, vetoMatch()));
@@ -766,6 +782,7 @@ describe("/matches/[id] on the game server", () => {
     createdByMemberId: "host1",
     candidates: null,
     stats: [],
+    statsDetail: "full",
     connect: null,
     serverSession: null,
     ...extra,
@@ -867,7 +884,7 @@ describe("/matches/[id] on the game server", () => {
     expect(panel).toHaveTextContent("請先開啟 CS2，進到主選單後再按「進入遊戲」");
   });
 
-  it("shows the result and each team's stats once completed", async () => {
+  describe("the scoreboard once completed (spec 賽後成績表)", () => {
     const done: MatchDetail = {
       ...teamed(),
       status: "completed",
@@ -881,7 +898,7 @@ describe("/matches/[id] on the game server", () => {
         completedAt: "2026-11-05T12:50:00.000Z",
       },
     };
-    const stat = (playerId: string, name: string, team: "A" | "B", kills: number) => ({
+    const stat = (playerId: string, name: string, team: "A" | "B", kills: number, adr = 76.9) => ({
       playerId,
       name,
       team,
@@ -890,36 +907,101 @@ describe("/matches/[id] on the game server", () => {
       assists: 2,
       damage: 2000,
       roundsPlayed: 26,
-      adr: 76.9,
+      adr,
       headshotPercent: 40,
+      kdDiff: kills - 10,
+      kdRatio: kills / 10,
+      kastPercent: 70,
+      multiKillRounds: 3,
       headshotKills: 6,
       multiKills: { 2: 1, 3: 0, 4: 0, 5: 0 },
-      clutches: 0,
-      firstKills: 0,
-      firstDeaths: 0,
+      clutches: 1,
+      firstKills: 2,
+      firstDeaths: 1,
       tradeKills: 0,
       mvp: 1,
       swing: null as number | null,
     });
-    (fetchViewerMatch as jest.Mock).mockResolvedValue({
-      ...viewer({}, done),
-      stats: [{ ...stat("a", "阿強", "A", 15), swing: 3.2 }, stat("c", "訪客C", "B", 12)],
+    const stats = [
+      { ...stat("a", "阿強", "A", 15), swing: 3.2 },
+      stat("c", "訪客C", "B", 12, 60),
+      stat("b", "小明", "B", 8, 90),
+    ];
+    const rowNames = (table: HTMLElement) =>
+      within(table)
+        .getAllByRole("row")
+        .slice(1)
+        .map((row) => within(row).getByRole("rowheader").textContent);
+
+    it("puts the numbers in each team's table, not beside the players in the room", async () => {
+      (fetchViewerMatch as jest.Mock).mockResolvedValue({ ...viewer({}, done), stats });
+      await renderMatch();
+      expect(screen.getByRole("region", { name: "比賽" })).toHaveTextContent("平手");
+      const teamA = screen.getByRole("region", { name: "A 隊" });
+      expect(within(teamA).getByText("阿強").closest("li")).not.toHaveTextContent("ADR");
+
+      const board = screen.getByRole("region", { name: "成績" });
+      const tableA = within(board).getByRole("table", { name: /A 隊每位玩家的成績/ });
+      const row = within(tableA).getByRole("row", { name: /阿強/ });
+      expect(row).toHaveTextContent("阿強15102+51.5076.940%70%2131+3.2%");
+      // B has no SWING, so it sorts by ADR, high to low.
+      const tableB = within(board).getByRole("table", { name: /B 隊每位玩家的成績/ });
+      expect(rowNames(tableB)).toEqual(["小明", "訪客C"]);
+      expect(within(tableB).getByRole("columnheader", { name: /每回合平均傷害/ })).toHaveAttribute(
+        "aria-sort",
+        "descending",
+      );
+      expect(within(tableB).getAllByText("沒有資料").length).toBeGreaterThan(0);
+      expect(screen.queryByRole("link", { name: "下載 demo" })).not.toBeInTheDocument();
     });
-    await renderMatch();
-    const panel = screen.getByRole("region", { name: "比賽" });
-    expect(panel).toHaveTextContent("平手");
-    // Each player's numbers sit beside them in their team's column.
-    const teamA = screen.getByRole("region", { name: "A 隊" });
-    expect(within(teamA).getByText("阿強").closest("li")).toHaveTextContent(
-      "15 / 10 / 2（擊殺／死亡／助攻）・ADR 76.9・爆頭 40%・SWING +3.2%",
-    );
-    const teamB = screen.getByRole("region", { name: "B 隊" });
-    expect(within(teamB).getByText("訪客C").closest("li")).toHaveTextContent("12 / 10 / 2");
-    // No SWING until the demo is parsed.
-    expect(within(teamB).getByText("訪客C").closest("li")).not.toHaveTextContent("SWING");
-    expect(within(teamB).getByText("小明").closest("li")).not.toHaveTextContent("ADR");
-    // Nobody here may download the demo: no link.
-    expect(screen.queryByRole("link", { name: "下載 demo" })).not.toBeInTheDocument();
+
+    it("sorts one team by the URL and keeps the other team's order in its links", async () => {
+      (fetchViewerMatch as jest.Mock).mockResolvedValue({ ...viewer({}, done), stats });
+      await renderMatch({ sortB: "kills", dirB: "desc" });
+      const tableB = screen.getByRole("table", { name: /B 隊每位玩家的成績/ });
+      expect(rowNames(tableB)).toEqual(["訪客C", "小明"]);
+      const kills = within(tableB).getByRole("link", { name: "擊殺" });
+      expect(kills).toHaveAttribute("href", "/matches/m1?sortA=swing&dirA=desc&sortB=kills&dirB=asc#scoreboard-B");
+      const tableA = screen.getByRole("table", { name: /A 隊每位玩家的成績/ });
+      expect(within(tableA).getByRole("link", { name: "每回合平均傷害" })).toHaveAttribute(
+        "href",
+        "/matches/m1?sortA=adr&dirA=desc&sortB=kills&dirB=desc#scoreboard-A",
+      );
+    });
+
+    it("shows 「—」 for what a demo does not have", async () => {
+      (fetchViewerMatch as jest.Mock).mockResolvedValue({
+        ...viewer({}, { ...done, server: { ...done.server!, resultSource: "demo" } }),
+        stats,
+        statsDetail: "basic",
+      });
+      await renderMatch();
+      const row = within(screen.getByRole("table", { name: /A 隊每位玩家的成績/ })).getByRole("row", {
+        name: /阿強/,
+      });
+      expect(row).not.toHaveTextContent("70%");
+      expect(within(row).getAllByText("沒有資料")).toHaveLength(5);
+      expect(screen.getByRole("region", { name: "成績" })).toHaveTextContent("這場的數據來自 demo");
+    });
+
+    it("asks visitors to sign in and shows no table", async () => {
+      (fetchMatchDetail as jest.Mock).mockResolvedValue(done);
+      await renderMatch();
+      const board = screen.getByRole("region", { name: "成績" });
+      expect(board).toHaveTextContent("登入後可看到每位玩家的數據");
+      expect(within(board).queryByRole("table")).not.toBeInTheDocument();
+    });
+
+    it("has no scoreboard for a match completed without a score", async () => {
+      const closed = {
+        ...done,
+        server: { ...done.server!, scoreA: null, scoreB: null, resultSource: "closed" as const },
+      };
+      (fetchViewerMatch as jest.Mock).mockResolvedValue({ ...viewer({}, closed), stats });
+      await renderMatch();
+      expect(screen.getByRole("region", { name: "比賽" })).toHaveTextContent("未記錄比分");
+      expect(screen.queryByRole("region", { name: "成績" })).not.toBeInTheDocument();
+    });
   });
 
   it("offers the demo download to whoever the backend allows, once completed", async () => {

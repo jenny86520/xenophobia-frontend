@@ -23,6 +23,14 @@ function Score({
   completed: boolean;
   teamNames: { A: string; B: string };
 }) {
+  if (completed && server.resultSource === "closed") {
+    return (
+      <p className="text-lead text-ink">
+        未記錄比分
+        <span className="ml-2 text-body text-ink-muted">（管理者標記為已完成，不計入評分）</span>
+      </p>
+    );
+  }
   if (server.scoreA === null || server.scoreB === null) return null;
   const result = !completed ? null : server.winner ? `${teamNames[server.winner]}獲勝` : "平手";
   return (
@@ -78,8 +86,9 @@ function Connect({ connect }: { connect: MatchConnect }) {
 
 /**
  * The match on its game server, in the middle of the match room: what is happening, the server, the
- * live or final score by team name. The match's players and managers also get how to join. Each
- * player's numbers sit beside them in the team columns (signed-in viewers only).
+ * live or final score by team name. The match's players and managers also get how to join. While the
+ * match runs each player's numbers sit beside them in the team columns; once completed they are in
+ * the scoreboard below the room (signed-in viewers only).
  */
 export function MatchServerPanel({
   status,
@@ -111,9 +120,8 @@ export function MatchServerPanel({
       </div>
       <Score server={server} completed={completed} teamNames={teamNames} />
       {connect && <Connect connect={connect} />}
-      {!signedIn && (status === "in_game" || completed) && server.resultSource !== "manual" && (
-        <MetaLabel>登入後可看到每位玩家的數據</MetaLabel>
-      )}
+      {/* Once completed, the hint sits where the scoreboard would be (MatchScoreboardSection). */}
+      {!signedIn && status === "in_game" && <MetaLabel>登入後可看到每位玩家的數據</MetaLabel>}
       {completed && server.resultSource === "manual" && (
         <p className="text-body text-ink-secondary">手動輸入比分的場次沒有玩家數據。</p>
       )}

@@ -13,11 +13,13 @@ import { JoinGroupForm } from "@/components/match/match-forms";
 import { MatchInviteFriends } from "@/components/match/match-invite-friends";
 import { MatchManage } from "@/components/match/match-manage";
 import { MatchRoom } from "@/components/match/match-room";
+import { MatchScoreboard } from "@/components/match/match-scoreboard";
 import { MatchStatusLabel } from "@/components/match/match-status";
 import { SteamLoginLink } from "@/components/player/steam-login-link";
 import { fetchManagedMatch, fetchMatchFriends, fetchMatchServers, fetchViewerMatch } from "@/lib/player-actor";
 import { fetchMatchDetail } from "@/lib/public-content-client";
-import type { ViewerMatch } from "@/types/match";
+import type { MatchDetail, MatchPlayerStats, StatsDetail, ViewerMatch } from "@/types/match";
+import { parseScoreboardSort, type ScoreboardRow } from "@/utils/scoreboard";
 
 export async function generateMetadata({ params }: PageProps<"/matches/[id]">): Promise<Metadata> {
   const { id } = await params;
@@ -66,7 +68,8 @@ function SignUp({ match }: { match: ViewerMatch }) {
  */
 export default async function MatchPage({ params, searchParams }: PageProps<"/matches/[id]">) {
   const { id } = await params;
-  const { candidate } = await searchParams;
+  const query = await searchParams;
+  const { candidate } = query;
   const viewerMatch = await fetchViewerMatch(id);
   const match = viewerMatch ?? (await fetchMatchDetail(id));
   if (!match) notFound();
@@ -171,6 +174,16 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
         </Container>
       </Section>
 
+      {shown.status === "completed" && shown.server && shown.server.resultSource !== "closed" && (
+        <ScoreboardSection
+          match={shown}
+          signedIn={viewerMatch !== null || managed !== null}
+          stats={viewerMatch?.stats ?? managed?.stats ?? []}
+          detail={viewerMatch?.statsDetail ?? managed?.statsDetail ?? "full"}
+          query={query}
+        />
+      )}
+
       {managed && (
         <Section spacing="tight" labelledBy="manage-title" ruled>
           <EditorialGrid className="gap-y-6">
@@ -186,5 +199,57 @@ export default async function MatchPage({ params, searchParams }: PageProps<"/ma
         </Section>
       )}
     </main>
+  );
+}
+
+/**
+ * 成績 below the match room once it is completed (spec scrim-match-server 賽後成績表): both teams'
+ * tables for signed-in viewers, a sign-in hint for visitors, nothing when there are no numbers.
+ */
+function ScoreboardSection({
+  match,
+  signedIn,
+  stats,
+  detail,
+  query,
+}: {
+  match: MatchDetail;
+  signedIn: boolean;
+  stats: MatchPlayerStats[];
+  detail: StatsDetail;
+  query: Record<string, string | string[] | undefined>;
+}) {
+  if (!match.server || !match.teams) return null;
+  if (signedIn && stats.length === 0) return null;
+  const players = new Map(match.entries.flatMap((entry) => entry.players).map((p) => [p.playerId, p]));
+  const rows: ScoreboardRow[] = stats.map((row) => ({
+    ...row,
+    ratingChange: players.get(row.playerId)?.ratingChange ?? null,
+  }));
+  const sideRows = (side: "A" | "B") => rows.filter((row) => row.team === side);
+  return (
+    <Section spacing="tight" labelledBy="scoreboard-title" ruled bleed>
+      <Container className="max-w-[112rem]">
+        <Heading level={2} id="scoreboard-title" className="mb-8">
+          成績
+        </Heading>
+        {signedIn ? (
+          <MatchScoreboard
+            matchId={match.id}
+            server={match.server}
+            teamNames={{ A: match.teams.A.name, B: match.teams.B.name }}
+            rows={rows}
+            players={players}
+            detail={detail}
+            sorts={{
+              A: parseScoreboardSort(query, "A", sideRows("A")),
+              B: parseScoreboardSort(query, "B", sideRows("B")),
+            }}
+          />
+        ) : (
+          <MetaLabel>登入後可看到每位玩家的數據</MetaLabel>
+        )}
+      </Container>
+    </Section>
   );
 }

@@ -338,6 +338,33 @@ export function TeamNameForm({
   );
 }
 
+/**
+ * A manager retitles the match (any status). The typed title survives a refused submission; the
+ * backend trims it and checks its length.
+ */
+export function MatchTitleForm({ rename, current }: { rename: ConfirmedAction; current: string }) {
+  const [state, action, pending] = useActionState<MatchActionState, FormData>(rename, {});
+  return (
+    <form action={action} className="flex max-w-xl flex-col gap-3">
+      <FormField
+        id="match-title"
+        name="title"
+        label="場次標題"
+        maxLength={60}
+        required
+        autoComplete="off"
+        hint="最多 60 個字。"
+        defaultValue={state.values?.title ?? current}
+        error={state.fields?.title}
+      />
+      <button type="submit" disabled={pending} className={cn(secondaryButton, "self-start px-4 py-2")}>
+        {pending ? "處理中…" : "儲存標題"}
+      </button>
+      <FormMessage state={state} />
+    </form>
+  );
+}
+
 // ---- The map veto ----
 
 /** The captain whose turn it is bans one map (one small form per map). */

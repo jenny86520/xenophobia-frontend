@@ -65,8 +65,10 @@ function Ladder({ entries }: { entries: LadderEntry[] }) {
 
 /** One finished match: title, map, both teams with the score, the winner and when; links to it. */
 function ResultRow({ match }: { match: CompletedMatch }) {
-  const score = match.scoreA !== null && match.scoreB !== null ? `${match.scoreA} : ${match.scoreB}` : "—";
-  const result = match.winner ? `${match.teams[match.winner]}獲勝` : "平手";
+  const scored = match.scoreA !== null && match.scoreB !== null;
+  const score = scored ? `${match.scoreA} : ${match.scoreB}` : "—";
+  // No score at all: a match an admin marked completed without one, never shown as a draw.
+  const result = !scored ? "未記錄比分" : match.winner ? `${match.teams[match.winner]}獲勝` : "平手";
   return (
     <li className="list-row border-t border-line">
       <Link

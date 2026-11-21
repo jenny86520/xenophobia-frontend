@@ -65,7 +65,8 @@ export type MatchServer = {
   winner: "A" | "B" | null;
   /** server: MatchZy's result; manual: typed in by a manager (no full stats). */
   /** demo: an admin applied a demo uploaded by hand (shown as 「依 demo」). */
-  resultSource: "server" | "manual" | "demo" | null;
+  /** closed: marked completed without a score (no scores, no winner; shown as 「未記錄比分」). */
+  resultSource: "server" | "manual" | "demo" | "closed" | null;
   liveAt: string | null;
   completedAt: string | null;
 };
@@ -73,7 +74,13 @@ export type MatchServer = {
 /** How to join the server: only for the match's players and its managers. */
 export type MatchConnect = { address: string; password: string; url: string };
 
-/** One player's stats from the server; ADR and headshot % come worked out from the backend. */
+/**
+ * Which stats columns can be trusted: `basic` when they came from a demo applied by hand (KAST,
+ * first kills and deaths, multi-kills and clutches are not in it and show as 「—」).
+ */
+export type StatsDetail = "full" | "basic";
+
+/** One player's stats; every derived number (ADR, HS%, K/D, KAST%…) comes worked out from the backend. */
 export type MatchPlayerStats = {
   playerId: string;
   name: string;
@@ -85,6 +92,13 @@ export type MatchPlayerStats = {
   roundsPlayed: number;
   adr: number;
   headshotPercent: number;
+  /** Kills minus deaths. */
+  kdDiff: number;
+  /** Kills per death, two decimals. */
+  kdRatio: number;
+  kastPercent: number;
+  /** Rounds with two or more kills. */
+  multiKillRounds: number;
   headshotKills: number;
   multiKills: { 2: number; 3: number; 4: number; 5: number };
   clutches: number;
@@ -206,6 +220,7 @@ export type ViewerMatch = MatchDetail & {
     canDownloadDemo: boolean;
   };
   stats: MatchPlayerStats[];
+  statsDetail: StatsDetail;
 };
 
 export type CandidateSide = {
@@ -230,6 +245,7 @@ export type ManagedMatch = MatchDetail & {
   createdBy: string;
   createdByMemberId: string | null;
   stats: MatchPlayerStats[];
+  statsDetail: StatsDetail;
   connect: MatchConnect | null;
   serverSession: MatchServerSession | null;
 };
@@ -239,7 +255,13 @@ export type MemberMatches = {
   /** false until the member links Steam (no player, so no rating or matches). */
   steamLinked: boolean;
   rating: number | null;
-  items: (MatchSummary & { team: "A" | "B" | null; isCaptain: boolean; ratingChange: RatingChange | null })[];
+  items: (MatchSummary & {
+    team: "A" | "B" | null;
+    isCaptain: boolean;
+    ratingChange: RatingChange | null;
+    /** Completed without a score (shown as 「未記錄比分」). */
+    unscored: boolean;
+  })[];
   /** Admins' adjustments of the member's rating, newest first. */
   adjustments: { before: number; after: number; delta: number; at: string }[];
 };

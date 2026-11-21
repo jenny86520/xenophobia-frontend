@@ -215,7 +215,8 @@ export function MatchRoom(props: MatchRoomProps) {
   }
 
   const players = new Map(match.entries.flatMap((entry) => entry.players).map((p) => [p.playerId, p]));
-  const statsOf = new Map((stats ?? []).map((row) => [row.playerId, row]));
+  // Once completed the numbers are in the scoreboard below the room; the columns keep the rating change.
+  const statsOf = new Map(match.status === "completed" ? [] : (stats ?? []).map((row) => [row.playerId, row] as const));
   const renameOf = (side: "A" | "B") =>
     !match.teamNamesOpen ? null : managed ? "manager" : props.captainOf === side ? "captain" : null;
   return (

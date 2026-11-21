@@ -7,11 +7,12 @@ import { signedPoints } from "@/utils/rating";
 import { MatchRow } from "./match-row";
 import { RatingHistoryList } from "./rating-history";
 
-/** Beside a match: the member's team and, once rated, their change ("A 隊・隊長・評分 +28"). */
+/** Beside a match: the member's team and, once rated, their change ("A 隊・隊長・評分 +28"), or 未記錄比分. */
 function noteOf(match: MemberMatches["items"][number]): string | undefined {
   const parts = [
     match.team && `${match.team} 隊${match.isCaptain ? "・隊長" : ""}`,
     match.ratingChange && `評分 ${signedPoints(match.ratingChange.delta)}`,
+    match.unscored && "未記錄比分",
   ].filter(Boolean);
   return parts.length > 0 ? parts.join("・") : undefined;
 }

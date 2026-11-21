@@ -9,6 +9,7 @@ import {
   confirmTeamsAction,
   managerBanAction,
   matchResultAction,
+  matchTitleAction,
   removePlayerAction,
   serverStartAction,
   vetoStartAction,
@@ -18,6 +19,7 @@ import {
   GenerateTeamsButton,
   ImportPartyButton,
   LockButton,
+  MatchCloseForm,
   ServerAbortForm,
   UnconfirmTeamsForm,
   UnlockForm,
@@ -27,6 +29,7 @@ import {
 import {
   ManagerBanForm,
   MatchResultForm,
+  MatchTitleForm,
   RemovePlayerForm,
   ServerStartForm,
   TeamConfirmForm,
@@ -267,6 +270,15 @@ export function StageActions({
 
 const ON_SERVER: readonly ManagedMatch["status"][] = ["server_starting", "server_ready", "in_game"];
 
+/** Where a manual score (or 不記比分) is open, as the backend allows it. */
+const SCOREABLE: readonly ManagedMatch["status"][] = [
+  "teams_confirmed",
+  "veto_active",
+  "veto_complete",
+  ...ON_SERVER,
+  "completed",
+];
+
 /**
  * The creating member's management area below the match room: the group invite codes, the manual
  * score, and the steps that undo something. The main step of each status sits in the room
@@ -284,12 +296,19 @@ export function MatchManage({ match }: { match: ManagedMatch }) {
   const vetoing = match.status === "veto_active" || match.status === "veto_complete";
   const unconfirmable = match.status === "teams_confirmed";
   const onServer = ON_SERVER.includes(match.status);
-  const scoreable = match.status === "veto_complete" || onServer || match.status === "completed";
+  // From the confirmed teams on: old matches made before the veto or the server existed can be finished too.
+  const scoreable = SCOREABLE.includes(match.status);
+  const closable = scoreable && match.status !== "completed";
   const veto = match.veto;
   const leftColumn = removable || unlockable || vetoing || unconfirmable || onServer;
 
   return (
     <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-3">
+        <Heading level={3}>場次標題</Heading>
+        <MatchTitleForm rename={matchTitleAction.bind(null, match.id)} current={match.title} />
+      </div>
+
       {groups.length > 0 && (
         <div className="flex flex-col gap-3">
           <Heading level={3}>小隊邀請碼</Heading>
@@ -307,8 +326,21 @@ export function MatchManage({ match }: { match: ManagedMatch }) {
       {scoreable && (
         <div className="flex flex-col gap-3">
           <Heading level={3}>{match.status === "completed" ? "更正比分" : "手動輸入比分"}</Heading>
-          <p className="text-body text-ink-secondary">伺服器沒辦法回傳結果時使用；手動輸入的場次沒有玩家數據。</p>
+          <p className="text-body text-ink-secondary">
+            伺服器沒辦法回傳結果、或是舊場次沒有走伺服器時使用；手動輸入的場次沒有玩家數據，會照比分計入評分。
+          </p>
           <MatchResultForm save={matchResultAction.bind(null, match.id)} completed={match.status === "completed"} />
+        </div>
+      )}
+
+      {closable && (
+        <div className="flex flex-col gap-3">
+          <Heading level={3}>標記為已完成（不記比分）</Heading>
+          <p className="text-body text-ink-secondary">
+            比賽打完了卻沒有比分時使用（例如 Ban
+            圖功能上線前的舊場次）：場次改為已完成、不計入評分，之後仍可在上方補上比分。
+          </p>
+          <MatchCloseForm matchId={match.id} />
         </div>
       )}
 

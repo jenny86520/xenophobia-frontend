@@ -63,4 +63,13 @@ describe("/games/cs2", () => {
     expect(screen.getByText(/還沒有已計分的場次/)).toBeInTheDocument();
     expect(screen.getByText("還沒有完成的比賽。")).toBeInTheDocument();
   });
+
+  it("says 未記錄比分 for a match completed without a score, never 平手", async () => {
+    (fetchScrimLadder as jest.Mock).mockResolvedValue([]);
+    (fetchRecentScrims as jest.Mock).mockResolvedValue([{ ...result, scoreA: null, scoreB: null, winner: null }]);
+    render(await Cs2GamePage());
+    const row = within(screen.getByRole("list", { name: "最近的比賽" })).getByRole("link", { name: /週五晚場/ });
+    expect(row).toHaveTextContent("未記錄比分");
+    expect(row).not.toHaveTextContent("平手");
+  });
 });

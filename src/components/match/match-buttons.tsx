@@ -5,6 +5,7 @@ import {
   inviteFriendAction,
   leaveAction,
   lockAction,
+  matchCloseAction,
   serverAbortAction,
   signUpAction,
   unconfirmTeamsAction,
@@ -121,6 +122,18 @@ export function VetoResetForm({ matchId }: { matchId: string }) {
       action={vetoResetAction.bind(null, matchId)}
       label="重設 Ban 圖"
       confirmText="確認重設，清除所有 Ban 與先手，回到隊伍已確認"
+    />
+  );
+}
+
+/** 不記比分: closes an old or broken match as completed, never rated. */
+export function MatchCloseForm({ matchId }: { matchId: string }) {
+  return (
+    <ConfirmedActionForm
+      id="match-close"
+      action={matchCloseAction.bind(null, matchId)}
+      label="標記為已完成"
+      confirmText="確認標記為已完成（不記比分）：沒有比分與勝方、不計入評分，伺服器上進行中的比賽會一併中止；之後仍可補上比分"
     />
   );
 }

@@ -176,6 +176,31 @@ export async function cancelMatchAction(
   return asManager(matchId, "/cancel", { method: "POST" }, () => "場次已取消。");
 }
 
+/** A manager retitles the match in any status (the backend checks the title). */
+export async function matchTitleAction(
+  matchId: string,
+  _: MatchActionState,
+  form: FormData,
+): Promise<MatchActionState> {
+  const result = await asManager(
+    matchId,
+    "/title",
+    { method: "POST", body: JSON.stringify({ title: String(form.get("title") ?? "") }) },
+    () => "標題已更新。",
+  );
+  return keepValues(result, form);
+}
+
+/** Marks the match completed without a score (an old match, a dead server): ticked first. */
+export async function matchCloseAction(
+  matchId: string,
+  _: MatchActionState,
+  form: FormData,
+): Promise<MatchActionState> {
+  if (!confirmed(form)) return NOT_CONFIRMED;
+  return asManager(matchId, "/complete", { method: "POST" }, () => "已標記為完成（未記錄比分）。");
+}
+
 export async function removePlayerAction(
   matchId: string,
   _: MatchActionState,
