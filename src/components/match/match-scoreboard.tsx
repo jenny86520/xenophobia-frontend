@@ -5,13 +5,27 @@ import { MemberTitleTag } from "@/components/cosmetics/member-title-tag";
 import { cn } from "@/lib/utils";
 import type { MatchPlayer, MatchServer, StatsDetail } from "@/types/match";
 import {
+  SWING_TIER_LEGEND,
   cellValue,
   scoreboardHref,
   sortRows,
+  swingTier,
   visibleColumns,
   type ScoreboardRow,
   type ScoreboardSort,
+  type SwingTier,
 } from "@/utils/scoreboard";
+
+/** Text colours of the SWING tiers, all tokens (each AA on the page background). */
+const SWING_TIER_CLASS: Record<SwingTier, string> = {
+  gold: "text-gold",
+  good: "text-success",
+  even: "text-ink",
+  bad: "text-destructive",
+};
+
+/** The SWING column stands out: a faint surface behind it and a hairline either side. */
+const SWING_COLUMN = "border-x border-line bg-surface";
 
 type Side = "A" | "B";
 
@@ -45,7 +59,7 @@ function TeamTable({
   sorts: Record<Side, ScoreboardSort>;
 }) {
   const sort = sorts[side];
-  const columns = visibleColumns(rows);
+  const columns = visibleColumns();
   const sorted = sortRows(rows, sort, detail);
   const score = side === "A" ? server.scoreA : server.scoreB;
   const titleId = `scoreboard-${side}-title`;
@@ -80,14 +94,17 @@ function TeamTable({
                     key={column.key}
                     scope="col"
                     aria-sort={active ? (sort.direction === "desc" ? "descending" : "ascending") : undefined}
-                    className="px-3 py-2 text-right text-label font-normal whitespace-nowrap"
+                    className={cn(
+                      "px-3 py-2 text-right text-label font-normal whitespace-nowrap",
+                      column.key === "swing" && cn(SWING_COLUMN, "px-4"),
+                    )}
                   >
                     <Link
                       href={scoreboardHref(matchId, side, column.key, sorts)}
                       scroll={false}
                       className={cn(
                         "inline-flex items-center gap-1 hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
-                        active ? "text-ink" : "text-ink-secondary",
+                        active || column.key === "swing" ? "text-ink" : "text-ink-secondary",
                       )}
                     >
                       {column.longLabel ? (
@@ -118,12 +135,17 @@ function TeamTable({
                   </th>
                   {columns.map((column) => {
                     const value = cellValue(column, row, detail);
+                    const swing = column.key === "swing";
+                    const tier = swing && value !== null ? swingTier(value) : null;
                     return (
                       <td
                         key={column.key}
+                        data-swing-tier={tier ?? undefined}
                         className={cn(
                           "px-3 py-3 text-right font-mono tabular-nums",
                           sort.key === column.key ? "text-ink" : "text-ink-secondary",
+                          swing && cn(SWING_COLUMN, "px-4 text-lead font-semibold"),
+                          tier && SWING_TIER_CLASS[tier],
                         )}
                       >
                         {value === null ? (
@@ -170,9 +192,18 @@ export function MatchScoreboard({
 }) {
   return (
     <div className="flex flex-col gap-10">
+      <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-ink-muted">
+        <span>SWING 是每回合讓隊伍勝率平均提高多少，評分的個人部分看的就是它。</span>
+        {SWING_TIER_LEGEND.map(({ tier, label }) => (
+          <span key={tier} className={cn("font-mono tabular-nums", SWING_TIER_CLASS[tier])}>
+            {label}
+          </span>
+        ))}
+      </p>
       {detail === "basic" && (
         <p className="text-caption text-ink-muted">
-          這場的數據來自 demo：KAST、首殺、首死、多殺與殘局 demo 沒有提供，顯示為「—」。
+          這場的數據來自較早套用的 demo，當時還沒有計算 KAST、首殺、首死、多殺與殘局，顯示為「—」；管理員重新解析 demo
+          後就會補上。
         </p>
       )}
       {(["A", "B"] as const).map((side) => (

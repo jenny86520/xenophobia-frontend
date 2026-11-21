@@ -75,8 +75,9 @@ export type MatchServer = {
 export type MatchConnect = { address: string; password: string; url: string };
 
 /**
- * Which stats columns can be trusted: `basic` when they came from a demo applied by hand (KAST,
- * first kills and deaths, multi-kills and clutches are not in it and show as 「—」).
+ * Which stats columns can be trusted: `basic` when they came from a demo applied by hand before the
+ * demo counted KAST, first kills and deaths, multi-kills and clutches (those show as 「—」 until the
+ * demo is parsed again).
  */
 export type StatsDetail = "full" | "basic";
 

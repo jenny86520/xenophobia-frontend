@@ -943,7 +943,10 @@ describe("/matches/[id] on the game server", () => {
       const board = screen.getByRole("region", { name: "成績" });
       const tableA = within(board).getByRole("table", { name: /A 隊每位玩家的成績/ });
       const row = within(tableA).getByRole("row", { name: /阿強/ });
-      expect(row).toHaveTextContent("阿強15102+51.5076.940%70%2131+3.2%");
+      // SWING leads the row and is coloured by its tier (+3.2% is green).
+      expect(row).toHaveTextContent("阿強+3.2%15102+51.5076.940%70%2131");
+      expect(row.querySelector("[data-swing-tier]")).toHaveAttribute("data-swing-tier", "good");
+      expect(row.querySelector("[data-swing-tier]")).toHaveClass("text-success");
       // B has no SWING, so it sorts by ADR, high to low.
       const tableB = within(board).getByRole("table", { name: /B 隊每位玩家的成績/ });
       expect(rowNames(tableB)).toEqual(["小明", "訪客C"]);
@@ -969,7 +972,7 @@ describe("/matches/[id] on the game server", () => {
       );
     });
 
-    it("shows 「—」 for what a demo does not have", async () => {
+    it("shows 「—」 for what an older demo result does not have", async () => {
       (fetchViewerMatch as jest.Mock).mockResolvedValue({
         ...viewer({}, { ...done, server: { ...done.server!, resultSource: "demo" } }),
         stats,
@@ -981,7 +984,7 @@ describe("/matches/[id] on the game server", () => {
       });
       expect(row).not.toHaveTextContent("70%");
       expect(within(row).getAllByText("沒有資料")).toHaveLength(5);
-      expect(screen.getByRole("region", { name: "成績" })).toHaveTextContent("這場的數據來自 demo");
+      expect(screen.getByRole("region", { name: "成績" })).toHaveTextContent("這場的數據來自較早套用的 demo");
     });
 
     it("asks visitors to sign in and shows no table", async () => {

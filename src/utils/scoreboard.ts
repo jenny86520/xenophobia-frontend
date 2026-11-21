@@ -2,6 +2,26 @@ import type { MatchPlayerStats, RatingChange, StatsDetail } from "@/types/match"
 import { signedPoints, swingText } from "@/utils/rating";
 
 /**
+ * How a SWING value is coloured (spec scrim-match-server 賽後成績表): gold from +10%, green from
+ * +3%, plain from 0, red below 0. The signed number is always written, so the colour only adds to it.
+ */
+export type SwingTier = "gold" | "good" | "even" | "bad";
+
+export function swingTier(value: number): SwingTier {
+  if (value >= 10) return "gold";
+  if (value >= 3) return "good";
+  return value >= 0 ? "even" : "bad";
+}
+
+/** Words for each colour, for the legend under the scoreboard. */
+export const SWING_TIER_LEGEND: readonly { tier: SwingTier; label: string }[] = [
+  { tier: "gold", label: "+10% 以上" },
+  { tier: "good", label: "+3% 以上" },
+  { tier: "even", label: "0～3%" },
+  { tier: "bad", label: "低於 0" },
+];
+
+/**
  * The finished match's scoreboard (spec scrim-match-server 賽後成績表). Sorting only changes the
  * order on screen, so it lives here; every number comes worked out from the backend.
  */
@@ -28,13 +48,8 @@ const plain = (value: number) => String(value);
 const percent = (value: number) => `${value}%`;
 
 export const SCOREBOARD_COLUMNS: readonly ScoreboardColumn[] = [
-  {
-    key: "rating",
-    label: "評分",
-    longLabel: "評分變動",
-    value: (r) => r.ratingChange?.delta ?? null,
-    format: signedPoints,
-  },
+  // SWING leads: it is what the match's rating weighs (spec scrim-match-server 賽後成績表).
+  { key: "swing", label: "SWING", longLabel: "每回合 SWING", value: (r) => r.swing, format: swingText },
   { key: "kills", label: "K", longLabel: "擊殺", value: (r) => r.kills, format: plain },
   { key: "deaths", label: "D", longLabel: "死亡", value: (r) => r.deaths, format: plain },
   { key: "assists", label: "A", longLabel: "助攻", value: (r) => r.assists, format: plain },
@@ -54,18 +69,16 @@ export const SCOREBOARD_COLUMNS: readonly ScoreboardColumn[] = [
     fullOnly: true,
   },
   { key: "clutches", label: "殘局勝", value: (r) => r.clutches, format: plain, fullOnly: true },
-  { key: "swing", label: "SWING", longLabel: "每回合 SWING", value: (r) => r.swing, format: swingText },
 ];
 
 const COLUMN_KEYS = new Set(SCOREBOARD_COLUMNS.map((c) => c.key));
 
-/** The columns a table shows: 評分 only once the match is rated. */
-export function visibleColumns(rows: readonly ScoreboardRow[]): ScoreboardColumn[] {
-  const rated = rows.some((row) => row.ratingChange !== null);
-  return SCOREBOARD_COLUMNS.filter((column) => column.key !== "rating" || rated);
+/** The columns a table shows (the rating change is shown in the match room, not here). */
+export function visibleColumns(): readonly ScoreboardColumn[] {
+  return SCOREBOARD_COLUMNS;
 }
 
-/** A cell's value, or null for 「—」 (a demo's missing columns, no SWING, not rated). */
+/** A cell's value, or null for 「—」 (an older demo result's missing columns, no SWING). */
 export function cellValue(column: ScoreboardColumn, row: ScoreboardRow, detail: StatsDetail): number | null {
   if (column.fullOnly && detail === "basic") return null;
   return column.value(row);
@@ -84,8 +97,7 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 /** `?sortA=adr&dirA=asc` → that team's sort; an unknown or hidden column falls back to the default. */
 export function parseScoreboardSort(params: Params, side: "A" | "B", rows: readonly ScoreboardRow[]): ScoreboardSort {
   const key = first(params[`sort${side}`]);
-  const shown = visibleColumns(rows).some((column) => column.key === key);
-  if (!key || !COLUMN_KEYS.has(key) || !shown) return defaultSort(rows);
+  if (!key || !COLUMN_KEYS.has(key)) return defaultSort(rows);
   return { key, direction: first(params[`dir${side}`]) === "asc" ? "asc" : "desc" };
 }
 

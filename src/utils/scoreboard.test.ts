@@ -5,6 +5,7 @@ import {
   SCOREBOARD_COLUMNS,
   scoreboardHref,
   sortRows,
+  swingTier,
   visibleColumns,
   type ScoreboardRow,
 } from "./scoreboard";
@@ -59,9 +60,9 @@ describe("parseScoreboardSort", () => {
     });
   });
 
-  it("falls back to the default for unknown or hidden columns", () => {
+  it("falls back to the default for unknown columns", () => {
     expect(parseScoreboardSort({ sortA: "nope" }, "A", rows)).toEqual(defaultSort(rows));
-    // 評分 is only shown once the match is rated.
+    // 評分 is no longer a scoreboard column (an old link still works).
     expect(parseScoreboardSort({ sortA: "rating" }, "A", rows)).toEqual(defaultSort(rows));
   });
 });
@@ -87,10 +88,23 @@ describe("cells and columns", () => {
     expect(cellValue(column("adr"), row("甲"), "basic")).toBe(80);
   });
 
-  it("shows 評分 only once a player has a rating change", () => {
-    expect(visibleColumns([row("甲")]).map((c) => c.key)).not.toContain("rating");
-    const rated = row("甲", { ratingChange: { delta: 12, teamPart: 10, personalPart: 2, note: null } });
-    expect(visibleColumns([rated]).map((c) => c.key)[0]).toBe("rating");
+  it("leads with SWING and has no 評分 column", () => {
+    const keys = visibleColumns().map((c) => c.key);
+    expect(keys[0]).toBe("swing");
+    expect(keys).not.toContain("rating");
+  });
+
+  it("colours SWING gold from +10%, green from +3%, plain from 0 and red below", () => {
+    expect([12.4, 10, 9.9, 3, 2.9, 0, -0.1, -8].map(swingTier)).toEqual([
+      "gold",
+      "gold",
+      "good",
+      "good",
+      "even",
+      "even",
+      "bad",
+      "bad",
+    ]);
   });
 
   it("formats signed numbers and ratios", () => {
